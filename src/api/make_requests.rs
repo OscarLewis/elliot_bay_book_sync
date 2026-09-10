@@ -1,7 +1,5 @@
-use crate::api::init_resources::ResourcesRoot;
 use axum::http::{HeaderMap, Method};
 use reqwest::{Client, Response};
-use serde::{Deserialize, Serialize};
 
 pub(crate) async fn make_request_to_kobo_store(
     client: &Client,
@@ -21,18 +19,4 @@ pub(crate) async fn make_request_to_kobo_store(
         .timeout(std::time::Duration::from_secs(10))
         .send()
         .await
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub(crate) struct KoboStoreResponse {
-    pub(crate) response_status: Option<ResponseStatus>,
-    pub(crate) resources: Option<ResourcesRoot>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub(crate) struct ResponseStatus {
-    pub(crate) error_code: Option<String>,
-    pub(crate) message: Option<String>,
 }

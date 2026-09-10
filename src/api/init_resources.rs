@@ -1,4 +1,3 @@
-use axum::http::{self, HeaderMap};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -108,7 +107,8 @@ pub struct Resources {
     pub kobo_nativeborrow_enabled: String,
     pub kobo_onedrive_link_account_enabled: String,
     pub kobo_onestorelibrary_enabled: String,
-    pub kobo_privacyCentre_url: String,
+    #[serde(rename = "kobo_privacyCentre_url")]
+    pub kobo_privacy_centre_url: String,
     pub kobo_redeem_enabled: String,
     pub kobo_shelfie_enabled: String,
     pub kobo_shopping_cart_enabled: String,
@@ -304,7 +304,7 @@ impl Default for Resources {
             kobo_nativeborrow_enabled: "True".to_string(),
             kobo_onedrive_link_account_enabled: "False".to_string(),
             kobo_onestorelibrary_enabled: "False".to_string(),
-            kobo_privacyCentre_url: "https://www.kobo.com/privacy".to_string(),
+            kobo_privacy_centre_url: "https://www.kobo.com/privacy".to_string(),
             kobo_redeem_enabled: "True".to_string(),
             kobo_shelfie_enabled: "False".to_string(),
             kobo_shopping_cart_enabled: "False".to_string(),

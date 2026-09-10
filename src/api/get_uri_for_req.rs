@@ -1,7 +1,9 @@
 use axum::http::Uri;
 
 pub const KOBO_STOREAPI_URL: &str = "https://storeapi.kobo.com";
-pub const KOBO_IMAGEHOST_URL: &str = "https://cdn.kobo.com/book-images";
+
+// TODO this will get used in HandleCoverImageRequest
+pub const _KOBO_IMAGEHOST_URL: &str = "https://cdn.kobo.com/book-images";
 
 /// Parses the incoming request URI to build the official Kobo Store API URL.
 pub fn get_store_url_for_current_request(uri: &Uri) -> String {

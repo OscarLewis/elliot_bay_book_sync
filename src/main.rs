@@ -99,7 +99,8 @@ pub async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(async move {
-        scan::scanner::scan_library(status, scan_id, &state.config.library_path).await;
+        // TODO do something with the result this returns
+        let _ = scan::scanner::scan_library(status, scan_id, &state.config.library_path).await;
     });
 
     Json(ScanResponse { scan_id })

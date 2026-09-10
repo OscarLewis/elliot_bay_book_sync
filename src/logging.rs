@@ -1,10 +1,5 @@
-use axum::{
-    body::{Body, Bytes},
-    http::Request,
-    middleware::Next,
-    response::Response,
-};
-use tracing::{debug, info, trace};
+use axum::{body::Body, http::Request, middleware::Next, response::Response};
+use tracing::debug;
 
 pub async fn log_with_body(req: Request<Body>, next: Next) -> Response {
     let (parts, body) = req.into_parts();
