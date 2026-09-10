@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::scan::{scanner::ScanResponse, status::ScanStatus};
 use axum::{
     Json, Router,
@@ -10,18 +12,23 @@ use uuid::Uuid;
 
 pub mod scan;
 
+const LIBRARY_PATH: &str = "/homes/oscar/Documents/Projects/kobo_sync_rs/test ebooks";
+
 /// Holds shared application state accessible across request handlers.
 #[derive(Clone)]
 pub(crate) struct AppState {
     /// Global handle for monitoring and dispatching scan status updates.
     pub(crate) scan_status: ScanStatus,
+    /// Shared, immutable reference to the library root path.
+    pub(crate) library_path: Arc<std::path::Path>,
 }
 
 impl AppState {
-    /// Creates a new `AppState` instance initialized with default channels.
-    pub(crate) fn new() -> Self {
+    /// Creates a new `AppState` instance with the given library path.
+    pub(crate) fn new(library_path: impl AsRef<std::path::Path>) -> Self {
         AppState {
             scan_status: ScanStatus::new(),
+            library_path: Arc::from(library_path.as_ref()),
         }
     }
 }
@@ -29,7 +36,7 @@ impl AppState {
 /// Constructs the main application `Router` and registers API routes with shared state.
 pub(crate) fn app(state: AppState) -> Router {
     Router::new()
-        .route("/", get(|| async { "Hello, world!" }))
+        .route("/", get(|| async { "Ebook Sync Server" }))
         .route("/scan", post(scan_handler))
         .with_state(state)
 }
@@ -45,7 +52,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let state = AppState::new();
+    let state = AppState::new(LIBRARY_PATH);
 
     // Subscribe to scan status updates before starting the server
     let mut status_rx = state.scan_status.subscribe();
@@ -71,8 +78,8 @@ async fn main() {
 }
 
 /// POST `/scan` request handler.
-/// 
-/// Generates a unique `scan_id`, launches an asynchronous scan task in the 
+///
+/// Generates a unique `scan_id`, launches an asynchronous scan task in the
 /// background, and returns the generated UUID to the client immediately.
 pub(crate) async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
     let scan_id = Uuid::new_v4();
@@ -100,19 +107,14 @@ pub(crate) mod test_helpers {
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        scan::{
-            scanner::ScanResponse,
-            status::ScanStatus,
-        },
-        test_helpers::setup_test_app,
+        AppState, LIBRARY_PATH, scan::scanner::ScanResponse, test_helpers::setup_test_app,
     };
     use axum::http::StatusCode;
 
     /// Tests the root endpoint response.
     #[tokio::test]
     async fn test_root_handler() {
-        let state = AppState::new();
+        let state = AppState::new(LIBRARY_PATH);
         let server = setup_test_app(state);
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
@@ -121,7 +123,7 @@ mod tests {
     /// Verifies that calling POST `/scan` triggers a background scan and returns a valid UUID.
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_scan_handler_triggers_scan() {
-        let state = AppState::new();
+        let state = AppState::new(LIBRARY_PATH);
 
         let server = setup_test_app(state);
 
