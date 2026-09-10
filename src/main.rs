@@ -9,6 +9,7 @@ use axum::{
     routing::{get, post},
 };
 use std::sync::Arc;
+use tower_http::trace::TraceLayer;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
@@ -43,6 +44,7 @@ pub fn app(state: AppState) -> Router {
         .route("/scan", post(scan_handler))
         .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
+        .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
 }
 
@@ -52,7 +54,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("kobo_sync_rs=debug")),
+                .unwrap_or_else(|_| EnvFilter::new("kobo_sync_rs=debug,tower_http=debug")),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
