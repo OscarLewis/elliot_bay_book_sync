@@ -30,9 +30,12 @@ pub async fn scan_library(
             let path = entry.path();
 
             if path.is_file()
-                && path
+                && (path
                     .extension()
                     .is_some_and(|ext| ext.eq_ignore_ascii_case("epub"))
+                    || path
+                        .extension()
+                        .is_some_and(|ext| ext.eq_ignore_ascii_case("kepub")))
             {
                 let book = Book::from_path(path);
                 book_list.push(book);
@@ -40,7 +43,7 @@ pub async fn scan_library(
         }
     }
     if !book_list.is_empty() {
-        debug!(?book_list, "Found files");
+        debug!(number_epubs = book_list.len(), ?book_list, "Found files");
     }
     Ok((scan_id, book_list))
 }

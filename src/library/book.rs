@@ -6,6 +6,7 @@ pub struct Book {
     pub path: Box<Path>,
     pub name: String,
     pub id: Uuid,
+    pub initial_format: Option<String>,
     pub author: Option<String>,
     pub title: Option<String>,
 }
@@ -22,6 +23,7 @@ impl Book {
             path: Path::new("").into(),
             name: String::new(),
             id: Uuid::new_v4(),
+            initial_format: None,
             author: None,
             title: None,
         }
@@ -36,10 +38,16 @@ impl Book {
             .unwrap_or_default()
             .to_string();
 
+        let initial_format = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(str::to_owned);
+
         Self {
             path,
             name,
             id: Uuid::new_v4(),
+            initial_format,
             ..Default::default()
         }
     }
