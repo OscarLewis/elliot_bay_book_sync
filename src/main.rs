@@ -16,6 +16,7 @@ use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitEx
 use uuid::Uuid;
 pub mod api;
 pub(crate) mod config;
+pub mod library;
 pub mod logging;
 pub mod scan;
 
@@ -62,6 +63,8 @@ async fn main() {
 
     let config = AppConfig::default();
     let state = AppState::new(config);
+
+    // TODO Add sea-orm and SQLX support for a data backend
 
     // Subscribe to scan status updates before starting the server
     let mut status_rx = state.scan_status.subscribe();
