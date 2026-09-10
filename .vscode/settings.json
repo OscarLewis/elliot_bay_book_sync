@@ -2,5 +2,9 @@
     "rust-analyzer.linkedProjects": [
         "./kobink/Cargo.toml",
         "./Cargo.toml"
-    ]
+    ],
+    "ruff.enable": false,
+    "python.analysis.exclude": [
+    "**/Calibre-Web-Automated/**"
+  ]
 }

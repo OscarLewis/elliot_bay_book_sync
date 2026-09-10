@@ -1,18 +1,19 @@
-use std::sync::Arc;
-
 use crate::scan::{scanner::ScanResponse, status::ScanStatus};
 use axum::{
     Json, Router,
     extract::State,
+    middleware,
     routing::{get, post},
 };
+use std::sync::Arc;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
-
+pub(crate) mod logging;
 pub mod scan;
 
 const LIBRARY_PATH: &str = "/homes/oscar/Documents/Projects/kobo_sync_rs/test ebooks";
+const PROXY_KOBO_STORE: bool = false;
 
 /// Holds shared application state accessible across request handlers.
 #[derive(Clone)]
@@ -39,6 +40,7 @@ pub(crate) fn app(state: AppState) -> Router {
         .route("/", get(|| async { "Ebook Sync Server" }))
         .route("/scan", post(scan_handler))
         .with_state(state)
+        .layer(middleware::from_fn(logging::log_with_body))
 }
 
 #[tokio::main]
