@@ -1,4 +1,7 @@
-use crate::scan::{scanner::ScanResponse, status::ScanStatus};
+use crate::{
+    config::AppConfig,
+    scan::{scanner::ScanResponse, status::ScanStatus},
+};
 use axum::{
     Json, Router,
     extract::State,
@@ -9,36 +12,36 @@ use std::sync::Arc;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
-pub(crate) mod logging;
+pub mod api;
+pub(crate) mod config;
+pub mod logging;
 pub mod scan;
-
-const LIBRARY_PATH: &str = "/homes/oscar/Documents/Projects/kobo_sync_rs/test ebooks";
-const PROXY_KOBO_STORE: bool = false;
 
 /// Holds shared application state accessible across request handlers.
 #[derive(Clone)]
-pub(crate) struct AppState {
+pub struct AppState {
     /// Global handle for monitoring and dispatching scan status updates.
-    pub(crate) scan_status: ScanStatus,
-    /// Shared, immutable reference to the library root path.
-    pub(crate) library_path: Arc<std::path::Path>,
+    pub scan_status: ScanStatus,
+    /// Shared application configuration settings.
+    pub config: Arc<AppConfig>,
 }
 
 impl AppState {
-    /// Creates a new `AppState` instance with the given library path.
-    pub(crate) fn new(library_path: impl AsRef<std::path::Path>) -> Self {
+    /// Creates a new `AppState` instance with the given configuration.
+    pub fn new(config: impl Into<Arc<AppConfig>>) -> Self {
         AppState {
             scan_status: ScanStatus::new(),
-            library_path: Arc::from(library_path.as_ref()),
+            config: config.into(),
         }
     }
 }
 
 /// Constructs the main application `Router` and registers API routes with shared state.
-pub(crate) fn app(state: AppState) -> Router {
+pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/", get(|| async { "Ebook Sync Server" }))
         .route("/scan", post(scan_handler))
+        .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
         .layer(middleware::from_fn(logging::log_with_body))
 }
@@ -54,7 +57,8 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let state = AppState::new(LIBRARY_PATH);
+    let config = AppConfig::default();
+    let state = AppState::new(config);
 
     // Subscribe to scan status updates before starting the server
     let mut status_rx = state.scan_status.subscribe();
@@ -83,49 +87,54 @@ async fn main() {
 ///
 /// Generates a unique `scan_id`, launches an asynchronous scan task in the
 /// background, and returns the generated UUID to the client immediately.
-pub(crate) async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
+pub async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
     let scan_id = Uuid::new_v4();
     let status = state.scan_status.clone();
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(async move {
-        scan::scanner::scan_library(status, scan_id).await;
+        scan::scanner::scan_library(status, scan_id, &state.config.library_path).await;
     });
 
     Json(ScanResponse { scan_id })
 }
 
 #[cfg(test)]
-pub(crate) mod test_helpers {
+pub mod test_helpers {
     use crate::{AppState, app};
+    use axum::Router;
     use axum_test::TestServer;
 
     /// Helper utility to bootstrap a `TestServer` instance for integration testing.
-    pub(crate) fn setup_test_app(state: AppState) -> TestServer {
-        TestServer::new(app(state))
+    pub fn setup_test_app(state: AppState) -> TestServer {
+        let router = Router::new().merge(app(state));
+        TestServer::new(router)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState, LIBRARY_PATH, scan::scanner::ScanResponse, test_helpers::setup_test_app,
+        AppState, config::AppConfig, scan::scanner::ScanResponse, test_helpers::setup_test_app,
     };
     use axum::http::StatusCode;
+    use test_log::test;
 
     /// Tests the root endpoint response.
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn test_root_handler() {
-        let state = AppState::new(LIBRARY_PATH);
+        let config = AppConfig::default();
+        let state = AppState::new(config);
         let server = setup_test_app(state);
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
     }
 
     /// Verifies that calling POST `/scan` triggers a background scan and returns a valid UUID.
-    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    #[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
     async fn test_scan_handler_triggers_scan() {
-        let state = AppState::new(LIBRARY_PATH);
+        let config = AppConfig::default();
+        let state = AppState::new(config);
 
         let server = setup_test_app(state);
 
