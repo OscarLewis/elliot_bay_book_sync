@@ -1,3 +1,4 @@
+use axum::http::{self, HeaderMap};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -447,5 +448,31 @@ impl Default for LocalizedPages {
             nl: "https://www.kobo.com/{region}/{language}/List/bekijk-het-overzicht-van-gratis-ebooks/QpkkVWnUw8sxmgjSlCbJRg".to_string(),
             pt: "https://www.kobo.com/{region}/{language}/p/livros-gratis".to_string(),
         }
+    }
+}
+
+pub fn patch_kobo_resources(
+    resources: &mut Resources,
+    base_url: &str, // e.g. "https://books.example.com" or "http://192.168.1.50:8083"
+    auth_token: &str,
+    is_kobo_proxy_enabled: bool,
+) {
+    let clean_base = base_url.trim_end_matches('/');
+
+    // Rewrite Cover Image Endpoints
+    resources.image_host = clean_base.to_string();
+
+    let quality_url = format!(
+        "{clean_base}/kobo/{auth_token}/cover/{{ImageId}}/{{width}}/{{height}}/{{Quality}}/isGreyscale"
+    );
+    resources.image_url_quality_template = quality_url;
+
+    let standard_url =
+        format!("{clean_base}/kobo/{auth_token}/cover/{{ImageId}}/{{width}}/{{height}}/false");
+    resources.image_url_template = standard_url;
+
+    // Fallbacks when not proxying the official Kobo Store
+    if !is_kobo_proxy_enabled {
+        resources.oauth_host = format!("{clean_base}/kobo/{auth_token}/oauth");
     }
 }

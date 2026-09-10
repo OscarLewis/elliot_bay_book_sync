@@ -5,6 +5,7 @@ use crate::{
 use axum::{
     Json, Router,
     extract::State,
+    http::{self, HeaderMap},
     middleware,
     routing::{get, post},
 };
@@ -99,6 +100,25 @@ pub async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
     });
 
     Json(ScanResponse { scan_id })
+}
+
+pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<&str>) -> String {
+    if let Some(ext_url) = config_external_url {
+        return ext_url.trim_end_matches('/').to_string();
+    }
+
+    let host = headers
+        .get("x-forwarded-host")
+        .or_else(|| headers.get(http::header::HOST))
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("localhost:8080");
+
+    let scheme = headers
+        .get("x-forwarded-proto")
+        .and_then(|s| s.to_str().ok())
+        .unwrap_or("http");
+
+    format!("{scheme}://{host}")
 }
 
 #[cfg(test)]
