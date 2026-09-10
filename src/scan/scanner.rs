@@ -37,6 +37,7 @@ pub async fn scan_library(
                         .extension()
                         .is_some_and(|ext| ext.eq_ignore_ascii_case("kepub")))
             {
+                // TODO handle 'Book Name.kepub.epub' files
                 let book = Book::from_path(path);
                 book_list.push(book);
             }
