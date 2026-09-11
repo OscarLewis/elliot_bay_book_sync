@@ -1,0 +1,14 @@
+query BookByPK($id:  Int!) {
+  books_by_pk(id: $id) {
+    id
+    slug
+    title
+    updated_at
+    contributions {
+      author {
+        id
+        name
+      }
+    }
+  }
+}

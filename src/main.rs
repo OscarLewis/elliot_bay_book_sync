@@ -13,17 +13,21 @@ use axum::{
     routing::{get, post},
 };
 use chrono::Utc;
+use dotenvy::dotenv;
+use std::env;
 use std::{sync::Arc, time::Duration};
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
+
 pub mod api;
 pub(crate) mod config;
 pub(crate) mod database;
 pub mod error;
 pub mod library;
 pub mod logging;
+pub(crate) mod metadata;
 pub mod scan;
 
 /// Holds shared application state accessible across request handlers
@@ -74,6 +78,14 @@ async fn main() -> Result<(), AppError> {
         .init();
 
     let config = AppConfig::default();
+
+    // Load the .env file into the system environment
+    dotenv().ok();
+
+    match env::var("HARDCOVER_TOKEN") {
+        Ok(val) => debug!("Hardcover Token: {val}"),
+        Err(e) => error!("Could not find HARDCOVER_TOKEN: {e}"),
+    }
 
     // Fetch and log all stored books & scans from redb
     let db = DocumentDB::open(&config.database_path)?;

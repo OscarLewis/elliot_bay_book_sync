@@ -22,3 +22,5 @@ log = "0.4.34"
 redb = { version = "4.2.0", features = ["uuid"] }
 chrono = "0.4.45"
 thiserror = "2.0.20"
+dotenvy = "0.15.7"
+graphql_client = { version = "0.16.0", features = ["reqwest"] }
