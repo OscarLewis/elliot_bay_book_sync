@@ -42,7 +42,7 @@ impl Book {
         let initial_format = path
             .extension()
             .and_then(|ext| ext.to_str())
-            .map(str::to_owned);
+            .map(str::to_owned); //TODO ".kepub.epub"
 
         // Query file metadata to obtain file size in kilobytes
         let size_kb = std::fs::metadata(&path)
