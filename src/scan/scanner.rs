@@ -3,7 +3,7 @@ use crate::{
     library::book::Book,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 use tokio::fs;
 use tracing::{debug, error, info};
 use uuid::Uuid;
@@ -16,6 +16,7 @@ pub struct ScanResponse {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ScanRecord {
     pub scan_id: Uuid,
+    // TODO Add scan status to record
 }
 
 pub async fn scan_library(

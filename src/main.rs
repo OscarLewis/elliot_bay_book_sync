@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::registry()
         .with(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("kobo_sync_rs=debug,tower_http=debug")),
+                .unwrap_or_else(|_| EnvFilter::new("kobo_sync_rs=debug,tower_http=info")),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
