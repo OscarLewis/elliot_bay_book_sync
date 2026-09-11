@@ -45,7 +45,6 @@ pub enum ScanDetails {
         reason: String,
     },
 }
-
 pub async fn scan_library(scan_id: Uuid, scan_dir: &Path) -> Result<Vec<Book>, AppError> {
     let mut book_list: Vec<Book> = vec![];
     if scan_dir.is_dir() {
@@ -53,18 +52,20 @@ pub async fn scan_library(scan_id: Uuid, scan_dir: &Path) -> Result<Vec<Book>, A
 
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();
+            if path.is_file() {
+                let is_supported = matches!(path.extension(), Some(ext) if ext == "epub" || ext == "kepub")
+                    || (
+                        // Check to see if a file as a title like 'Book Name.kepub.epub' - that's supported just fine
+                        path.file_stem()
+                            .and_then(|stem| Path::new(stem).extension())
+                            .is_some_and(|ext| ext == "kepub")
+                            && path.extension().is_some_and(|ext| ext == "epub")
+                    );
 
-            if path.is_file()
-                && (path
-                    .extension()
-                    .is_some_and(|ext| ext.eq_ignore_ascii_case("epub"))
-                    || path
-                        .extension()
-                        .is_some_and(|ext| ext.eq_ignore_ascii_case("kepub")))
-            {
-                // TODO handle 'Book Name.kepub.epub' files
-                let book = Book::from_path(path);
-                book_list.push(book);
+                if is_supported {
+                    let book = Book::from_path(path);
+                    book_list.push(book);
+                }
             }
         }
     }
@@ -74,6 +75,7 @@ pub async fn scan_library(scan_id: Uuid, scan_dir: &Path) -> Result<Vec<Book>, A
 
     Ok(book_list)
 }
+
 pub(crate) async fn run_library_scan(
     db: Arc<DocumentDB>,
     scan_id: Uuid,

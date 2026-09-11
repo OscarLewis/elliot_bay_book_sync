@@ -35,14 +35,35 @@ impl Book {
 
         let name = path
             .file_stem()
+            .and_then(|stem| {
+                if Path::new(stem)
+                    .extension()
+                    .is_some_and(|ext| ext == "kepub")
+                {
+                    Path::new(stem).file_stem()
+                } else {
+                    Some(stem)
+                }
+            })
             .and_then(|name| name.to_str())
             .unwrap_or_default()
             .to_string();
 
-        let initial_format = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(str::to_owned); //TODO ".kepub.epub"
+        let initial_format = {
+            // Check if it's a 'Book.kepub.epub' file first
+            if path
+                .file_stem()
+                .and_then(|stem| Path::new(stem).extension())
+                .is_some_and(|ext| ext == "kepub")
+                && path.extension().is_some_and(|ext| ext == "epub")
+            {
+                Some("kepub".to_owned())
+            } else {
+                path.extension()
+                    .and_then(|ext| ext.to_str())
+                    .map(str::to_owned)
+            }
+        };
 
         // Query file metadata to obtain file size in kilobytes
         let size_kb = std::fs::metadata(&path)
