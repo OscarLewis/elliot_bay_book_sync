@@ -7,8 +7,25 @@ use uuid::Uuid;
 const BOOK_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("book_docs");
 const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan_docs");
 
-// Secondary index table: maps Book Path -> Book UUID
+// Secondary index tables
 const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
+const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ScanStatus {
+    Running,
+    Error,
+    Finished,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanDocument {
+    pub id: Option<String>,
+    pub status: ScanStatus,
+    pub timestamp: String,
+    pub details: String,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DocumentTable {
@@ -40,8 +57,7 @@ impl DocumentDB {
         Ok(Self { db })
     }
 
-    /// Book Lookup by Path
-    /// Fetches a book document directly using its path index in O(1)
+    /// Book Lookup by Path (O(1) secondary index lookup)
     pub fn get_book_by_path<P: AsRef<Path>, T: for<'a> Deserialize<'a>>(
         &self,
         path: P,
@@ -53,7 +69,6 @@ impl DocumentDB {
 
         let read_txn = self.db.begin_read()?;
 
-        // 1. Look up the index table
         let index_table = match read_txn.open_table(BOOK_PATH_INDEX) {
             Ok(table) => table,
             Err(redb::TableError::TableDoesNotExist(_)) => return Ok(None),
@@ -66,7 +81,6 @@ impl DocumentDB {
         };
         let doc_id = doc_id_guard.value().to_string();
 
-        // 2. Fetch the actual document from the primary table
         let doc_table = read_txn.open_table(BOOK_COLLECTION)?;
         if let Some(doc_guard) = doc_table.get(doc_id.as_str())? {
             let doc: T = serde_json::from_slice(doc_guard.value())?;
@@ -76,37 +90,77 @@ impl DocumentDB {
         }
     }
 
-    /// CREATE: Inserts a document and maintains path index if path getter is provided.
+    /// Fetches the most recent scan in O(1) time using the secondary index table.
+    pub fn get_most_recent_scan<T: for<'a> Deserialize<'a>>(
+        &self,
+    ) -> Result<Option<(String, T)>, Box<dyn std::error::Error>> {
+        let read_txn = self.db.begin_read()?;
+
+        let index_table = match read_txn.open_table(SCAN_TIME_INDEX) {
+            Ok(table) => table,
+            Err(redb::TableError::TableDoesNotExist(_)) => return Ok(None),
+            Err(e) => return Err(Box::new(e)),
+        };
+
+        let doc_id = match index_table.iter()?.next_back() {
+            Some(result) => {
+                let (_key_guard, value_guard) = result?;
+                value_guard.value().to_string()
+            }
+            None => return Ok(None),
+        };
+
+        let doc_table = read_txn.open_table(SCAN_COLLECTION)?;
+        if let Some(doc_guard) = doc_table.get(doc_id.as_str())? {
+            let doc: T = serde_json::from_slice(doc_guard.value())?;
+            Ok(Some((doc_id, doc)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// CREATE: Inserts a document and maintains secondary indexes.
     pub fn create<T: Serialize>(
         &self,
         target: DocumentTable,
         doc: &T,
         get_path: Option<fn(&T) -> &str>,
+        get_timestamp: Option<fn(&T) -> &str>,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let id = Uuid::new_v4().to_string();
+        let id_uuid = Uuid::new_v4();
+        let id_str = id_uuid.to_string();
         let write_txn = self.db.begin_write()?;
         {
             let mut table = write_txn.open_table(target.definition())?;
             let payload = serde_json::to_vec(doc)?;
-            table.insert(id.as_str(), payload.as_slice())?;
+            table.insert(id_str.as_str(), payload.as_slice())?;
 
-            if target == DocumentTable::Books {
-                if let Some(path_fn) = get_path {
-                    let mut index_table = write_txn.open_table(BOOK_PATH_INDEX)?;
-                    index_table.insert(path_fn(doc), id.as_str())?;
+            match target {
+                DocumentTable::Books => {
+                    if let Some(path_fn) = get_path {
+                        let mut index_table = write_txn.open_table(BOOK_PATH_INDEX)?;
+                        index_table.insert(path_fn(doc), id_str.as_str())?;
+                    }
+                }
+                DocumentTable::Scans => {
+                    if let Some(time_fn) = get_timestamp {
+                        let mut index_table = write_txn.open_table(SCAN_TIME_INDEX)?;
+                        index_table.insert((time_fn(doc), id_uuid), id_str.as_str())?;
+                    }
                 }
             }
         }
         write_txn.commit()?;
-        Ok(id)
+        Ok(id_str)
     }
 
-    /// BATCH CREATE: Inserts multiple documents and updates secondary indexes in a single transaction.
+    /// BATCH CREATE: Inserts multiple documents and updates secondary indexes.
     pub fn create_many<T: Serialize>(
         &self,
         target: DocumentTable,
         docs: &[T],
         get_path: Option<fn(&T) -> &str>,
+        get_timestamp: Option<fn(&T) -> &str>,
     ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let write_txn = self.db.begin_write()?;
         let mut ids = Vec::with_capacity(docs.len());
@@ -114,26 +168,35 @@ impl DocumentDB {
         {
             let mut table = write_txn.open_table(target.definition())?;
 
-            // Open index table separately if targeting Books with path extractor
-            let mut index_table = if target == DocumentTable::Books && get_path.is_some() {
+            let mut path_index_table = if target == DocumentTable::Books && get_path.is_some() {
                 Some(write_txn.open_table(BOOK_PATH_INDEX)?)
             } else {
                 None
             };
 
+            let mut time_index_table = if target == DocumentTable::Scans && get_timestamp.is_some()
+            {
+                Some(write_txn.open_table(SCAN_TIME_INDEX)?)
+            } else {
+                None
+            };
+
             for doc in docs {
-                let id = Uuid::new_v4().to_string();
+                let id_uuid = Uuid::new_v4();
+                let id_str = id_uuid.to_string();
                 let payload = serde_json::to_vec(doc)?;
 
-                // 1. Insert into primary document table
-                table.insert(id.as_str(), payload.as_slice())?;
+                table.insert(id_str.as_str(), payload.as_slice())?;
 
-                // 2. Insert into index table if present
-                if let (Some(idx), Some(path_fn)) = (index_table.as_mut(), get_path) {
-                    idx.insert(path_fn(doc), id.as_str())?;
+                if let (Some(idx), Some(path_fn)) = (path_index_table.as_mut(), get_path) {
+                    idx.insert(path_fn(doc), id_str.as_str())?;
                 }
 
-                ids.push(id);
+                if let (Some(idx), Some(time_fn)) = (time_index_table.as_mut(), get_timestamp) {
+                    idx.insert((time_fn(doc), id_uuid), id_str.as_str())?;
+                }
+
+                ids.push(id_str);
             }
         }
 
@@ -141,37 +204,51 @@ impl DocumentDB {
         Ok(ids)
     }
 
-    /// UPDATE: Overwrites an existing document and updates path index if the path changed.
+    /// UPDATE: Overwrites an existing document and updates path/timestamp indexes if changed.
     pub fn update<T: Serialize + for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,
         id: &str,
         doc: &T,
         get_path: Option<fn(&T) -> &str>,
+        get_timestamp: Option<fn(&T) -> &str>,
     ) -> Result<bool, Box<dyn std::error::Error>> {
+        let id_uuid = Uuid::parse_str(id)?;
         let write_txn = self.db.begin_write()?;
         let mut updated = false;
         {
             let mut table = write_txn.open_table(target.definition())?;
 
-            // 1. Fetch old document and release the immutable table borrow immediately
             let old_doc: Option<T> = match table.get(id)? {
                 Some(guard) => serde_json::from_slice(guard.value()).ok(),
                 None => None,
             };
 
-            // 2. Perform mutable operations now that guard is dropped
             if let Some(old_doc) = old_doc {
-                if target == DocumentTable::Books {
-                    if let Some(path_fn) = get_path {
-                        let old_path = path_fn(&old_doc);
-                        let new_path = path_fn(doc);
+                match target {
+                    DocumentTable::Books => {
+                        if let Some(path_fn) = get_path {
+                            let old_path = path_fn(&old_doc);
+                            let new_path = path_fn(doc);
 
-                        let mut index_table = write_txn.open_table(BOOK_PATH_INDEX)?;
-                        if old_path != new_path {
-                            index_table.remove(old_path)?;
+                            let mut index_table = write_txn.open_table(BOOK_PATH_INDEX)?;
+                            if old_path != new_path {
+                                index_table.remove(old_path)?;
+                            }
+                            index_table.insert(new_path, id)?;
                         }
-                        index_table.insert(new_path, id)?;
+                    }
+                    DocumentTable::Scans => {
+                        if let Some(time_fn) = get_timestamp {
+                            let old_time = time_fn(&old_doc);
+                            let new_time = time_fn(doc);
+
+                            let mut index_table = write_txn.open_table(SCAN_TIME_INDEX)?;
+                            if old_time != new_time {
+                                index_table.remove((old_time, id_uuid))?;
+                            }
+                            index_table.insert((new_time, id_uuid), id)?;
+                        }
                     }
                 }
 
@@ -184,12 +261,13 @@ impl DocumentDB {
         Ok(updated)
     }
 
-    /// DELETE: Removes a document and cleans up its path index entry.
+    /// DELETE: Removes a document and cleans up secondary indexes.
     pub fn delete<T: for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,
         id: &str,
         get_path: Option<fn(&T) -> &str>,
+        get_timestamp: Option<fn(&T) -> &str>,
     ) -> Result<bool, Box<dyn std::error::Error>> {
         let write_txn = self.db.begin_write()?;
         let mut deleted = false;
@@ -200,18 +278,27 @@ impl DocumentDB {
                 Err(e) => return Err(Box::new(e)),
             };
 
-            // Retrieve old document and drop table guard
             let existing_doc: Option<T> = match table.get(id)? {
                 Some(guard) => serde_json::from_slice(guard.value()).ok(),
                 None => None,
             };
 
-            // Perform index cleanup and removal
             if let Some(doc) = existing_doc {
-                if target == DocumentTable::Books {
-                    if let Some(path_fn) = get_path {
-                        if let Ok(mut index_table) = write_txn.open_table(BOOK_PATH_INDEX) {
-                            index_table.remove(path_fn(&doc))?;
+                match target {
+                    DocumentTable::Books => {
+                        if let Some(path_fn) = get_path {
+                            if let Ok(mut index_table) = write_txn.open_table(BOOK_PATH_INDEX) {
+                                index_table.remove(path_fn(&doc))?;
+                            }
+                        }
+                    }
+                    DocumentTable::Scans => {
+                        if let Some(time_fn) = get_timestamp {
+                            if let Ok(id_uuid) = Uuid::parse_str(id) {
+                                if let Ok(mut index_table) = write_txn.open_table(SCAN_TIME_INDEX) {
+                                    index_table.remove((time_fn(&doc), id_uuid))?;
+                                }
+                            }
                         }
                     }
                 }
@@ -244,7 +331,7 @@ impl DocumentDB {
         }
     }
 
-    /// READ ALL: Iterates over all entries in the table.
+    /// READ ALL: Iterates over all entries in the target table.
     pub fn get_all<T: for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,

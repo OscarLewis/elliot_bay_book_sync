@@ -2,7 +2,7 @@ use crate::{
     config::AppConfig,
     database::document::{DocumentDB, DocumentTable},
     library::book::Book,
-    scan::scanner::{ScanRecord, ScanResponse, run_library_scan},
+    scan::scanner::{ScanDocument, ScanResponse, run_library_scan},
 };
 use axum::{
     Json, Router,
@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
     debug!(?books, count = books.len(), "All stored books in database");
 
-    let scans: Vec<(String, ScanRecord)> = db.get_all(DocumentTable::Scans)?;
+    let scans: Vec<(String, ScanDocument)> = db.get_all(DocumentTable::Scans)?;
     debug!(?scans, count = scans.len(), "All stored scans in database");
 
     let state = AppState::new(config, db);

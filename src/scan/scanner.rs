@@ -2,6 +2,7 @@ use crate::{
     database::document::{DocumentDB, DocumentTable},
     library::book::Book,
 };
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::{path::Path, sync::Arc};
 use tokio::fs;
@@ -13,10 +14,34 @@ pub struct ScanResponse {
     pub scan_id: Uuid,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ScanRecord {
-    pub scan_id: Uuid,
-    // TODO Add scan status to record
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanDocument {
+    pub id: Option<Uuid>,
+    pub status: ScanStatus,
+    /// ISO-8601 formatted timestamp string (e.g., "2026-09-11T00:38:00Z")
+    pub timestamp: String,
+    pub details: ScanDetails,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ScanStatus {
+    Running,
+    Error,
+    Finished,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+pub enum ScanDetails {
+    Started,
+    Completed {
+        added_count: usize,
+        skipped_count: usize,
+    },
+    Failed {
+        reason: String,
+    },
 }
 
 pub async fn scan_library(
@@ -81,9 +106,12 @@ pub(crate) async fn run_library_scan(
         }
     }
 
+    let added_count = new_books.len();
+    let skipped_count = skipped_books.len();
+
     if !skipped_books.is_empty() {
         debug!(
-            skipped_count = skipped_books.len(),
+            skipped_count,
             "Skipped books that already existed in the database index; ready for updates"
         );
 
@@ -96,26 +124,38 @@ pub(crate) async fn run_library_scan(
             DocumentTable::Books,
             &new_books,
             Some(|b: &Book| b.path.to_str().unwrap_or_default()),
+            None,
         ) {
             error!(
                 ?err,
-                count = new_books.len(),
+                count = added_count,
                 "Failed to save new books to database"
             );
         } else {
-            info!(
-                added_count = new_books.len(),
-                "Successfully batch-persisted new books"
-            );
+            info!(added_count, "Successfully batch-persisted new books");
         }
     } else {
         debug!("No new books found to persist.");
     }
 
     // Persist the scan execution record to SCAN_COLLECTION
-    let record = ScanRecord { scan_id };
+    let record = ScanDocument {
+        id: Some(scan_id),
+        status: ScanStatus::Finished,
+        timestamp: Utc::now().to_rfc3339(),
+        details: ScanDetails::Completed {
+            added_count,
+            skipped_count,
+        },
+    };
+
     let record_doc_id = db
-        .create(DocumentTable::Scans, &record, None)
+        .create(
+            DocumentTable::Scans,
+            &record,
+            None,
+            Some(|s| s.timestamp.as_str()),
+        )
         .map_err(|e| e.to_string())?;
 
     debug!(
