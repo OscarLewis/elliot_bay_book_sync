@@ -606,8 +606,8 @@
               "#digitally-own"
             ],
             "title": "The Eye of the World",
-            "users_count": 5439,
-            "users_read_count": 3286
+            "users_count": 5440,
+            "users_read_count": 3287
           },
           "highlight": {
             "alternative_titles": [
@@ -913,7 +913,7 @@
         },
         {
           "document": {
-            "activities_count": 1630,
+            "activities_count": 1632,
             "alternative_titles": [
               "El Despertar de los Heroes",
               "Great Hunt",
@@ -983,12 +983,8 @@
                   "slug": "robert-jordan"
                 },
                 "contribution": "Author",
-                "contributor_role_blurb": null,
                 "contributor_role_id": 1,
                 "contributor_role_name": "Author",
-                "contributor_specialization_blurb": null,
-                "contributor_specialization_id": null,
-                "contributor_specialization_name": null,
                 "primary": true
               }
             ],
@@ -1197,8 +1193,8 @@
               "fiction"
             ],
             "title": "The Great Hunt",
-            "users_count": 2921,
-            "users_read_count": 2405
+            "users_count": 2923,
+            "users_read_count": 2406
           },
           "highlight": {
             "alternative_titles": [
@@ -1482,7 +1478,7 @@
         },
         {
           "document": {
-            "activities_count": 1438,
+            "activities_count": 1439,
             "alternative_titles": [
               "The Dragon Reborn - Book Three of The Wheel of Time",
               "The Dragon Reborn",
@@ -1532,12 +1528,8 @@
                   "slug": "robert-jordan"
                 },
                 "contribution": "Author",
-                "contributor_role_blurb": null,
                 "contributor_role_id": 1,
                 "contributor_role_name": "Author",
-                "contributor_specialization_blurb": null,
-                "contributor_specialization_id": null,
-                "contributor_specialization_name": null,
                 "primary": true
               }
             ],
@@ -1706,8 +1698,8 @@
               "fiction"
             ],
             "title": "The Dragon Reborn",
-            "users_count": 2685,
-            "users_read_count": 2207
+            "users_count": 2686,
+            "users_read_count": 2208
           },
           "highlight": {
             "alternative_titles": [
@@ -2174,8 +2166,8 @@
               "fiction"
             ],
             "title": "The Shadow Rising",
-            "users_count": 2399,
-            "users_read_count": 1940
+            "users_count": 2400,
+            "users_read_count": 1941
           },
           "highlight": {
             "alternative_titles": [
@@ -2423,7 +2415,7 @@
         },
         {
           "document": {
-            "activities_count": 1314,
+            "activities_count": 1315,
             "alternative_titles": [
               "The Fires of Heaven",
               "Wheel of Time 05 - The Fires of Heaven",
@@ -2481,12 +2473,8 @@
                   "slug": "robert-jordan"
                 },
                 "contribution": "Author",
-                "contributor_role_blurb": null,
                 "contributor_role_id": 1,
                 "contributor_role_name": "Author",
-                "contributor_specialization_blurb": null,
-                "contributor_specialization_id": null,
-                "contributor_specialization_name": null,
                 "primary": true
               }
             ],
@@ -2659,8 +2647,8 @@
               "adventurous"
             ],
             "title": "The Fires of Heaven",
-            "users_count": 2178,
-            "users_read_count": 1715
+            "users_count": 2179,
+            "users_read_count": 1716
           },
           "highlight": {
             "alternative_titles": [
@@ -3158,8 +3146,8 @@
               "fantlab-import"
             ],
             "title": "Lord of Chaos",
-            "users_count": 2060,
-            "users_read_count": 1612
+            "users_count": 2061,
+            "users_read_count": 1613
           },
           "highlight": {
             "alternative_titles": [
@@ -3600,8 +3588,8 @@
               "slow-paced"
             ],
             "title": "A Crown of Swords",
-            "users_count": 1970,
-            "users_read_count": 1504
+            "users_count": 1971,
+            "users_read_count": 1505
           },
           "highlight": {
             "alternative_titles": [
@@ -4024,8 +4012,8 @@
               "#digitally-own"
             ],
             "title": "The Path of Daggers",
-            "users_count": 1870,
-            "users_read_count": 1407
+            "users_count": 1871,
+            "users_read_count": 1408
           },
           "highlight": {
             "alternative_titles": [
@@ -4772,8 +4760,8 @@
               "Fantasy - Epic"
             ],
             "title": "Crossroads of Twilight",
-            "users_count": 1758,
-            "users_read_count": 1292
+            "users_count": 1759,
+            "users_read_count": 1293
           },
           "highlight": {
             "alternative_titles": [
@@ -5580,8 +5568,8 @@
               "Not Diverse Characters"
             ],
             "title": "Knife of Dreams",
-            "users_count": 1742,
-            "users_read_count": 1270
+            "users_count": 1743,
+            "users_read_count": 1271
           },
           "highlight": {
             "alternative_titles": [
@@ -8573,7 +8561,7 @@
           }
         }
       ],
-      "out_of": 2575027,
+      "out_of": 2575023,
       "page": 1,
       "request_params": {
         "collection_name": "Book_production_1760914612",
@@ -8582,7 +8570,7 @@
         "q": "The Wheel of Time"
       },
       "search_cutoff": false,
-      "search_time_ms": 105
+      "search_time_ms": 56
     }
   }
 }

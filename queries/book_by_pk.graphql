@@ -1,4 +1,4 @@
-query BookByPK($id:  Int!) {
+query BookByPK($id: Int!) {
   books_by_pk(id: $id) {
     id
     slug
@@ -10,5 +10,13 @@ query BookByPK($id:  Int!) {
         name
       }
     }
+    description
+    image_id
+    pages
+    parent_book_id
+    release_date
+    rating
+    ratings_count
+    subtitle
   }
 }

@@ -6,10 +6,17 @@ use std::io::Write;
 use tracing::{debug, info};
 
 mod scalars {
+    // Both casings point to String
     pub type Date = String;
+    pub type date = String;
+
     pub type Timestamp = String;
     pub type timestamptz = String;
-    pub type Numeric = String;
+
+    // Both casings point to String
+    pub type Numeric = f64;
+    pub type numeric = f64;
+
     pub type bigint = i64;
     pub type Json = String;
     pub type jsonb = serde_json::Value;
