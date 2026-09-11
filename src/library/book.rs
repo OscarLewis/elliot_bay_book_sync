@@ -1,14 +1,15 @@
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Book {
     pub path: Box<Path>,
     pub name: String,
-    pub id: Uuid,
     pub initial_format: Option<String>,
     pub author: Option<String>,
     pub title: Option<String>,
+    pub size_kb: u64,
 }
 
 impl Default for Book {
@@ -22,10 +23,10 @@ impl Book {
         Self {
             path: Path::new("").into(),
             name: String::new(),
-            id: Uuid::new_v4(),
             initial_format: None,
             author: None,
             title: None,
+            size_kb: 0,
         }
     }
 
@@ -43,11 +44,16 @@ impl Book {
             .and_then(|ext| ext.to_str())
             .map(str::to_owned);
 
+        // Query file metadata to obtain file size in kilobytes
+        let size_kb = std::fs::metadata(&path)
+            .map(|meta| meta.len() / 1024)
+            .unwrap_or(0);
+
         Self {
             path,
             name,
-            id: Uuid::new_v4(),
             initial_format,
+            size_kb,
             ..Default::default()
         }
     }
