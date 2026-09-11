@@ -5,7 +5,7 @@ pub const KOBO_STOREAPI_URL: &str = "https://storeapi.kobo.com";
 // TODO this will get used in HandleCoverImageRequest
 pub const _KOBO_IMAGEHOST_URL: &str = "https://cdn.kobo.com/book-images";
 
-/// Parses the incoming request URI to build the official Kobo Store API URL.
+/// Parses the incoming request URI to build the official Kobo Store API URL
 pub fn get_store_url_for_current_request(uri: &Uri) -> String {
     let path_and_query = uri.path_and_query().map(|pq| pq.as_str()).unwrap_or("");
 

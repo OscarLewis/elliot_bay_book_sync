@@ -1,6 +1,8 @@
 use crate::{
     config::AppConfig,
-    scan::{scanner::ScanResponse, status::ScanStatus},
+    database::document::{DocumentDB, DocumentTable},
+    library::book::Book,
+    scan::scanner::{ScanRecord, ScanResponse, run_library_scan},
 };
 use axum::{
     Json, Router,
@@ -9,37 +11,38 @@ use axum::{
     middleware,
     routing::{get, post},
 };
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tower_http::trace::TraceLayer;
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 pub mod api;
 pub(crate) mod config;
+pub(crate) mod database;
 pub mod library;
 pub mod logging;
 pub mod scan;
 
-/// Holds shared application state accessible across request handlers.
+/// Holds shared application state accessible across request handlers
 #[derive(Clone)]
 pub struct AppState {
-    /// Global handle for monitoring and dispatching scan status updates.
-    pub scan_status: ScanStatus,
     /// Shared application configuration settings.
     pub config: Arc<AppConfig>,
+
+    pub db: Arc<DocumentDB>,
 }
 
 impl AppState {
     /// Creates a new `AppState` instance with the given configuration.
-    pub fn new(config: impl Into<Arc<AppConfig>>) -> Self {
+    pub fn new(config: impl Into<Arc<AppConfig>>, db: DocumentDB) -> Self {
         AppState {
-            scan_status: ScanStatus::new(),
+            db: Arc::new(db),
             config: config.into(),
         }
     }
 }
 
-/// Constructs the main application `Router` and registers API routes with shared state.
+/// Constructs the main application `Router` and registers API routes with shared state
 pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/", get(|| async { "Ebook Sync Server" }))
@@ -51,7 +54,7 @@ pub fn app(state: AppState) -> Router {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging subscriber using environment filter (defaults to debug level for kobo_sync_rs)
     tracing_subscriber::registry()
         .with(
@@ -62,19 +65,18 @@ async fn main() {
         .init();
 
     let config = AppConfig::default();
-    let state = AppState::new(config);
 
-    // TODO Add sea-orm and SQLX support for a data backend
+    // Fetch and log all stored books from redb
+    // TODO This needs to be in an Arc<> in the state
+    let db = DocumentDB::open(&config.database_path)?;
 
-    // Subscribe to scan status updates before starting the server
-    let mut status_rx = state.scan_status.subscribe();
+    let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
+    debug!(?books, count = books.len(), "All stored books in database");
 
-    // Background task to process and log broadcast scan status events
-    tokio::spawn(async move {
-        while let Ok(message) = status_rx.recv().await {
-            debug!(?message, "Received scan status");
-        }
-    });
+    let scans: Vec<(String, ScanRecord)> = db.get_all(DocumentTable::Scans)?;
+    debug!(?scans, count = scans.len(), "All stored scans in database");
+
+    let state = AppState::new(config, db);
 
     let app = app(state);
 
@@ -83,25 +85,26 @@ async fn main() {
         .await
         .unwrap();
 
-    info!("listening on {}", listener.local_addr().unwrap());
+    info!(addr = ?listener.local_addr().unwrap(), "listening");
 
     // Start serving HTTP requests
     axum::serve(listener, app).await.unwrap();
+    Ok(())
 }
 
-/// POST `/scan` request handler.
+/// POST `/scan` request handler
 ///
 /// Generates a unique `scan_id`, launches an asynchronous scan task in the
-/// background, and returns the generated UUID to the client immediately.
+/// background, and returns the generated UUID to the client immediately
 pub async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
     let scan_id = Uuid::new_v4();
-    let status = state.scan_status.clone();
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
-    tokio::spawn(async move {
-        // TODO do something with the result this returns
-        let _ = scan::scanner::scan_library(status, scan_id, &state.config.library_path).await;
-    });
+    tokio::spawn(run_library_scan(
+        state.db.clone(),
+        scan_id,
+        state.config.library_path.clone(),
+    ));
 
     Json(ScanResponse { scan_id })
 }
@@ -141,7 +144,8 @@ pub mod test_helpers {
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState, config::AppConfig, scan::scanner::ScanResponse, test_helpers::setup_test_app,
+        AppState, config::AppConfig, database::document::DocumentDB, scan::scanner::ScanResponse,
+        test_helpers::setup_test_app,
     };
     use axum::http::StatusCode;
     use test_log::test;
@@ -150,7 +154,8 @@ mod tests {
     #[test(tokio::test)]
     async fn test_root_handler() {
         let config = AppConfig::default();
-        let state = AppState::new(config);
+        let db = DocumentDB::open_in_memory().expect("Unable to open database");
+        let state = AppState::new(config, db);
         let server = setup_test_app(state);
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
@@ -160,7 +165,8 @@ mod tests {
     #[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
     async fn test_scan_handler_triggers_scan() {
         let config = AppConfig::default();
-        let state = AppState::new(config);
+        let db = DocumentDB::open_in_memory().expect("Unable to open database");
+        let state = AppState::new(config, db);
 
         let server = setup_test_app(state);
 

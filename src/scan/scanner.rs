@@ -1,11 +1,11 @@
 use crate::{
+    database::document::{DocumentDB, DocumentTable},
     library::book::Book,
-    scan::status::{ScanStatus, ScanStatusMessage},
 };
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{collections::HashSet, path::Path, sync::Arc};
 use tokio::fs;
-use tracing::debug;
+use tracing::{debug, error, info};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -13,15 +13,15 @@ pub struct ScanResponse {
     pub scan_id: Uuid,
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ScanRecord {
+    pub scan_id: Uuid,
+}
+
 pub async fn scan_library(
-    status: ScanStatus,
     scan_id: Uuid,
     scan_dir: &Path,
 ) -> Result<(Uuid, Vec<Book>), Box<dyn std::error::Error>> {
-    status.send(ScanStatusMessage::ScanStarted {
-        scan_id,
-        path: scan_dir.to_path_buf(),
-    });
     let mut book_list: Vec<Book> = vec![];
     if scan_dir.is_dir() {
         let mut entries = fs::read_dir(scan_dir).await?;
@@ -46,5 +46,82 @@ pub async fn scan_library(
     if !book_list.is_empty() {
         debug!(number_epubs = book_list.len(), ?book_list, "Found files");
     }
+
     Ok((scan_id, book_list))
+}
+
+/// Background task that scans the library folder and batch-persists discovered books to redb
+pub(crate) async fn run_library_scan(
+    db: Arc<DocumentDB>,
+    scan_id: Uuid,
+    library_path: Arc<std::path::Path>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let (_scan_id, book_list) = scan_library(scan_id, &library_path)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let mut new_books = Vec::new();
+    let mut skipped_books = Vec::new();
+
+    // Use the O(1) index lookup per scanned book instead of loading all books into memory
+    for book in book_list {
+        match db.get_book_by_path::<_, Book>(&book.path) {
+            Ok(Some((existing_id, _existing_book))) => {
+                // Book already exists in index
+                skipped_books.push((existing_id, book));
+            }
+            Ok(None) => {
+                // New book, not present in path index
+                new_books.push(book);
+            }
+            Err(err) => {
+                error!(?err, path = ?book.path, "Failed to check path index for book");
+            }
+        }
+    }
+
+    if !skipped_books.is_empty() {
+        debug!(
+            skipped_count = skipped_books.len(),
+            "Skipped books that already existed in the database index; ready for updates"
+        );
+
+        // TODO: Iterate over `skipped_books` tuple (existing_id, updated_book) to perform updates
+    }
+
+    if !new_books.is_empty() {
+        // Persist only newly discovered books in a single transaction
+        if let Err(err) = db.create_many(
+            DocumentTable::Books,
+            &new_books,
+            Some(|b: &Book| b.path.to_str().unwrap_or_default()),
+        ) {
+            error!(
+                ?err,
+                count = new_books.len(),
+                "Failed to save new books to database"
+            );
+        } else {
+            info!(
+                added_count = new_books.len(),
+                "Successfully batch-persisted new books"
+            );
+        }
+    } else {
+        debug!("No new books found to persist.");
+    }
+
+    // Persist the scan execution record to SCAN_COLLECTION
+    let record = ScanRecord { scan_id };
+    let record_doc_id = db
+        .create(DocumentTable::Scans, &record, None)
+        .map_err(|e| e.to_string())?;
+
+    debug!(
+        %scan_id,
+        doc_id = %record_doc_id,
+        "Persisted scan record to database"
+    );
+
+    Ok(())
 }
