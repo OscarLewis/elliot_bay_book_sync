@@ -1,8 +1,9 @@
 use crate::{
     config::AppConfig,
     database::document::{DocumentDB, DocumentTable},
+    error::AppError,
     library::book::Book,
-    scan::scanner::{ScanDocument, ScanResponse, run_library_scan},
+    scan::scanner::{ScanDetails, ScanDocument, ScanResponse, ScanStatus, run_library_scan},
 };
 use axum::{
     Json, Router,
@@ -11,6 +12,7 @@ use axum::{
     middleware,
     routing::{get, post},
 };
+use chrono::Utc;
 use std::{sync::Arc, time::Duration};
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
@@ -29,16 +31,22 @@ pub mod scan;
 pub struct AppState {
     /// Shared application configuration settings.
     pub config: Arc<AppConfig>,
-
+    pub req_client: reqwest::Client,
     pub db: Arc<DocumentDB>,
 }
 
 impl AppState {
     /// Creates a new `AppState` instance with the given configuration.
     pub fn new(config: impl Into<Arc<AppConfig>>, db: DocumentDB) -> Self {
+        let client = reqwest::Client::builder()
+            .user_agent("Kobo Touch/4.38.21908 (Linux 2.6.35.3; U; en-US)")
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
+
         AppState {
             db: Arc::new(db),
             config: config.into(),
+            req_client: client,
         }
     }
 }
@@ -55,7 +63,7 @@ pub fn app(state: AppState) -> Router {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), AppError> {
     // Initialize logging subscriber using environment filter (defaults to debug level for kobo_sync_rs)
     tracing_subscriber::registry()
         .with(
@@ -67,8 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = AppConfig::default();
 
-    // Fetch and log all stored books from redb
-    // TODO This needs to be in an Arc<> in the state
+    // Fetch and log all stored books & scans from redb
     let db = DocumentDB::open(&config.database_path)?;
 
     let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
@@ -97,17 +104,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///
 /// Generates a unique `scan_id`, launches an asynchronous scan task in the
 /// background, and returns the generated UUID to the client immediately
-pub async fn scan_handler(State(state): State<AppState>) -> Json<ScanResponse> {
-    let scan_id = Uuid::new_v4();
+pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResponse>, AppError> {
+    let initial_record = ScanDocument {
+        status: ScanStatus::Running,
+        timestamp: Utc::now().to_rfc3339(),
+        details: ScanDetails::Started,
+    };
+
+    let record_doc_id = state.db.create(
+        DocumentTable::Scans,
+        &initial_record,
+        None,
+        Some(|s| s.timestamp.as_str()),
+    )?;
+
+    debug!(doc_id = %record_doc_id, "Initialized scan execution record");
+
+    // Clone for the spawned task
+    let doc_id_for_task = record_doc_id.clone();
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(run_library_scan(
         state.db.clone(),
-        scan_id,
+        doc_id_for_task,
         state.config.library_path.clone(),
     ));
 
-    Json(ScanResponse { scan_id })
+    Ok(Json(ScanResponse {
+        scan_id: Uuid::parse_str(&record_doc_id)
+            .map_err(|e| AppError::Internal(format!("Failed to parse UUID: {}", e)))?,
+    }))
 }
 
 pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<&str>) -> String {

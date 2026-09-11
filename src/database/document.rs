@@ -1,4 +1,4 @@
-use crate::error::AppError;
+use crate::{error::AppError, scan::scanner::ScanStatus};
 use redb::{Builder, Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -9,14 +9,6 @@ const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan
 
 const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
 const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ScanStatus {
-    Running,
-    Error,
-    Finished,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanDocument {

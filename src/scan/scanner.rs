@@ -17,7 +17,6 @@ pub struct ScanResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanDocument {
-    pub id: Option<Uuid>,
     pub status: ScanStatus,
     /// ISO-8601 formatted timestamp string (e.g., "2026-09-11T00:38:00Z")
     pub timestamp: String,
@@ -45,7 +44,7 @@ pub enum ScanDetails {
         reason: String,
     },
 }
-pub async fn scan_library(scan_id: Uuid, scan_dir: &Path) -> Result<Vec<Book>, AppError> {
+pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
     let mut book_list: Vec<Book> = vec![];
     if scan_dir.is_dir() {
         let mut entries = fs::read_dir(scan_dir).await?;
@@ -78,29 +77,14 @@ pub async fn scan_library(scan_id: Uuid, scan_dir: &Path) -> Result<Vec<Book>, A
 
 pub(crate) async fn run_library_scan(
     db: Arc<DocumentDB>,
-    scan_id: Uuid,
+    scan_document_id: String,
     library_path: Arc<std::path::Path>,
 ) -> Result<(), AppError> {
-    // Record start
-    let initial_record = ScanDocument {
-        id: Some(scan_id),
-        status: ScanStatus::Running,
-        timestamp: Utc::now().to_rfc3339(),
-        details: ScanDetails::Started,
-    };
-
-    let record_doc_id = db.create(
-        DocumentTable::Scans,
-        &initial_record,
-        None,
-        Some(|s| s.timestamp.as_str()),
-    )?;
-
-    debug!(%scan_id, doc_id = %record_doc_id, "Initialized scan execution record");
+    debug!(doc_id = %scan_document_id, "Initialized scan execution record");
 
     // Execute scan directly
     let scan_result: Result<(usize, usize, usize), AppError> =
-        match scan_library(scan_id, &library_path).await {
+        match scan_library(&library_path).await {
             Ok(book_list) => {
                 let mut new_books = Vec::new();
                 let mut updated_books: Vec<(String, Book)> = Vec::new();
@@ -152,7 +136,6 @@ pub(crate) async fn run_library_scan(
     match scan_result {
         Ok((added_count, skipped_count, updated_count)) => {
             let completed_record = ScanDocument {
-                id: Some(scan_id),
                 status: ScanStatus::Finished,
                 timestamp: Utc::now().to_rfc3339(),
                 details: ScanDetails::Completed {
@@ -164,7 +147,7 @@ pub(crate) async fn run_library_scan(
 
             db.update(
                 DocumentTable::Scans,
-                &record_doc_id,
+                &scan_document_id,
                 &completed_record,
                 None,
                 Some(|s| s.timestamp.as_str()),
@@ -174,7 +157,6 @@ pub(crate) async fn run_library_scan(
         }
         Err(err) => {
             let failed_record = ScanDocument {
-                id: Some(scan_id),
                 status: ScanStatus::Error,
                 timestamp: Utc::now().to_rfc3339(),
                 details: ScanDetails::Failed {
@@ -184,7 +166,7 @@ pub(crate) async fn run_library_scan(
 
             let _ = db.update(
                 DocumentTable::Scans,
-                &record_doc_id,
+                &scan_document_id,
                 &failed_record,
                 None,
                 Some(|s| s.timestamp.as_str()),

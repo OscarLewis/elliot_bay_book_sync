@@ -50,14 +50,16 @@ pub(crate) async fn initialization_handler(
         // Build the upstream Kobo store URL from the current request
         let store_url = get_store_url_for_current_request(&uri);
 
-        // TODO: Move client into AppState
-        let client = reqwest::Client::builder()
-            .user_agent("Kobo Touch/4.38.21908 (Linux 2.6.35.3; U; en-US)")
-            .build()
-            .unwrap_or_else(|_| reqwest::Client::new());
-
         // Proxy the initialization request to the Kobo store
-        match make_request_to_kobo_store(&client, method, &store_url, headers.clone(), body).await {
+        match make_request_to_kobo_store(
+            &state.req_client,
+            method,
+            &store_url,
+            headers.clone(),
+            body,
+        )
+        .await
+        {
             Ok(store_response) => {
                 // Process the upstream response and handle responses that must be returned directly
                 if let Some(early_response) =
