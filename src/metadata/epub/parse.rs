@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use epub::doc::EpubDoc;
+use image::ImageFormat;
 
 use crate::error::AppError;
 
@@ -39,33 +40,33 @@ pub async fn extract_epub_cover(
 ) -> Result<Option<PathBuf>, AppError> {
     let mut doc = EpubDoc::new(path)?;
 
-    let Some((cover_data, mime)) = doc.get_cover() else {
+    let Some((cover_data, _mime)) = doc.get_cover() else {
         return Ok(None);
     };
 
-    let extension = match mime.as_str() {
-        "image/jpeg" => "jpg",
-        "image/png" => "png",
-        "image/gif" => "gif",
-        "image/webp" => "webp",
-        _ => {
-            return Err(AppError::Internal(format!(
-                "Unsupported cover image MIME type: {mime}"
-            )));
-        }
-    };
+    let output_path = output_path.with_extension("webp");
 
-    let output_path = output_path.with_extension(extension);
+    let result = tokio::task::spawn_blocking(move || {
+        let image = image::load_from_memory(&cover_data)
+            .map_err(|err| AppError::Internal(format!("Failed to decode cover: {err}")))?;
 
-    tokio::fs::write(&output_path, cover_data).await?;
+        image
+            .save_with_format(&output_path, ImageFormat::WebP)
+            .map_err(|err| AppError::Internal(format!("Failed to save WebP cover: {err}")))?;
 
-    Ok(Some(output_path))
+        Ok::<PathBuf, AppError>(output_path)
+    })
+    .await
+    .map_err(|err| AppError::Internal(format!("Cover extraction task failed: {err}")))??;
+
+    Ok(Some(result))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use test_log::test;
+    use tracing::debug;
 
     #[test(tokio::test)]
     async fn test_parse_metadata_ebook() -> Result<(), Box<dyn std::error::Error>> {
@@ -75,7 +76,7 @@ mod tests {
 
         let metadata = parse_metadata_ebook(path).await?;
 
-        println!("{metadata:#?}");
+        debug!("{metadata:#?}");
 
         assert!(metadata.title.is_some());
         assert!(metadata.author.is_some());
@@ -95,11 +96,14 @@ mod tests {
 
         assert!(cover_path.is_some());
 
-        let cover_path = cover_path.unwrap();
+        let cover_path_disk = cover_path.unwrap();
 
-        assert!(cover_path.exists());
+        // WebP is the best image format on the world wide web. Everyone agrees with me on this.
+        assert_eq!(cover_path_disk.extension().unwrap(), "webp");
 
-        println!("Cover extracted to: {}", cover_path.display());
+        assert!(cover_path_disk.exists());
+
+        debug!("Cover extracted to: {}", cover_path_disk.display());
 
         Ok(())
     }
