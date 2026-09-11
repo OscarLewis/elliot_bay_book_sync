@@ -56,7 +56,7 @@ pub async fn book_by_pk_query(
         .json::<graphql_client::Response<book_by_pk::ResponseData>>()
         .await?;
 
-    info!(?response.errors, "Hardcover response");
+    debug!(?response.errors, "Hardcover response");
 
     let Some(data) = response.data else {
         return Ok(None);
@@ -106,13 +106,19 @@ mod tests {
 
         let authorization_token = std::env::var("HARDCOVER_TOKEN")?;
 
-        let book = book_by_pk_query(&authorization_token, 10)
+        let book = book_by_pk_query(&authorization_token, 2168623)
             .await?
             .expect("Book 10 should exist");
 
-        assert_eq!(book.id, 10);
-        assert_eq!(book.slug, Some("regimen-de-leasing".into()));
-        assert_eq!(book.title, Some("RÉGIMEN DE LEASING".into()));
+        assert_eq!(book.id, 2168623);
+        assert_eq!(book.slug, Some("absolute-martian-manhunter-vol-1".into()));
+        assert_eq!(
+            book.title,
+            Some("Absolute Martian Manhunter, Vol. 1: Martian Vision".into())
+        );
+
+        let file = std::fs::File::create("test_data/test_book_absolute_martian_manhunter.json")?;
+        serde_json::to_writer_pretty(file, &book)?;
 
         Ok(())
     }
@@ -128,10 +134,15 @@ mod tests {
             .await?
             .expect("Search should return data");
 
-        let books = data.search.expect("Search should return books");
+        let books = data.search.as_ref().expect("Search should return books");
 
         // Assert something about the returned search result.
         assert!(books.results.is_some());
+
+        let file = std::fs::File::create(
+            "test_data/test_hardcover_search_absolute_martian_manhunter.json",
+        )?;
+        serde_json::to_writer_pretty(file, &data)?;
 
         Ok(())
     }

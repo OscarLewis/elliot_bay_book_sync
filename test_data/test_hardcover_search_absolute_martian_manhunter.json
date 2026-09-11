@@ -1,0 +1,368 @@
+{
+  "search": {
+    "ids": [
+      2168623
+    ],
+    "results": {
+      "facet_counts": [],
+      "found": 1,
+      "hits": [
+        {
+          "document": {
+            "activities_count": 65,
+            "alternative_titles": [
+              "Absolute Martian Manhunter - Bd. 1: Wahrheit gegen Wahn",
+              "Absolute Martian Manhunter, Vol. 1: Martian Vision",
+              "Absolute Caçador de Marte, Vol. 1",
+              "Absolute Martian Manhunter Tome 1",
+              "Absolute Martian Manhunter, Vol. 1"
+            ],
+            "author_names": [
+              "Deniz Camp",
+              "Javier Rodriguez"
+            ],
+            "book_category_id": 4,
+            "compilation": true,
+            "content_warnings": [],
+            "contribution_specializations": [],
+            "contribution_types": [
+              "Author",
+              "Illustrator"
+            ],
+            "contributions": [
+              {
+                "author": {
+                  "id": 443774,
+                  "image": {
+                    "color": "#272727",
+                    "color_name": "Black",
+                    "height": 630,
+                    "id": 7706294,
+                    "url": "https://assets.hardcover.app/author/443774/ed6c5e1b-d95f-415c-b405-f4dc6e32dbbb.jpeg",
+                    "width": 668
+                  },
+                  "name": "Deniz Camp",
+                  "slug": "deniz-camp"
+                },
+                "contribution": "Author",
+                "contributor_role_blurb": null,
+                "contributor_role_id": 1,
+                "contributor_role_name": "Author",
+                "contributor_specialization_blurb": null,
+                "contributor_specialization_id": null,
+                "contributor_specialization_name": null,
+                "primary": true
+              },
+              {
+                "author": {
+                  "id": 278013,
+                  "image": {},
+                  "name": "Javier Rodriguez",
+                  "slug": "javier-rodriguez"
+                },
+                "contribution": "Illustrator",
+                "contributor_role_blurb": null,
+                "contributor_role_id": null,
+                "contributor_role_name": null,
+                "contributor_specialization_blurb": null,
+                "contributor_specialization_id": null,
+                "contributor_specialization_name": null,
+                "primary": false
+              }
+            ],
+            "cover_color": "Beige",
+            "description": "Brought into the Absolute Universe by Deniz Camp and Javier Rodríguez, Absolute Martian Manhunter reinvents the Justice League's resident Martian from top to bottom, taking him on a mind-bending, psychedelic journey that transcends dimensions.\n\nAn astonishing new version of DC's iconic characters is here! In the Absolute Universe, familiar heroes have been reinvented from the ground up with origin stories that completely reshape both their abilities and their circumstances but maintain the core characteristics than fans have known and loved for decades!\n\nFBI Agent John Jones has a problem. His brain has been infected by an alien consciousness calling itself \"the Martian,\" and its perception of reality is utterly incomprehensible to the human psyche. Now he must navigate this new status quo, all while balancing the deeply grounded and important duties of his day job! Deniz Camp and Javier Rodriguez take the Martian Manhunter into the Absolute Universe on a mind-bending, psychedelic trip!\n\n<b>Collects Absolute Martian Manhunter #1-6.</b>",
+            "featured_series": {
+              "details": "1",
+              "featured": true,
+              "id": 870006,
+              "position": 1.0,
+              "series": {
+                "books_count": 1,
+                "id": 297632,
+                "name": "Absolute Martian Manhunter",
+                "primary_books_count": 1,
+                "slug": "absolute-martian-manhunter"
+              },
+              "unreleased": false
+            },
+            "featured_series_position": 1.0,
+            "genres": [
+              "Aliens",
+              "Young Adult",
+              "Comics & Graphic Novels",
+              "Comics",
+              "Science Fiction",
+              "Fantasy"
+            ],
+            "has_audiobook": false,
+            "has_ebook": true,
+            "id": "2168623",
+            "image": {
+              "color": "#dfd7bb",
+              "color_name": "Beige",
+              "height": 500,
+              "id": 6034774,
+              "url": "https://assets.hardcover.app/external_data/1633116/8fcc036b0ad1263a22eb5756ad5411a7f219a66a.jpeg",
+              "width": 325
+            },
+            "isbns": [
+              "375692890X",
+              "9783756928903",
+              "1799511693",
+              "9781799511694",
+              "6555169680",
+              "9786555169683",
+              "1799505219",
+              "9781799505211",
+              "9791026853794"
+            ],
+            "lists_count": 19,
+            "moods": [],
+            "pages": 160,
+            "prompts_count": 0,
+            "rating": 4.21875,
+            "ratings_count": 32,
+            "release_date": "2025-11-18",
+            "release_year": 2025,
+            "reviews_count": 6,
+            "series_ids": [
+              258587,
+              297632
+            ],
+            "series_names": [
+              "Absolute Martian Manhunter (2025)",
+              "Absolute Martian Manhunter"
+            ],
+            "slug": "absolute-martian-manhunter-vol-1",
+            "subtitle": "Martian Vision",
+            "tags": [],
+            "title": "Absolute Martian Manhunter, Vol. 1: Martian Vision",
+            "users_count": 59,
+            "users_read_count": 44
+          },
+          "highlight": {
+            "alternative_titles": [
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "1"
+                ],
+                "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> - Bd. <mark>1</mark>: Wahrheit gegen Wahn"
+              },
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "Vol",
+                  "1",
+                  "Martian",
+                  "Vision"
+                ],
+                "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>, <mark>Vol</mark>. <mark>1</mark>: <mark>Martian</mark> <mark>Vision</mark>"
+              },
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Vol",
+                  "1"
+                ],
+                "snippet": "<mark>Absolute</mark> Caçador de Marte, <mark>Vol</mark>. <mark>1</mark>"
+              },
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "1"
+                ],
+                "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> Tome <mark>1</mark>"
+              },
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "Vol",
+                  "1"
+                ],
+                "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>, <mark>Vol</mark>. <mark>1</mark>"
+              }
+            ],
+            "author_names": [
+              {
+                "matched_tokens": [
+                  "Deniz",
+                  "Camp"
+                ],
+                "snippet": "<mark>Deniz</mark> <mark>Camp</mark>"
+              },
+              {
+                "matched_tokens": [],
+                "snippet": "Javier Rodriguez"
+              }
+            ],
+            "series_names": [
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter"
+                ],
+                "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> (2025)"
+              },
+              {
+                "matched_tokens": [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter"
+                ],
+                "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>"
+              }
+            ],
+            "title": {
+              "matched_tokens": [
+                "Absolute",
+                "Martian",
+                "Manhunter",
+                "Vol",
+                "1",
+                "Martian",
+                "Vision"
+              ],
+              "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>, <mark>Vol</mark>. <mark>1</mark>: <mark>Martian</mark> <mark>Vision</mark>"
+            }
+          },
+          "highlights": [
+            {
+              "field": "title",
+              "matched_tokens": [
+                "Absolute",
+                "Martian",
+                "Manhunter",
+                "Vol",
+                "1",
+                "Martian",
+                "Vision"
+              ],
+              "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>, <mark>Vol</mark>. <mark>1</mark>: <mark>Martian</mark> <mark>Vision</mark>"
+            },
+            {
+              "field": "alternative_titles",
+              "indices": [
+                1,
+                4,
+                0,
+                3,
+                2
+              ],
+              "matched_tokens": [
+                [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "Vol",
+                  "1",
+                  "Martian",
+                  "Vision"
+                ],
+                [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "Vol",
+                  "1"
+                ],
+                [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "1"
+                ],
+                [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter",
+                  "1"
+                ],
+                [
+                  "Absolute",
+                  "Vol",
+                  "1"
+                ]
+              ],
+              "snippets": [
+                "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>, <mark>Vol</mark>. <mark>1</mark>: <mark>Martian</mark> <mark>Vision</mark>",
+                "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>, <mark>Vol</mark>. <mark>1</mark>",
+                "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> - Bd. <mark>1</mark>: Wahrheit gegen Wahn",
+                "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> Tome <mark>1</mark>",
+                "<mark>Absolute</mark> Caçador de Marte, <mark>Vol</mark>. <mark>1</mark>"
+              ]
+            },
+            {
+              "field": "series_names",
+              "indices": [
+                1,
+                0
+              ],
+              "matched_tokens": [
+                [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter"
+                ],
+                [
+                  "Absolute",
+                  "Martian",
+                  "Manhunter"
+                ]
+              ],
+              "snippets": [
+                "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>",
+                "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> (2025)"
+              ]
+            },
+            {
+              "field": "author_names",
+              "indices": [
+                0
+              ],
+              "matched_tokens": [
+                [
+                  "Deniz",
+                  "Camp"
+                ]
+              ],
+              "snippets": [
+                "<mark>Deniz</mark> <mark>Camp</mark>"
+              ]
+            }
+          ],
+          "text_match": 5203979716427513900,
+          "text_match_info": {
+            "best_field_score": "7730930515968",
+            "best_field_weight": 5,
+            "fields_matched": 4,
+            "num_tokens_dropped": 0,
+            "score": "5203979716427513900",
+            "tokens_matched": 9,
+            "typo_prefix_score": 0
+          }
+        }
+      ],
+      "out_of": 2575027,
+      "page": 1,
+      "request_params": {
+        "collection_name": "Book_production_1760914612",
+        "first_q": "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp",
+        "per_page": 25,
+        "q": "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp"
+      },
+      "search_cutoff": false,
+      "search_time_ms": 15
+    }
+  }
+}
