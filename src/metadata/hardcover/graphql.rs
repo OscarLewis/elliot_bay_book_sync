@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[test(tokio::test)]
-    async fn test_book_search() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_single_book_search() -> Result<(), Box<dyn std::error::Error>> {
         dotenv().ok();
 
         let authorization_token = std::env::var("HARDCOVER_TOKEN")?;
@@ -142,6 +142,28 @@ mod tests {
         let file = std::fs::File::create(
             "test_data/test_hardcover_search_absolute_martian_manhunter.json",
         )?;
+        serde_json::to_writer_pretty(file, &data)?;
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_multi_book_search() -> Result<(), Box<dyn std::error::Error>> {
+        dotenv().ok();
+
+        let authorization_token = std::env::var("HARDCOVER_TOKEN")?;
+        let search_title = "The Wheel of Time";
+
+        let data = search_books_query(&authorization_token, search_title)
+            .await?
+            .expect("Search should return data");
+
+        let books = data.search.as_ref().expect("Search should return books");
+
+        // Assert something about the returned search result.
+        assert!(books.results.is_some());
+
+        let file = std::fs::File::create("test_data/test_hardcover_search_wot.json")?;
         serde_json::to_writer_pretty(file, &data)?;
 
         Ok(())
