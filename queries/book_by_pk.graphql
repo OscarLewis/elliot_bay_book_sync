@@ -3,6 +3,7 @@ query BookByPK($id: Int!) {
     id
     slug
     title
+    subtitle
     updated_at
     contributions {
       author {
@@ -12,11 +13,23 @@ query BookByPK($id: Int!) {
     }
     description
     image_id
+    image {
+      url
+      width
+      height
+      id
+    }
+    images {
+      id
+      url
+      ratio
+      width
+      height
+    }
     pages
     parent_book_id
     release_date
     rating
     ratings_count
-    subtitle
   }
 }

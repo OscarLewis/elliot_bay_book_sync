@@ -5,6 +5,9 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use tracing::{debug, info};
 
+use crate::error::AppError;
+
+#[allow(non_camel_case_types, dead_code)]
 mod scalars {
     // Both casings point to String
     pub type Date = String;
@@ -17,7 +20,14 @@ mod scalars {
     pub type Numeric = f64;
     pub type numeric = f64;
 
+    pub type Float8 = f64;
+    pub type float8 = f64;
+
     pub type bigint = i64;
+
+    pub type Int = i64;
+    pub type int = i64;
+
     pub type Json = String;
     pub type jsonb = serde_json::Value;
 }
@@ -40,11 +50,11 @@ pub struct BookByPK;
 )]
 pub struct SearchBooks;
 
-type HardcoverBookByPK = book_by_pk::BookByPkBooksByPk;
+pub type HardcoverBookByPK = book_by_pk::BookByPkBooksByPk;
 pub async fn book_by_pk_query(
     authorization_token: &str,
     id: i64,
-) -> Result<Option<HardcoverBookByPK>, Box<dyn std::error::Error>> {
+) -> Result<Option<HardcoverBookByPK>, AppError> {
     let client = Client::new();
 
     let variables = book_by_pk::Variables { id };
@@ -72,10 +82,11 @@ pub async fn book_by_pk_query(
     Ok(data.books_by_pk)
 }
 
+pub type HardcoverBookSearch = search_books::SearchBooksSearch;
 pub async fn search_books_query(
     authorization_token: &str,
     query: &str,
-) -> Result<Option<search_books::ResponseData>, Box<dyn std::error::Error>> {
+) -> Result<Option<HardcoverBookSearch>, AppError> {
     let client = Client::new();
 
     let variables = search_books::Variables {
@@ -96,9 +107,8 @@ pub async fn search_books_query(
         .json::<graphql_client::Response<search_books::ResponseData>>()
         .await?;
 
-    debug!("{}", serde_json::to_string_pretty(&response.data)?);
-
-    Ok(response.data)
+    // Extract the inner `search` field directly
+    Ok(response.data.and_then(|d| d.search))
 }
 
 #[cfg(test)]
@@ -113,9 +123,9 @@ mod tests {
 
         let authorization_token = std::env::var("HARDCOVER_TOKEN")?;
 
-        let book = book_by_pk_query(&authorization_token, 2168623)
+        let book: HardcoverBookByPK = book_by_pk_query(&authorization_token, 2168623)
             .await?
-            .expect("Book 10 should exist");
+            .expect("Book 2168623 should exist");
 
         assert_eq!(book.id, 2168623);
         assert_eq!(book.slug, Some("absolute-martian-manhunter-vol-1".into()));
@@ -129,7 +139,6 @@ mod tests {
 
         Ok(())
     }
-
     #[test(tokio::test)]
     async fn test_single_book_search() -> Result<(), Box<dyn std::error::Error>> {
         dotenv().ok();
@@ -137,11 +146,9 @@ mod tests {
         let authorization_token = std::env::var("HARDCOVER_TOKEN")?;
         let search_title = "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp";
 
-        let data = search_books_query(&authorization_token, search_title)
+        let books: HardcoverBookSearch = search_books_query(&authorization_token, search_title)
             .await?
-            .expect("Search should return data");
-
-        let books = data.search.as_ref().expect("Search should return books");
+            .expect("Search should return books");
 
         // Assert something about the returned search result.
         assert!(books.results.is_some());
@@ -149,7 +156,7 @@ mod tests {
         let file = std::fs::File::create(
             "test_data/test_hardcover_search_absolute_martian_manhunter.json",
         )?;
-        serde_json::to_writer_pretty(file, &data)?;
+        serde_json::to_writer_pretty(file, &books)?;
 
         Ok(())
     }
@@ -161,17 +168,15 @@ mod tests {
         let authorization_token = std::env::var("HARDCOVER_TOKEN")?;
         let search_title = "The Wheel of Time";
 
-        let data = search_books_query(&authorization_token, search_title)
+        let books: HardcoverBookSearch = search_books_query(&authorization_token, search_title)
             .await?
-            .expect("Search should return data");
-
-        let books = data.search.as_ref().expect("Search should return books");
+            .expect("Search should return books");
 
         // Assert something about the returned search result.
         assert!(books.results.is_some());
 
         let file = std::fs::File::create("test_data/test_hardcover_search_wot.json")?;
-        serde_json::to_writer_pretty(file, &data)?;
+        serde_json::to_writer_pretty(file, &books)?;
 
         Ok(())
     }

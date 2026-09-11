@@ -1,1 +1,1 @@
-mod graphql;
+pub(super) mod graphql;
