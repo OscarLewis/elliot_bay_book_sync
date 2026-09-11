@@ -19,6 +19,7 @@ use uuid::Uuid;
 pub mod api;
 pub(crate) mod config;
 pub(crate) mod database;
+pub mod error;
 pub mod library;
 pub mod logging;
 pub mod scan;

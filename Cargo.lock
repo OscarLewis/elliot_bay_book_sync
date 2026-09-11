@@ -1077,6 +1077,7 @@ dependencies = [
  "serde",
  "serde_json",
  "test-log",
+ "thiserror",
  "tokio",
  "tower-http 0.7.1",
  "tracing",

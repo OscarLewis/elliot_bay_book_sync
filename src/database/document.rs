@@ -1,13 +1,12 @@
+use crate::error::AppError;
 use redb::{Builder, Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
 
-// Primary document tables
 const BOOK_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("book_docs");
 const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan_docs");
 
-// Secondary index tables
 const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
 const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
 
@@ -47,32 +46,31 @@ pub struct DocumentDB {
 }
 
 impl DocumentDB {
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, redb::Error> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, AppError> {
         let db = Database::create(path)?;
         Ok(Self { db })
     }
 
-    pub fn open_in_memory() -> Result<Self, redb::Error> {
+    pub fn open_in_memory() -> Result<Self, AppError> {
         let db = Builder::new().create_with_backend(redb::backends::InMemoryBackend::new())?;
         Ok(Self { db })
     }
 
-    /// Book Lookup by Path (O(1) secondary index lookup)
     pub fn get_book_by_path<P: AsRef<Path>, T: for<'a> Deserialize<'a>>(
         &self,
         path: P,
-    ) -> Result<Option<(String, T)>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<(String, T)>, AppError> {
         let path_str = path
             .as_ref()
             .to_str()
-            .ok_or("Path contains invalid UTF-8")?;
+            .ok_or_else(|| AppError::InvalidPath("Path contains invalid UTF-8".into()))?;
 
         let read_txn = self.db.begin_read()?;
 
         let index_table = match read_txn.open_table(BOOK_PATH_INDEX) {
             Ok(table) => table,
             Err(redb::TableError::TableDoesNotExist(_)) => return Ok(None),
-            Err(e) => return Err(Box::new(e)),
+            Err(e) => return Err(AppError::Table(e)),
         };
 
         let doc_id_guard = match index_table.get(path_str)? {
@@ -90,16 +88,15 @@ impl DocumentDB {
         }
     }
 
-    /// Fetches the most recent scan in O(1) time using the secondary index table.
     pub fn get_most_recent_scan<T: for<'a> Deserialize<'a>>(
         &self,
-    ) -> Result<Option<(String, T)>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<(String, T)>, AppError> {
         let read_txn = self.db.begin_read()?;
 
         let index_table = match read_txn.open_table(SCAN_TIME_INDEX) {
             Ok(table) => table,
             Err(redb::TableError::TableDoesNotExist(_)) => return Ok(None),
-            Err(e) => return Err(Box::new(e)),
+            Err(e) => return Err(AppError::Table(e)),
         };
 
         let doc_id = match index_table.iter()?.next_back() {
@@ -119,14 +116,13 @@ impl DocumentDB {
         }
     }
 
-    /// CREATE: Inserts a document and maintains secondary indexes.
     pub fn create<T: Serialize>(
         &self,
         target: DocumentTable,
         doc: &T,
         get_path: Option<fn(&T) -> &str>,
         get_timestamp: Option<fn(&T) -> &str>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, AppError> {
         let id_uuid = Uuid::new_v4();
         let id_str = id_uuid.to_string();
         let write_txn = self.db.begin_write()?;
@@ -154,14 +150,13 @@ impl DocumentDB {
         Ok(id_str)
     }
 
-    /// BATCH CREATE: Inserts multiple documents and updates secondary indexes.
     pub fn create_many<T: Serialize>(
         &self,
         target: DocumentTable,
         docs: &[T],
         get_path: Option<fn(&T) -> &str>,
         get_timestamp: Option<fn(&T) -> &str>,
-    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<String>, AppError> {
         let write_txn = self.db.begin_write()?;
         let mut ids = Vec::with_capacity(docs.len());
 
@@ -204,7 +199,6 @@ impl DocumentDB {
         Ok(ids)
     }
 
-    /// UPDATE: Overwrites an existing document and updates path/timestamp indexes if changed.
     pub fn update<T: Serialize + for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,
@@ -212,7 +206,7 @@ impl DocumentDB {
         doc: &T,
         get_path: Option<fn(&T) -> &str>,
         get_timestamp: Option<fn(&T) -> &str>,
-    ) -> Result<bool, Box<dyn std::error::Error>> {
+    ) -> Result<bool, AppError> {
         let id_uuid = Uuid::parse_str(id)?;
         let write_txn = self.db.begin_write()?;
         let mut updated = false;
@@ -261,21 +255,20 @@ impl DocumentDB {
         Ok(updated)
     }
 
-    /// DELETE: Removes a document and cleans up secondary indexes.
     pub fn delete<T: for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,
         id: &str,
         get_path: Option<fn(&T) -> &str>,
         get_timestamp: Option<fn(&T) -> &str>,
-    ) -> Result<bool, Box<dyn std::error::Error>> {
+    ) -> Result<bool, AppError> {
         let write_txn = self.db.begin_write()?;
         let mut deleted = false;
         {
             let mut table = match write_txn.open_table(target.definition()) {
                 Ok(t) => t,
                 Err(redb::TableError::TableDoesNotExist(_)) => return Ok(false),
-                Err(e) => return Err(Box::new(e)),
+                Err(e) => return Err(AppError::Table(e)),
             };
 
             let existing_doc: Option<T> = match table.get(id)? {
@@ -310,17 +303,16 @@ impl DocumentDB {
         Ok(deleted)
     }
 
-    /// READ: Fetches a single document by ID.
     pub fn read<T: for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,
         id: &str,
-    ) -> Result<Option<T>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<T>, AppError> {
         let read_txn = self.db.begin_read()?;
         let table = match read_txn.open_table(target.definition()) {
             Ok(table) => table,
             Err(redb::TableError::TableDoesNotExist(_)) => return Ok(None),
-            Err(err) => return Err(Box::new(err)),
+            Err(err) => return Err(AppError::Table(err)),
         };
 
         if let Some(guard) = table.get(id)? {
@@ -331,17 +323,16 @@ impl DocumentDB {
         }
     }
 
-    /// READ ALL: Iterates over all entries in the target table.
     pub fn get_all<T: for<'a> Deserialize<'a>>(
         &self,
         target: DocumentTable,
-    ) -> Result<Vec<(String, T)>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(String, T)>, AppError> {
         let read_txn = self.db.begin_read()?;
 
         let table = match read_txn.open_table(target.definition()) {
             Ok(table) => table,
             Err(redb::TableError::TableDoesNotExist(_)) => return Ok(Vec::new()),
-            Err(err) => return Err(Box::new(err)),
+            Err(err) => return Err(AppError::Table(err)),
         };
 
         let mut results = Vec::new();
