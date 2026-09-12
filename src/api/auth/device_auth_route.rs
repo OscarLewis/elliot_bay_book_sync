@@ -16,7 +16,7 @@ use rand::Rng;
 use reqwest::Method;
 use tracing::debug;
 
-pub async fn auth_request_handler(
+pub async fn device_auth_request_handler(
     extract::Path(token): extract::Path<String>,
     extract::State(state): extract::State<AppState>,
     OriginalUri(uri): OriginalUri,

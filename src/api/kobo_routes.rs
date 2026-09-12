@@ -1,7 +1,7 @@
 use crate::{
     AppState,
     api::{
-        auth::device_auth_route::auth_request_handler,
+        auth::device_auth_route::device_auth_request_handler,
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
     },
@@ -26,5 +26,8 @@ pub fn kobo_routes() -> Router<AppState> {
             "/kobo/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}/image.jpg",
             get(image_handler_with_quality),
         )
-        .route("/kobo/{token}/v1/auth/device", post(auth_request_handler))
+        .route(
+            "/kobo/{token}/v1/auth/device",
+            post(device_auth_request_handler),
+        )
 }
