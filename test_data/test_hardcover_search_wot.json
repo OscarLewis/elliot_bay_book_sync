@@ -18,8 +18,8 @@
     460393,
     508756,
     1885097,
-    1123139,
     481728,
+    1123139,
     503242,
     543049,
     584747,
@@ -292,7 +292,7 @@
       },
       {
         "document": {
-          "activities_count": 2523,
+          "activities_count": 2524,
           "alternative_titles": [
             "The Eye of the World",
             "The Eye of the World - Book One of The Wheel of Time",
@@ -564,7 +564,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1711,
+          "lists_count": 1714,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -579,8 +579,8 @@
           ],
           "pages": 804,
           "prompts_count": 7,
-          "rating": 4.059386973180077,
-          "ratings_count": 2349,
+          "rating": 4.060509554140127,
+          "ratings_count": 2355,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 211,
@@ -605,8 +605,8 @@
             "#digitally-own"
           ],
           "title": "The Eye of the World",
-          "users_count": 5445,
-          "users_read_count": 3291
+          "users_count": 5456,
+          "users_read_count": 3298
         },
         "highlight": {
           "alternative_titles": [
@@ -912,7 +912,7 @@
       },
       {
         "document": {
-          "activities_count": 1632,
+          "activities_count": 1635,
           "alternative_titles": [
             "El Despertar de los Heroes",
             "Great Hunt",
@@ -1166,11 +1166,11 @@
           ],
           "pages": 720,
           "prompts_count": 0,
-          "rating": 4.190085158150851,
-          "ratings_count": 1644,
+          "rating": 4.19,
+          "ratings_count": 1650,
           "release_date": "1990-01-01",
           "release_year": 1990,
-          "reviews_count": 101,
+          "reviews_count": 102,
           "series_ids": [
             1097
           ],
@@ -1192,8 +1192,8 @@
             "fiction"
           ],
           "title": "The Great Hunt",
-          "users_count": 2926,
-          "users_read_count": 2409
+          "users_count": 2935,
+          "users_read_count": 2417
         },
         "highlight": {
           "alternative_titles": [
@@ -1477,7 +1477,7 @@
       },
       {
         "document": {
-          "activities_count": 1439,
+          "activities_count": 1442,
           "alternative_titles": [
             "The Dragon Reborn - Book Three of The Wheel of Time",
             "The Dragon Reborn",
@@ -1676,11 +1676,11 @@
           ],
           "pages": 672,
           "prompts_count": 0,
-          "rating": 4.200134770889488,
-          "ratings_count": 1484,
+          "rating": 4.199596774193548,
+          "ratings_count": 1488,
           "release_date": "1991-01-01",
           "release_year": 1991,
-          "reviews_count": 82,
+          "reviews_count": 83,
           "series_ids": [
             1097
           ],
@@ -1701,8 +1701,8 @@
             "fiction"
           ],
           "title": "The Dragon Reborn",
-          "users_count": 2690,
-          "users_read_count": 2212
+          "users_count": 2698,
+          "users_read_count": 2219
         },
         "highlight": {
           "alternative_titles": [
@@ -1940,7 +1940,7 @@
       },
       {
         "document": {
-          "activities_count": 1674,
+          "activities_count": 1675,
           "alternative_titles": [
             "[Wheel of Time, Book 4] The Shadow Rising",
             "The Shadow Rising - Book Four of The Wheel of Time",
@@ -1997,8 +1997,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2124,7 +2128,7 @@
             "1250390338",
             "9781250390332"
           ],
-          "lists_count": 747,
+          "lists_count": 748,
           "moods": [
             "Adventurous",
             "dark",
@@ -2139,8 +2143,8 @@
           ],
           "pages": 1024,
           "prompts_count": 1,
-          "rating": 4.206869009584665,
-          "ratings_count": 1252,
+          "rating": 4.207336523125996,
+          "ratings_count": 1254,
           "release_date": "1992-09-15",
           "release_year": 1992,
           "reviews_count": 66,
@@ -2165,8 +2169,8 @@
             "fiction"
           ],
           "title": "The Shadow Rising",
-          "users_count": 2404,
-          "users_read_count": 1945
+          "users_count": 2408,
+          "users_read_count": 1947
         },
         "highlight": {
           "alternative_titles": [
@@ -2414,7 +2418,7 @@
       },
       {
         "document": {
-          "activities_count": 1315,
+          "activities_count": 1316,
           "alternative_titles": [
             "The Fires of Heaven",
             "Wheel of Time 05 - The Fires of Heaven",
@@ -2472,12 +2476,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2624,8 +2624,8 @@
           ],
           "pages": 928,
           "prompts_count": 1,
-          "rating": 4.091827364554637,
-          "ratings_count": 1089,
+          "rating": 4.091659028414298,
+          "ratings_count": 1091,
           "release_date": "1993-01-01",
           "release_year": 1993,
           "reviews_count": 52,
@@ -2650,8 +2650,8 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2183,
-          "users_read_count": 1720
+          "users_count": 2186,
+          "users_read_count": 1722
         },
         "highlight": {
           "alternative_titles": [
@@ -2932,7 +2932,7 @@
       },
       {
         "document": {
-          "activities_count": 1231,
+          "activities_count": 1232,
           "alternative_titles": [
             "Lord of Chaos: Book Six of The Wheel of Time",
             "Lord of Chaos",
@@ -2983,8 +2983,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3120,8 +3124,8 @@
           ],
           "pages": 1040,
           "prompts_count": 1,
-          "rating": 4.0703125,
-          "ratings_count": 1024,
+          "rating": 4.069200779727096,
+          "ratings_count": 1026,
           "release_date": "1994-01-01",
           "release_year": 1994,
           "reviews_count": 50,
@@ -3145,8 +3149,8 @@
             "fantlab-import"
           ],
           "title": "Lord of Chaos",
-          "users_count": 2065,
-          "users_read_count": 1617
+          "users_count": 2068,
+          "users_read_count": 1619
         },
         "highlight": {
           "alternative_titles": [
@@ -3353,7 +3357,7 @@
       },
       {
         "document": {
-          "activities_count": 1170,
+          "activities_count": 1171,
           "alternative_titles": [
             "Korona mieczy",
             "A Crown of Swords",
@@ -3411,12 +3415,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3562,8 +3562,8 @@
           ],
           "pages": 768,
           "prompts_count": 1,
-          "rating": 3.863685344827586,
-          "ratings_count": 928,
+          "rating": 3.863050483351235,
+          "ratings_count": 931,
           "release_date": "1996-01-01",
           "release_year": 1996,
           "reviews_count": 41,
@@ -3587,8 +3587,8 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 1974,
-          "users_read_count": 1508
+          "users_count": 1978,
+          "users_read_count": 1511
         },
         "highlight": {
           "alternative_titles": [
@@ -3810,7 +3810,7 @@
       },
       {
         "document": {
-          "activities_count": 1000,
+          "activities_count": 1001,
           "alternative_titles": [
             "The Path of Daggers Part 2 of 2",
             "Path of Daggers",
@@ -3857,12 +3857,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3987,8 +3983,8 @@
           ],
           "pages": 608,
           "prompts_count": 0,
-          "rating": 3.722610722610723,
-          "ratings_count": 858,
+          "rating": 3.722415795586527,
+          "ratings_count": 861,
           "release_date": "1998-01-01",
           "release_year": 1998,
           "reviews_count": 34,
@@ -4015,8 +4011,8 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1874,
-          "users_read_count": 1411
+          "users_count": 1878,
+          "users_read_count": 1414
         },
         "highlight": {
           "alternative_titles": [
@@ -4235,8 +4231,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -4254,8 +4254,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4372,8 +4376,8 @@
           ],
           "pages": 848,
           "prompts_count": 1,
-          "rating": 4.438628158844765,
-          "ratings_count": 831,
+          "rating": 4.438249400479616,
+          "ratings_count": 834,
           "release_date": "2009-11-07",
           "release_year": 2009,
           "reviews_count": 47,
@@ -4398,8 +4402,8 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1808,
-          "users_read_count": 1308
+          "users_count": 1811,
+          "users_read_count": 1311
         },
         "highlight": {
           "alternative_titles": [
@@ -4553,7 +4557,7 @@
       },
       {
         "document": {
-          "activities_count": 1085,
+          "activities_count": 1086,
           "alternative_titles": [
             "[Wheel of Time, Book 10] Crossroads of Twilight",
             "Crossroads Of Twilight: Book 10 of the Wheel of Time",
@@ -4604,12 +4608,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4733,8 +4733,8 @@
           ],
           "pages": 832,
           "prompts_count": 0,
-          "rating": 3.463924050632911,
-          "ratings_count": 790,
+          "rating": 3.463430012610341,
+          "ratings_count": 793,
           "release_date": "2003-01-01",
           "release_year": 2003,
           "reviews_count": 48,
@@ -4759,8 +4759,8 @@
             "Fantasy - Epic"
           ],
           "title": "Crossroads of Twilight",
-          "users_count": 1762,
-          "users_read_count": 1296
+          "users_count": 1766,
+          "users_read_count": 1299
         },
         "highlight": {
           "alternative_titles": [
@@ -4990,7 +4990,7 @@
       },
       {
         "document": {
-          "activities_count": 1031,
+          "activities_count": 1033,
           "alternative_titles": [
             "Towers of Midnight",
             "Towers of Midnight: Book Thirteen of the Wheel of Time",
@@ -5035,8 +5035,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -5054,8 +5058,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5156,7 +5164,7 @@
             "1427210233",
             "9781427210234"
           ],
-          "lists_count": 459,
+          "lists_count": 460,
           "moods": [
             "Adventurous",
             "tense",
@@ -5171,8 +5179,8 @@
           ],
           "pages": 976,
           "prompts_count": 1,
-          "rating": 4.447335025380711,
-          "ratings_count": 788,
+          "rating": 4.44493670886076,
+          "ratings_count": 790,
           "release_date": "2010-11-02",
           "release_year": 2010,
           "reviews_count": 43,
@@ -5196,8 +5204,8 @@
             "fiction"
           ],
           "title": "Towers of Midnight",
-          "users_count": 1759,
-          "users_read_count": 1252
+          "users_count": 1762,
+          "users_read_count": 1254
         },
         "highlight": {
           "alternative_titles": [
@@ -5369,7 +5377,7 @@
       },
       {
         "document": {
-          "activities_count": 993,
+          "activities_count": 994,
           "alternative_titles": [
             "Knife of Dreams",
             "Cuchillo de Sueños",
@@ -5538,8 +5546,8 @@
           ],
           "pages": 832,
           "prompts_count": 1,
-          "rating": 4.074935400516796,
-          "ratings_count": 774,
+          "rating": 4.074646074646075,
+          "ratings_count": 777,
           "release_date": "2005-10-03",
           "release_year": 2005,
           "reviews_count": 38,
@@ -5563,8 +5571,8 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1746,
-          "users_read_count": 1274
+          "users_count": 1750,
+          "users_read_count": 1277
         },
         "highlight": {
           "alternative_titles": [
@@ -5774,8 +5782,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -5793,8 +5805,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5908,11 +5924,11 @@
           ],
           "pages": 1056,
           "prompts_count": 3,
-          "rating": 4.601513240857503,
-          "ratings_count": 793,
+          "rating": 4.60125786163522,
+          "ratings_count": 795,
           "release_date": "2013-01-01",
           "release_year": 2013,
-          "reviews_count": 79,
+          "reviews_count": 80,
           "series_ids": [
             1097
           ],
@@ -5934,8 +5950,8 @@
             "dark"
           ],
           "title": "A Memory of Light",
-          "users_count": 1736,
-          "users_read_count": 1226
+          "users_count": 1738,
+          "users_read_count": 1228
         },
         "highlight": {
           "alternative_titles": [
@@ -6312,7 +6328,7 @@
       },
       {
         "document": {
-          "activities_count": 29,
+          "activities_count": 30,
           "alternative_titles": [
             "The World of Robert Jordan's The Wheel of Time",
             "The World of Robert Jordan's the Wheel of Time",
@@ -6345,8 +6361,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -6406,12 +6426,12 @@
             "1841490261",
             "9781841490267"
           ],
-          "lists_count": 58,
+          "lists_count": 59,
           "moods": [],
           "pages": 304,
           "prompts_count": 0,
-          "rating": 3.609375,
-          "ratings_count": 32,
+          "rating": 3.651515151515151,
+          "ratings_count": 33,
           "release_date": "1997-01-01",
           "release_year": 1997,
           "reviews_count": 1,
@@ -6424,8 +6444,8 @@
           "slug": "the-world-of-robert-jordans-the-wheel-of-time",
           "tags": [],
           "title": "The World of Robert Jordan's The Wheel of Time",
-          "users_count": 113,
-          "users_read_count": 60
+          "users_count": 115,
+          "users_read_count": 61
         },
         "highlight": {
           "alternative_titles": [
@@ -6908,15 +6928,16 @@
       },
       {
         "document": {
-          "activities_count": 52,
+          "activities_count": 15,
           "alternative_titles": [
-            "River of Souls"
+            "By Grace and Banners Fallen: Prologue to A Memory of Light",
+            "By Grace and Banners Fallen - the Prologue to A Memory of Light"
           ],
           "author_names": [
-            "Robert Jordan",
-            "Brandon Sanderson"
+            "Brandon Sanderson",
+            "Robert Jordan"
           ],
-          "book_category_id": 1,
+          "book_category_id": 2,
           "compilation": false,
           "content_warnings": [],
           "contribution_specializations": [],
@@ -6960,6 +6981,226 @@
               "contribution": "Author",
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "primary": true
+            }
+          ],
+          "cover_color": "Gray",
+          "description": "\"By Grace and Banners Fallen\" is the prologue to A Memory of Light, the fourteenth and final volume of the series.",
+          "featured_series": {
+            "collection": false,
+            "details": "14 Prologue",
+            "featured": true,
+            "id": 33203,
+            "position": 13.9,
+            "series": {
+              "books_count": 87,
+              "id": 1097,
+              "name": "The Wheel of Time",
+              "primary_books_count": 14,
+              "slug": "the-wheel-of-time"
+            },
+            "unreleased": false
+          },
+          "featured_series_position": 13.9,
+          "genres": [
+            "Fantasy",
+            "Adventure",
+            "Science Fiction",
+            "Fiction",
+            "Dystopian"
+          ],
+          "has_audiobook": false,
+          "has_ebook": false,
+          "id": "481728",
+          "image": {
+            "color": "#b3ad7b",
+            "color_name": "Gray",
+            "height": 1500,
+            "id": 4285442,
+            "url": "https://assets.hardcover.app/books/481728/3383534103992674.jpg",
+            "width": 1000
+          },
+          "isbns": [
+            "140552488X",
+            "9781405524889",
+            "1466829842",
+            "9781466829848"
+          ],
+          "lists_count": 21,
+          "moods": [],
+          "pages": 74,
+          "prompts_count": 0,
+          "rating": 4.5,
+          "ratings_count": 28,
+          "release_date": "2012-01-01",
+          "release_year": 2012,
+          "reviews_count": 1,
+          "series_ids": [
+            1097
+          ],
+          "series_names": [
+            "The Wheel of Time"
+          ],
+          "slug": "by-grace-and-banners-fallen",
+          "subtitle": "Prologue to A Memory of Light",
+          "tags": [],
+          "title": "By Grace and Banners Fallen: Prologue to A Memory of Light",
+          "users_count": 94,
+          "users_read_count": 44
+        },
+        "highlight": {
+          "alternative_titles": [
+            {
+              "matched_tokens": [
+                "of"
+              ],
+              "snippet": "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
+            },
+            {
+              "matched_tokens": [
+                "the",
+                "of"
+              ],
+              "snippet": "By Grace and Banners Fallen - <mark>the</mark> Prologue to A Memory <mark>of</mark> Light"
+            }
+          ],
+          "series_names": [
+            {
+              "matched_tokens": [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            }
+          ],
+          "title": {
+            "matched_tokens": [
+              "of"
+            ],
+            "snippet": "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
+          }
+        },
+        "highlights": [
+          {
+            "field": "series_names",
+            "indices": [
+              0
+            ],
+            "matched_tokens": [
+              [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ]
+            ],
+            "snippets": [
+              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            ]
+          },
+          {
+            "field": "alternative_titles",
+            "indices": [
+              1,
+              0
+            ],
+            "matched_tokens": [
+              [
+                "the",
+                "of"
+              ],
+              [
+                "of"
+              ]
+            ],
+            "snippets": [
+              "By Grace and Banners Fallen - <mark>the</mark> Prologue to A Memory <mark>of</mark> Light",
+              "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
+            ]
+          },
+          {
+            "field": "title",
+            "matched_tokens": [
+              "of"
+            ],
+            "snippet": "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
+          }
+        ],
+        "text_match": 2314894167593451547,
+        "text_match_info": {
+          "best_field_score": "4419510927616",
+          "best_field_weight": 3,
+          "fields_matched": 3,
+          "num_tokens_dropped": 0,
+          "score": "2314894167593451547",
+          "tokens_matched": 4,
+          "typo_prefix_score": 0
+        }
+      },
+      {
+        "document": {
+          "activities_count": 52,
+          "alternative_titles": [
+            "River of Souls"
+          ],
+          "author_names": [
+            "Robert Jordan",
+            "Brandon Sanderson"
+          ],
+          "book_category_id": 1,
+          "compilation": false,
+          "content_warnings": [],
+          "contribution_specializations": [],
+          "contribution_types": [
+            "Author"
+          ],
+          "contributions": [
+            {
+              "author": {
+                "id": 151072,
+                "image": {
+                  "color": "#671a08",
+                  "color_name": "Brown",
+                  "height": 330,
+                  "id": 5495291,
+                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
+                  "width": 330
+                },
+                "name": "Robert Jordan",
+                "slug": "robert-jordan"
+              },
+              "contribution": "Author",
+              "contributor_role_blurb": null,
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
+              "primary": true
+            },
+            {
+              "author": {
+                "id": 204214,
+                "image": {
+                  "color": "#6f1c0f",
+                  "color_name": "Brown",
+                  "height": 1000,
+                  "id": 6948605,
+                  "url": "https://assets.hardcover.app/author/204214/aa7250c9-0529-4c95-882f-6c9975634b21.jpg",
+                  "width": 1000
+                },
+                "name": "Brandon Sanderson",
+                "slug": "brandon-sanderson"
+              },
+              "contribution": "Author",
+              "contributor_role_blurb": null,
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -7084,227 +7325,6 @@
             "snippets": [
               "River <mark>of</mark> Souls"
             ]
-          }
-        ],
-        "text_match": 2314894167593451547,
-        "text_match_info": {
-          "best_field_score": "4419510927616",
-          "best_field_weight": 3,
-          "fields_matched": 3,
-          "num_tokens_dropped": 0,
-          "score": "2314894167593451547",
-          "tokens_matched": 4,
-          "typo_prefix_score": 0
-        }
-      },
-      {
-        "document": {
-          "activities_count": 15,
-          "alternative_titles": [
-            "By Grace and Banners Fallen: Prologue to A Memory of Light",
-            "By Grace and Banners Fallen - the Prologue to A Memory of Light"
-          ],
-          "author_names": [
-            "Brandon Sanderson",
-            "Robert Jordan"
-          ],
-          "book_category_id": 2,
-          "compilation": false,
-          "content_warnings": [],
-          "contribution_specializations": [],
-          "contribution_types": [
-            "Author"
-          ],
-          "contributions": [
-            {
-              "author": {
-                "id": 151072,
-                "image": {
-                  "color": "#671a08",
-                  "color_name": "Brown",
-                  "height": 330,
-                  "id": 5495291,
-                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
-                  "width": 330
-                },
-                "name": "Robert Jordan",
-                "slug": "robert-jordan"
-              },
-              "contribution": "Author",
-              "contributor_role_blurb": null,
-              "contributor_role_id": 1,
-              "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
-              "primary": true
-            },
-            {
-              "author": {
-                "id": 204214,
-                "image": {
-                  "color": "#6f1c0f",
-                  "color_name": "Brown",
-                  "height": 1000,
-                  "id": 6948605,
-                  "url": "https://assets.hardcover.app/author/204214/aa7250c9-0529-4c95-882f-6c9975634b21.jpg",
-                  "width": 1000
-                },
-                "name": "Brandon Sanderson",
-                "slug": "brandon-sanderson"
-              },
-              "contribution": "Author",
-              "contributor_role_blurb": null,
-              "contributor_role_id": 1,
-              "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
-              "primary": true
-            }
-          ],
-          "cover_color": "Gray",
-          "description": "\"By Grace and Banners Fallen\" is the prologue to A Memory of Light, the fourteenth and final volume of the series.",
-          "featured_series": {
-            "collection": false,
-            "details": "14 Prologue",
-            "featured": true,
-            "id": 33203,
-            "position": 13.9,
-            "series": {
-              "books_count": 87,
-              "id": 1097,
-              "name": "The Wheel of Time",
-              "primary_books_count": 14,
-              "slug": "the-wheel-of-time"
-            },
-            "unreleased": false
-          },
-          "featured_series_position": 13.9,
-          "genres": [
-            "Fantasy",
-            "Adventure",
-            "Science Fiction",
-            "Fiction",
-            "Dystopian"
-          ],
-          "has_audiobook": false,
-          "has_ebook": false,
-          "id": "481728",
-          "image": {
-            "color": "#b3ad7b",
-            "color_name": "Gray",
-            "height": 1500,
-            "id": 4285442,
-            "url": "https://assets.hardcover.app/books/481728/3383534103992674.jpg",
-            "width": 1000
-          },
-          "isbns": [
-            "140552488X",
-            "9781405524889",
-            "1466829842",
-            "9781466829848"
-          ],
-          "lists_count": 21,
-          "moods": [],
-          "pages": 74,
-          "prompts_count": 0,
-          "rating": 4.518518518518518,
-          "ratings_count": 27,
-          "release_date": "2012-01-01",
-          "release_year": 2012,
-          "reviews_count": 0,
-          "series_ids": [
-            1097
-          ],
-          "series_names": [
-            "The Wheel of Time"
-          ],
-          "slug": "by-grace-and-banners-fallen",
-          "subtitle": "Prologue to A Memory of Light",
-          "tags": [],
-          "title": "By Grace and Banners Fallen: Prologue to A Memory of Light",
-          "users_count": 93,
-          "users_read_count": 43
-        },
-        "highlight": {
-          "alternative_titles": [
-            {
-              "matched_tokens": [
-                "of"
-              ],
-              "snippet": "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
-            },
-            {
-              "matched_tokens": [
-                "the",
-                "of"
-              ],
-              "snippet": "By Grace and Banners Fallen - <mark>the</mark> Prologue to A Memory <mark>of</mark> Light"
-            }
-          ],
-          "series_names": [
-            {
-              "matched_tokens": [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            }
-          ],
-          "title": {
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
-          }
-        },
-        "highlights": [
-          {
-            "field": "series_names",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ]
-            ],
-            "snippets": [
-              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            ]
-          },
-          {
-            "field": "alternative_titles",
-            "indices": [
-              1,
-              0
-            ],
-            "matched_tokens": [
-              [
-                "the",
-                "of"
-              ],
-              [
-                "of"
-              ]
-            ],
-            "snippets": [
-              "By Grace and Banners Fallen - <mark>the</mark> Prologue to A Memory <mark>of</mark> Light",
-              "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
-            ]
-          },
-          {
-            "field": "title",
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "By Grace and Banners Fallen: Prologue to A Memory <mark>of</mark> Light"
           }
         ],
         "text_match": 2314894167593451547,
@@ -8544,7 +8564,7 @@
         }
       }
     ],
-    "out_of": 2575811,
+    "out_of": 2576733,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8553,6 +8573,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 55
+    "search_time_ms": 84
   }
 }
