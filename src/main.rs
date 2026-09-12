@@ -131,7 +131,7 @@ async fn main() -> Result<(), AppError> {
 
     if !books_needing_metadata.is_empty() {
         let metadata_state = state.clone();
-
+        // TODO Add a handler that sets all books has_metadata to false and then runs update_metadta() on the entire set
         tokio::spawn(async move {
             if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
                 error!(?err, "Metadata update failed");

@@ -2,6 +2,7 @@ use crate::{
     database::document::{DocumentDB, DocumentTable},
     error::AppError,
     library::book::Book,
+    metadata::update_meta::update_metadata,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
