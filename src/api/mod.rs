@@ -1,5 +1,6 @@
-pub(crate) mod get_uri_for_req;
+pub mod get_uri_for_req;
+pub mod images;
 pub mod init_resources;
 pub mod initialization;
-pub(crate) mod kobo_routes;
-pub(crate) mod make_requests;
+pub mod kobo_routes;
+pub mod make_requests;

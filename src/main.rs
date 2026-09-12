@@ -1,8 +1,10 @@
 use crate::{
+    api::init_resources::Resources,
     config::AppConfig,
     database::document::{DocumentDB, DocumentTable},
     error::AppError,
     library::book::Book,
+    metadata::update_meta::update_metadata,
     scan::scanner::{ScanDetails, ScanDocument, ScanResponse, ScanStatus, run_library_scan},
 };
 use axum::{
@@ -13,17 +15,23 @@ use axum::{
     routing::{get, post},
 };
 use chrono::Utc;
+use dotenvy::dotenv;
+use reqwest::StatusCode;
+use std::env;
 use std::{sync::Arc, time::Duration};
+use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
+
 pub mod api;
 pub(crate) mod config;
 pub(crate) mod database;
 pub mod error;
 pub mod library;
 pub mod logging;
+pub(crate) mod metadata;
 pub mod scan;
 
 /// Holds shared application state accessible across request handlers
@@ -33,11 +41,17 @@ pub struct AppState {
     pub config: Arc<AppConfig>,
     pub req_client: reqwest::Client,
     pub db: Arc<DocumentDB>,
+    pub hardcover_api_token: Option<String>,
+    pub kobo_resources: Arc<Mutex<Resources>>,
 }
 
 impl AppState {
     /// Creates a new `AppState` instance with the given configuration.
-    pub fn new(config: impl Into<Arc<AppConfig>>, db: DocumentDB) -> Self {
+    pub fn new(
+        config: impl Into<Arc<AppConfig>>,
+        db: DocumentDB,
+        hardcover_api_token: Option<String>,
+    ) -> Self {
         let client = reqwest::Client::builder()
             .user_agent("Kobo Touch/4.38.21908 (Linux 2.6.35.3; U; en-US)")
             .build()
@@ -47,6 +61,8 @@ impl AppState {
             db: Arc::new(db),
             config: config.into(),
             req_client: client,
+            hardcover_api_token,
+            kobo_resources: Arc::new(Mutex::new(Resources::default())),
         }
     }
 }
@@ -56,6 +72,11 @@ pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/", get(|| async { "Ebook Sync Server" }))
         .route("/scan", post(scan_handler))
+        .route("/metadata/refresh", post(refresh_metadata_handler))
+        .route(
+            "/metadata/refresh/{book_doc_id}",
+            post(refresh_single_book_metadata_handler),
+        )
         .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
         .layer(TraceLayer::new_for_http())
@@ -73,20 +94,59 @@ async fn main() -> Result<(), AppError> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Load default config
     let config = AppConfig::default();
 
-    // Fetch and log all stored books & scans from redb
+    // Load the .env file into the system environment
+    dotenv().ok();
+    // Panic if there is no Hardcover token for metadata
+    let hardcover_api_token = match env::var("HARDCOVER_TOKEN") {
+        Ok(val) => {
+            debug!("Hardcover Token loaded");
+            Some(val)
+        }
+        Err(e) => {
+            error!("Could not find HARDCOVER_TOKEN: {e}");
+            None
+        }
+    };
+
+    // Open DB
     let db = DocumentDB::open(&config.database_path)?;
 
-    let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
-    debug!(?books, count = books.len(), "All stored books in database");
-
+    // Debug all the scans stored in the database
     let scans: Vec<(String, ScanDocument)> = db.get_all(DocumentTable::Scans)?;
     debug!(?scans, count = scans.len(), "All stored scans in database");
 
-    let state = AppState::new(config, db);
+    // Fetch and debug all stored books & scans from redb
+    let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
+    debug!(?books, count = books.len(), "All stored books in database");
 
-    let app = app(state);
+    // Construct App state
+    let state = AppState::new(config, db, hardcover_api_token);
+
+    // Bind state to app
+    let app = app(state.clone());
+
+    // Filter through set of all books for those with has_metadata = False
+    let books_needing_metadata: Vec<(String, Book)> = books
+        .into_iter()
+        .filter(|(_, book)| !book.has_metadata)
+        .collect();
+
+    debug!(
+        count = books_needing_metadata.len(),
+        "Files needing metadata"
+    );
+
+    if !books_needing_metadata.is_empty() {
+        let metadata_state = state.clone();
+        tokio::spawn(async move {
+            if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
+                error!(?err, "Metadata update failed");
+            }
+        });
+    }
 
     // Bind server to local port 3000
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
@@ -95,7 +155,7 @@ async fn main() -> Result<(), AppError> {
 
     info!(addr = ?listener.local_addr().unwrap(), "listening");
 
-    // Start serving HTTP requests
+    // Start serving HTTP requests with Axum
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }
@@ -136,6 +196,13 @@ pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResp
     }))
 }
 
+/// Resolves the public base URL that Kobo should use when accessing this server.
+///
+/// Prefer an explicitly configured external URL when available.
+/// Otherwise, use reverse-proxy headers (`X-Forwarded-Host` and `X-Forwarded-Proto`)
+/// when present,falling back to the request's `Host` header and finally localhost.  
+/// This allows generated Kobo resource URLs to use the externally reachable
+/// address even when Axum itself is running behind a reverse proxy.
 pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<&str>) -> String {
     if let Some(ext_url) = config_external_url {
         return ext_url.trim_end_matches('/').to_string();
@@ -155,6 +222,49 @@ pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<
     format!("{scheme}://{host}")
 }
 
+pub async fn refresh_metadata_handler(
+    State(state): State<AppState>,
+) -> Result<StatusCode, AppError> {
+    let books = state.db.get_all::<Book>(DocumentTable::Books)?;
+
+    let books_needing_metadata: Vec<(String, Book)> = books
+        .into_iter()
+        .map(|(id, mut book)| {
+            book.has_metadata = false;
+            (id, book)
+        })
+        .collect();
+
+    let metadata_state = state.clone();
+
+    tokio::spawn(async move {
+        if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
+            error!(?err, "Metadata update failed");
+        }
+    });
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn refresh_single_book_metadata_handler(
+    axum::extract::Path(book_doc_id): axum::extract::Path<String>,
+    State(state): State<AppState>,
+) -> Result<StatusCode, AppError> {
+    let Some(book) = state.db.read::<Book>(DocumentTable::Books, &book_doc_id)? else {
+        return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
+    };
+
+    let metadata_state = state.clone();
+
+    tokio::spawn(async move {
+        if let Err(err) = update_metadata(metadata_state, vec![(book_doc_id, book)]).await {
+            error!(?err, "Metadata update failed");
+        }
+    });
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 #[cfg(test)]
 pub mod test_helpers {
     use crate::{AppState, app};
@@ -170,11 +280,18 @@ pub mod test_helpers {
 
 #[cfg(test)]
 mod tests {
+    use std::{env, path::PathBuf, sync::Arc};
+
     use crate::{
-        AppState, config::AppConfig, database::document::DocumentDB, scan::scanner::ScanResponse,
+        AppState,
+        config::AppConfig,
+        database::document::{DocumentDB, DocumentTable},
+        library::book::Book,
+        scan::scanner::ScanResponse,
         test_helpers::setup_test_app,
     };
     use axum::http::StatusCode;
+    use dotenvy::dotenv;
     use test_log::test;
 
     /// Tests the root endpoint response.
@@ -182,7 +299,7 @@ mod tests {
     async fn test_root_handler() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db);
+        let state = AppState::new(config, db, None);
         let server = setup_test_app(state);
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
@@ -193,7 +310,7 @@ mod tests {
     async fn test_scan_handler_triggers_scan() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db);
+        let state = AppState::new(config, db, None);
 
         let server = setup_test_app(state);
 
@@ -202,5 +319,42 @@ mod tests {
 
         let body: ScanResponse = response.json();
         assert!(!body.scan_id.is_nil());
+    }
+    #[test(tokio::test)]
+    async fn test_refresh_metadata_handler() {
+        let config = AppConfig::default();
+        let db = DocumentDB::open_in_memory().expect("Unable to open database");
+        let state = AppState::new(config, db, None);
+        let server = setup_test_app(state);
+
+        let response = server.post("/metadata/refresh").await;
+
+        response.assert_status(StatusCode::NO_CONTENT);
+    }
+
+    #[test(tokio::test)]
+    async fn test_refresh_single_book_metadata_handler() -> Result<(), Box<dyn std::error::Error>> {
+        let config = AppConfig::default();
+        let db = DocumentDB::open_in_memory()?;
+
+        let book = Book::from_path(PathBuf::from(
+            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
+        ));
+
+        let book_id = db.create(
+            DocumentTable::Books,
+            &book,
+            Some(|book: &Book| book.path.to_str().unwrap()),
+            None,
+        )?;
+
+        let state = AppState::new(config, db, None);
+        let server = setup_test_app(state);
+
+        let response = server.post(&format!("/metadata/refresh/{book_id}")).await;
+
+        response.assert_status(StatusCode::NO_CONTENT);
+
+        Ok(())
     }
 }
