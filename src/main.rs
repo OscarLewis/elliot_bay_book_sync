@@ -1,4 +1,5 @@
 use crate::{
+    api::init_resources::Resources,
     config::AppConfig,
     database::document::{DocumentDB, DocumentTable},
     error::AppError,
@@ -18,6 +19,7 @@ use dotenvy::dotenv;
 use reqwest::StatusCode;
 use std::env;
 use std::{sync::Arc, time::Duration};
+use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -40,6 +42,7 @@ pub struct AppState {
     pub req_client: reqwest::Client,
     pub db: Arc<DocumentDB>,
     pub hardcover_api_token: Option<String>,
+    pub kobo_resources: Arc<Mutex<Resources>>,
 }
 
 impl AppState {
@@ -59,6 +62,7 @@ impl AppState {
             config: config.into(),
             req_client: client,
             hardcover_api_token,
+            kobo_resources: Arc::new(Mutex::new(Resources::default())),
         }
     }
 }

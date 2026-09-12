@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use tracing::debug;
 
@@ -11,11 +11,12 @@ pub(crate) async fn extract_imgs_for_books(
     book_list: Vec<(String, Book)>,
     state: AppState,
     save_to_fs: bool,
-) -> Result<(), AppError> {
+) -> Result<Vec<PathBuf>, AppError> {
     debug!(
         ?book_list,
         state.config.image_path, "Extracting images for book list"
     );
+    let mut image_paths = Vec::new();
 
     for (id, mut book) in book_list {
         let mut epub_image = None;
@@ -83,8 +84,6 @@ pub(crate) async fn extract_imgs_for_books(
             if save_to_fs {
                 let image_path = Path::new(&state.config.image_path).join(format!("{id}.webp"));
 
-                image.save_with_format(&image_path, image::ImageFormat::WebP)?;
-
                 book.image_path = Some(image_path.to_string_lossy().into_owned());
                 book.has_image = true;
 
@@ -98,11 +97,13 @@ pub(crate) async fn extract_imgs_for_books(
                 let image_path = Path::new(&state.config.image_path).join(format!("{id}.webp"));
 
                 image.save_with_format(&image_path, image::ImageFormat::WebP)?;
+
+                image_paths.push(image_path);
             }
         }
     }
 
-    Ok(())
+    Ok(image_paths)
 }
 
 #[cfg(test)]
@@ -110,11 +111,13 @@ mod tests {
     use super::*;
     use crate::{
         AppState,
+        api::init_resources::Resources,
         config::AppConfig,
         database::document::{DocumentDB, DocumentTable},
     };
     use std::{path::PathBuf, sync::Arc};
     use test_log::test;
+    use tokio::sync::Mutex;
 
     #[test(tokio::test)]
     async fn test_extract_imgs_for_books() -> Result<(), Box<dyn std::error::Error>> {
@@ -144,6 +147,7 @@ mod tests {
             req_client: reqwest::Client::new(),
             db: Arc::new(db),
             hardcover_api_token: None,
+            kobo_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         extract_imgs_for_books(book_list, state, false).await?;

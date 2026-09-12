@@ -111,6 +111,7 @@ pub async fn update_metadata(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api::init_resources::Resources;
     use crate::database::document::{DocumentDB, DocumentTable};
     use crate::{AppState, config::AppConfig, library::book::Book};
     use dotenvy::dotenv;
@@ -118,6 +119,7 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
     use test_log::test;
+    use tokio::sync::Mutex;
     use tracing::{debug, error};
 
     #[test(tokio::test)]
@@ -159,6 +161,7 @@ mod tests {
             req_client: reqwest::Client::new(),
             db: Arc::new(db),
             hardcover_api_token,
+            kobo_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         update_metadata(state.clone(), vec![(book_id.clone(), book)]).await?;

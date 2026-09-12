@@ -84,6 +84,12 @@ pub(crate) async fn initialization_handler(
     // Resolve the base URL used when rewriting resource endpoints
     let base_url = resolve_base_url(&headers, None);
 
+    // Store canonical resources in state for later proxy requests
+    let mut kobo_resources = state.kobo_resources.lock().await;
+    *kobo_resources = resources.resources.clone();
+
+    debug!("Stored canonical kobo resources");
+
     // Patch resource URLs in-place to point to this server
     patch_kobo_resources(
         &mut resources.resources,
@@ -198,6 +204,7 @@ mod tests {
     use axum::http::StatusCode;
     use serde_json::Value;
     use test_log::test;
+    use tracing::debug;
 
     /// Verifies that the initialization handler matches the known Kobo test data
     #[test(tokio::test)]
