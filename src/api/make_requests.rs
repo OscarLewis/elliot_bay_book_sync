@@ -1,10 +1,14 @@
 use axum::{
     Json,
     body::Bytes,
-    http::{HeaderMap, Method},
+    http::{HeaderMap, Method, Uri},
     response::{IntoResponse, Redirect},
 };
 use reqwest::{Client, Response as ReqwestResponse, StatusCode};
+use tracing::debug;
+use url::Url;
+
+use crate::{AppState, error::AppError};
 
 /// Headers that are specific to a single connection and should not be forwarded
 /// in proxy requests. These are hop-by-hop headers as defined in HTTP specifications.
@@ -38,7 +42,6 @@ pub(crate) async fn make_request_to_kobo_store(
     mut headers: HeaderMap,
     body: bytes::Bytes,
 ) -> Result<ReqwestResponse, reqwest::Error> {
-    // Replicate Python: outgoing_headers.remove("Host")
     headers.remove(axum::http::header::HOST);
     headers.remove(axum::http::header::ACCEPT_ENCODING);
 
@@ -82,29 +85,7 @@ pub(crate) async fn redirect_or_proxy_request(
     }
 
     if method == Method::GET {
-        return Redirect::temporary(url).into_response();
-        // TODO I think this is incorrect
-        /*
-        if request.method == "GET":
-            return redirect(get_store_url_for_current_request(), 307)
-
-
-        def get_store_url_for_current_request():
-            # Programmatically modify the current url to point to the official Kobo store
-            __, __, request_path_with_auth_token = request.full_path.rpartition("/kobo/")
-            __, __, request_path = request_path_with_auth_token.rstrip("?").partition(
-                "/"
-            )
-            return KOBO_STOREAPI_URL + "/" + request_path
-
-
-        '''rust
-        if method == Method::GET {
-            let kobo_store_url = format!("https://storeapi.kobo.com/{}", request_path);
-            return Redirect::to(&kobo_store_url).into_response();
-        }
-        '''
-        */
+        return Redirect::to(url).into_response();
     }
 
     // Proxy non-GET requests manually
@@ -141,5 +122,82 @@ pub(crate) async fn make_proxy_response(store_response: ReqwestResponse) -> impl
             response
         }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
+}
+
+pub(crate) async fn get_store_url_for_current_request(
+    state: AppState,
+    uri: &Uri,
+    token: &str,
+) -> Result<String, AppError> {
+    let full_path = uri
+        .path_and_query()
+        .map(|pq| pq.as_str())
+        .unwrap_or_default();
+    let prefix = format!("/kobo/{token}/");
+
+    let request_path = full_path
+        .split_once(&prefix)
+        .map(|(_, subpath)| subpath)
+        .unwrap_or_else(|| full_path.trim_start_matches('/'));
+
+    let resources = state.kobo_resources.lock().await;
+
+    let parsed_auth = Url::parse(&resources.device_auth)
+        .map_err(|e| AppError::Internal(format!("Invalid device_auth URL: {e}")))?;
+
+    let base_origin = parsed_auth.origin().ascii_serialization();
+
+    let raw_url = format!("{base_origin}/{request_path}");
+    let validated_url = Url::parse(&raw_url)
+        .map_err(|e| AppError::Internal(format!("Invalid target URL '{raw_url}': {e}")))?;
+
+    debug!(
+        full_path,
+        token,
+        request_path,
+        base_origin = %base_origin,
+        target_url = %validated_url,
+        "Resolved target Kobo store URL"
+    );
+    Ok(validated_url.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        api::init_resources::Resources, config::AppConfig, database::document::DocumentDB,
+    };
+    use axum::http::Uri;
+    use std::{str::FromStr, sync::Arc};
+    use test_log::test;
+    use tokio::sync::Mutex;
+
+    #[test(tokio::test)]
+    async fn test_get_store_url_for_current_request() -> Result<(), Box<dyn std::error::Error>> {
+        let mut config = AppConfig::default();
+        config.proxy_kobo_store = true;
+        let db = DocumentDB::open_in_memory()?;
+
+        let mut resources = Resources::default();
+        resources.device_auth = "https://storeapi.kobo.com/v1/auth/device".to_string();
+
+        let state = AppState {
+            config: Arc::new(config),
+            req_client: reqwest::Client::new(),
+            db: Arc::new(db),
+            kobo_resources: Arc::new(Mutex::new(resources)),
+            hardcover_api_token: None,
+        };
+
+        let token = "test-token-123";
+        let uri = Uri::from_str("/kobo/test-token-123/v1/user/profile?param=value")?;
+
+        let url = get_store_url_for_current_request(state, &uri, token).await?;
+
+        assert_eq!(url, "https://storeapi.kobo.com/v1/user/profile?param=value");
+
+        Ok(())
     }
 }

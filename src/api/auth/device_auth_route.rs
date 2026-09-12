@@ -1,8 +1,12 @@
-use crate::{AppState, api::make_requests::redirect_or_proxy_request, error::AppError};
+use crate::{
+    AppState,
+    api::make_requests::{get_store_url_for_current_request, redirect_or_proxy_request},
+    error::AppError,
+};
 use axum::{
     Json,
     body::Bytes,
-    extract,
+    extract::{self, OriginalUri},
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
@@ -15,6 +19,7 @@ use tracing::debug;
 pub async fn auth_request_handler(
     extract::Path(token): extract::Path<String>,
     extract::State(state): extract::State<AppState>,
+    OriginalUri(uri): OriginalUri,
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Response, AppError> {
@@ -25,11 +30,12 @@ pub async fn auth_request_handler(
     );
 
     if state.config.proxy_kobo_store {
+        let store_url = get_store_url_for_current_request(state.clone(), &uri, &token).await?;
         return Ok(redirect_or_proxy_request(
             &state.req_client,
             state.config.proxy_kobo_store,
             Method::POST,
-            "https://storeapi.kobo.com/v1/auth/device",
+            &store_url,
             headers,
             body,
         )

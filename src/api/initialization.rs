@@ -1,10 +1,10 @@
 use crate::{
     AppState,
     api::{
-        get_uri_for_req::get_store_url_for_current_request,
         init_resources::{ResourcesRoot, patch_kobo_resources},
-        make_requests::make_request_to_kobo_store,
+        make_requests::{get_store_url_for_current_request, make_request_to_kobo_store},
     },
+    error::AppError,
     resolve_base_url,
 };
 use axum::http::Uri;
@@ -29,7 +29,7 @@ pub(crate) async fn initialization_handler(
     method: reqwest::Method,
     headers: HeaderMap,
     body: Bytes,
-) -> axum::response::Response {
+) -> Result<axum::response::Response, AppError> {
     debug!(
         token = %token,
         proxy_kobo = state.config.proxy_kobo_store,
@@ -48,7 +48,7 @@ pub(crate) async fn initialization_handler(
         }
 
         // Build the upstream Kobo store URL from the current request
-        let store_url = get_store_url_for_current_request(&uri);
+        let store_url = get_store_url_for_current_request(state.clone(), &uri, &token).await?;
 
         // Proxy the initialization request to the Kobo store
         match make_request_to_kobo_store(
@@ -65,7 +65,7 @@ pub(crate) async fn initialization_handler(
                 if let Some(early_response) =
                     process_store_response(store_response, &mut kobo_resources).await
                 {
-                    return early_response;
+                    return Ok(early_response);
                 }
             }
             Err(err) => {
@@ -102,7 +102,7 @@ pub(crate) async fn initialization_handler(
     let mut response_headers = HeaderMap::new();
     response_headers.insert("x-kobo-apitoken", "e30=".parse().unwrap());
 
-    (StatusCode::OK, response_headers, Json(resources)).into_response()
+    Ok((StatusCode::OK, response_headers, Json(resources)).into_response())
 }
 
 /// Parses the Kobo upstream store response

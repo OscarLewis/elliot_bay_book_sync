@@ -361,12 +361,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -564,7 +560,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1714,
+          "lists_count": 1715,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -982,8 +978,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5035,12 +5035,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -5058,12 +5054,8 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5164,7 +5156,7 @@
             "1427210233",
             "9781427210234"
           ],
-          "lists_count": 460,
+          "lists_count": 459,
           "moods": [
             "Adventurous",
             "tense",
@@ -8564,7 +8556,7 @@
         }
       }
     ],
-    "out_of": 2576733,
+    "out_of": 2576918,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8573,6 +8565,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 84
+    "search_time_ms": 76
   }
 }

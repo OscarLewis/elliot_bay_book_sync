@@ -26,9 +26,9 @@
 
 [ ] - Delete book from device - "/kobo/{token}/v1/library/{book_uuid}"
 
-[ ] - Device authentication - "/kobo/{token}/v1/auth/device"
+[x] - Device authentication - "/kobo/{token}/v1/auth/device"
 
-[ ] - OAuth token - "/kobo/{token}/oauth/token"
+[ ] - OAuth token - "/kobo/{token}/oauth/token" 
 
 [ ] - OAuth refresh - "/kobo/{token}/oauth/refresh"
 

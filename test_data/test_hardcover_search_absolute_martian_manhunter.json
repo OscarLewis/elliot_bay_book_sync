@@ -342,7 +342,7 @@
         }
       }
     ],
-    "out_of": 2576733,
+    "out_of": 2576918,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -351,6 +351,6 @@
       "q": "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp"
     },
     "search_cutoff": false,
-    "search_time_ms": 12
+    "search_time_ms": 16
   }
 }
