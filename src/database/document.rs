@@ -10,14 +10,6 @@ const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan
 const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
 const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ScanDocument {
-    pub id: Option<String>,
-    pub status: ScanStatus,
-    pub timestamp: String,
-    pub details: String,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DocumentTable {
     Books,

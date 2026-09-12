@@ -1,8 +1,11 @@
 use chrono::{DateTime, Utc};
+use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::SystemTime;
 use uuid::Uuid;
+
+use crate::error::AppError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Book {
@@ -119,5 +122,15 @@ impl Book {
             modified_at,
             ..Default::default()
         }
+    }
+
+    pub fn image(&self) -> Result<Option<DynamicImage>, AppError> {
+        let Some(image_path) = &self.image_path else {
+            return Ok(None);
+        };
+
+        let image = image::open(image_path)?;
+
+        Ok(Some(image))
     }
 }

@@ -46,8 +46,14 @@ pub enum AppError {
     #[error("Internal error: {0}")]
     Internal(String),
 
+    #[error("Not Found error: {0}")]
+    NotFound(String),
+
     #[error("Image error: {0}")]
     Image(#[from] image::ImageError),
+
+    #[error("URL parse error: {0}")]
+    Url(#[from] url::ParseError),
 }
 
 impl IntoResponse for AppError {
@@ -68,6 +74,8 @@ impl IntoResponse for AppError {
             AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DocError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Image(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::Url(_) => StatusCode::BAD_REQUEST,
         };
 
         (status, self.to_string()).into_response()
