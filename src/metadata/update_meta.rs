@@ -30,6 +30,7 @@ pub async fn update_metadata(
             let result = match_metadata_for_book(&book.name, search_results, &metadata).await?;
 
             book.hardcover_id = Some(result.id);
+            book.hardcover_slug = Some(result.slug);
             book.title = Some(result.title);
             // Check this author name against the one in the epub
             book.author = metadata

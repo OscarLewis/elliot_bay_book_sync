@@ -24,7 +24,7 @@ pub struct IntermediateBookSearchResult {
     #[serde(deserialize_with = "deserialize_id")]
     pub id: u64,
     pub title: String,
-
+    pub slug: String,
     // Primary series names array from the search document
     #[serde(default)]
     pub series_names: Vec<String>,

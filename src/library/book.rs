@@ -16,6 +16,8 @@ pub struct Book {
     #[serde(default)]
     pub hardcover_id: Option<u64>,
     #[serde(default)]
+    pub hardcover_slug: Option<String>,
+    #[serde(default)]
     pub has_metadata: bool,
 }
 
@@ -35,6 +37,7 @@ impl Book {
             title: None,
             size_kb: 0,
             hardcover_id: None,
+            hardcover_slug: None,
             has_metadata: false,
             modified_at: String::new(),
         }
