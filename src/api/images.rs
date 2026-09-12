@@ -83,9 +83,9 @@ mod tests {
 
     #[test(tokio::test)]
     async fn test_image_handler() -> Result<(), Box<dyn std::error::Error>> {
-        let epub_path = PathBuf::from(
-            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
-        );
+        // test with lios
+        /* https://cdn.kobo.com/book-images/32c82528-667b-49d0-8daf-08a84c7732d5/353/569/90/False/the-lions-of-al-rassan.jpg */
+        let epub_path = PathBuf::from("test ebooks/The Lions of Al-Rassan - Guy Gavriel Kay.epub");
 
         assert!(
             epub_path.exists(),
@@ -100,13 +100,11 @@ mod tests {
 
         let mut book = Book::from_path(epub_path);
         book.title = Some("Absolute Martian Manhunter, Vol. 1: Martian Vision".into());
-        book.hardcover_id = Some(2168623);
-        book.hardcover_slug = Some("absolute-martian-manhunter-vol-1".to_string());
-        book.hardcover_img_id = Some(6034774);
-        book.hardcover_img_url = Some(
-        "https://assets.hardcover.app/external_data/1633116/8fcc036b0ad1263a22eb5756ad5411a7f219a66a.jpeg"
-            .to_string(),
-    );
+        book.hardcover_id = Some(445946);
+        book.hardcover_slug = Some("the-lions-of-al-rassan".to_string());
+        book.hardcover_img_id = Some(463726);
+        book.hardcover_img_url =
+            Some("https://assets.hardcover.app/edition/16437269/33339-L.jpg".to_string());
 
         let book_id = db.create(
             DocumentTable::Books,
