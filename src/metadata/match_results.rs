@@ -229,4 +229,48 @@ mod tests {
 
         Ok(())
     }
+
+    #[test(tokio::test)]
+    async fn test_match_metadata_for_cats_cradle() -> Result<(), AppError> {
+        dotenv().ok();
+
+        let authorization_token = std::env::var("HARDCOVER_TOKEN")
+            .map_err(|e| AppError::Internal(format!("HARDCOVER_TOKEN env var not set: {e}")))?;
+
+        let book_title = "Cat's Cradle - Kurt Vonnegut";
+        let path = PathBuf::from("test ebooks/Cat's Cradle - Kurt Vonnegut.kepub.epub");
+
+        let metadata = parse_metadata_ebook(path).await?;
+
+        let search_results =
+            fetch_metadata_for_book(&authorization_token, book_title, &metadata).await?;
+
+        let result = match_metadata_for_book(book_title, search_results, &metadata).await?;
+
+        debug!(?result, "Matched result");
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_match_metadata_for_lions_of_al_rassan() -> Result<(), AppError> {
+        dotenv().ok();
+
+        let authorization_token = std::env::var("HARDCOVER_TOKEN")
+            .map_err(|e| AppError::Internal(format!("HARDCOVER_TOKEN env var not set: {e}")))?;
+
+        let book_title = "The Lions of Al-Rassan - Guy Gavriel Kay";
+        let path = PathBuf::from("test ebooks/The Lions of Al-Rassan - Guy Gavriel Kay.epub");
+
+        let metadata = parse_metadata_ebook(path).await?;
+
+        let search_results =
+            fetch_metadata_for_book(&authorization_token, book_title, &metadata).await?;
+
+        let result = match_metadata_for_book(book_title, search_results, &metadata).await?;
+
+        debug!(?result, "Matched result");
+
+        Ok(())
+    }
 }
