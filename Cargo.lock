@@ -652,6 +652,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
+name = "ebbooks"
+version = "0.1.0"
+dependencies = [
+ "askama",
+ "axum",
+ "axum-htmx",
+ "axum-test",
+ "bytes",
+ "chrono",
+ "dotenvy",
+ "epub",
+ "graphql_client",
+ "image",
+ "log",
+ "redb",
+ "reqwest 0.13.5",
+ "serde",
+ "serde_json",
+ "strsim",
+ "tempfile",
+ "test-log",
+ "thiserror 2.0.20",
+ "tokio",
+ "tower-http 0.7.1",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "educe"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1533,37 +1564,6 @@ dependencies = [
  "cfg-if",
  "futures-util",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "kobo_sync_rs"
-version = "0.1.0"
-dependencies = [
- "askama",
- "axum",
- "axum-htmx",
- "axum-test",
- "bytes",
- "chrono",
- "dotenvy",
- "epub",
- "graphql_client",
- "image",
- "log",
- "redb",
- "reqwest 0.13.5",
- "serde",
- "serde_json",
- "strsim",
- "tempfile",
- "test-log",
- "thiserror 2.0.20",
- "tokio",
- "tower-http 0.7.1",
- "tracing",
- "tracing-subscriber",
- "url",
- "uuid",
 ]
 
 [[package]]
