@@ -83,6 +83,28 @@ pub(crate) async fn redirect_or_proxy_request(
 
     if method == Method::GET {
         return Redirect::temporary(url).into_response();
+        // TODO I think this is incorrect
+        /*
+        if request.method == "GET":
+            return redirect(get_store_url_for_current_request(), 307)
+
+
+        def get_store_url_for_current_request():
+            # Programmatically modify the current url to point to the official Kobo store
+            __, __, request_path_with_auth_token = request.full_path.rpartition("/kobo/")
+            __, __, request_path = request_path_with_auth_token.rstrip("?").partition(
+                "/"
+            )
+            return KOBO_STOREAPI_URL + "/" + request_path
+
+
+        '''rust
+        if method == Method::GET {
+            let kobo_store_url = format!("https://storeapi.kobo.com/{}", request_path);
+            return Redirect::to(&kobo_store_url).into_response();
+        }
+        '''
+        */
     }
 
     // Proxy non-GET requests manually
