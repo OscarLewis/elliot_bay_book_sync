@@ -10,6 +10,10 @@ pub struct Book {
     pub author: Option<String>,
     pub title: Option<String>,
     pub size_kb: u64,
+    #[serde(default)]
+    pub hardcover_id: Option<u64>,
+    #[serde(default)]
+    pub has_metadata: bool,
 }
 
 impl Default for Book {
@@ -27,6 +31,8 @@ impl Book {
             author: None,
             title: None,
             size_kb: 0,
+            hardcover_id: None,
+            has_metadata: false,
         }
     }
 
@@ -69,6 +75,8 @@ impl Book {
         let size_kb = std::fs::metadata(&path)
             .map(|meta| meta.len() / 1024)
             .unwrap_or(0);
+
+        // TODO Add title and author from epub extraction
 
         Self {
             path,

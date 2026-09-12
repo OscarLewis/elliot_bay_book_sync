@@ -22,7 +22,7 @@ pub struct SeriesDetails {
 #[derive(Debug, Deserialize, Clone)]
 pub struct IntermediateBookSearchResult {
     #[serde(deserialize_with = "deserialize_id")]
-    pub id: i64,
+    pub id: u64,
     pub title: String,
 
     // Primary series names array from the search document
@@ -38,17 +38,17 @@ pub struct IntermediateBookSearchResult {
 
 /// Custom deserializer to handle both string IDs ("2077352") and integer IDs (2077352)
 #[allow(dead_code)]
-fn deserialize_id<'de, D>(deserializer: D) -> Result<i64, D::Error>
+fn deserialize_id<'de, D>(deserializer: D) -> Result<u64, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
     let val = serde_json::Value::deserialize(deserializer)?;
     match val {
         serde_json::Value::Number(n) => n
-            .as_i64()
+            .as_u64()
             .ok_or_else(|| serde::de::Error::custom("Invalid integer ID")),
         serde_json::Value::String(s) => s
-            .parse::<i64>()
+            .parse::<u64>()
             .map_err(|_| serde::de::Error::custom("Failed to parse string ID as i64")),
         _ => Err(serde::de::Error::custom(
             "Expected string or integer for ID",

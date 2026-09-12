@@ -1,4 +1,4 @@
-use crate::{error::AppError, scan::scanner::ScanStatus};
+use crate::{error::AppError, library::book::Book, scan::scanner::ScanStatus};
 use redb::{Builder, Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -333,6 +333,31 @@ impl DocumentDB {
             let id = key.value().to_string();
             let doc: T = serde_json::from_slice(value.value())?;
             results.push((id, doc));
+        }
+
+        Ok(results)
+    }
+
+    pub fn get_books_needing_metadata(&self) -> Result<Vec<(String, Book)>, AppError> {
+        let read_txn = self.db.begin_read()?;
+
+        let table = match read_txn.open_table(BOOK_COLLECTION) {
+            Ok(table) => table,
+            Err(redb::TableError::TableDoesNotExist(_)) => return Ok(Vec::new()),
+            Err(err) => return Err(AppError::Table(err)),
+        };
+
+        let mut results = Vec::new();
+
+        for result in table.iter()? {
+            let (key, value) = result?;
+
+            let id = key.value().to_string();
+            let book: Book = serde_json::from_slice(value.value())?;
+
+            if !book.has_metadata {
+                results.push((id, book));
+            }
         }
 
         Ok(results)

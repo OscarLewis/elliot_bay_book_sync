@@ -77,11 +77,12 @@ async fn main() -> Result<(), AppError> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Load default config
     let config = AppConfig::default();
 
     // Load the .env file into the system environment
     dotenv().ok();
-
+    // Panic if there is no Hardcover token for metadata
     match env::var("HARDCOVER_TOKEN") {
         Ok(val) => debug!("Hardcover Token: {val}"),
         Err(e) => error!("Could not find HARDCOVER_TOKEN: {e}"),
@@ -89,15 +90,37 @@ async fn main() -> Result<(), AppError> {
 
     // Fetch and log all stored books & scans from redb
     let db = DocumentDB::open(&config.database_path)?;
-
     let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
     debug!(?books, count = books.len(), "All stored books in database");
 
+    // Filter through set of all books for those with has_metadata = False
+    let books_needing_metadata: Vec<(String, Book)> = books
+        .into_iter()
+        .filter(|(_, book)| !book.has_metadata)
+        .collect();
+
+    debug!(
+        count = books_needing_metadata.len(),
+        "Files needing metadata"
+    );
+
+    if !books_needing_metadata.is_empty() {
+        for (id, book) in books_needing_metadata {
+            // TODO lets update some damn metadata
+            // id -> document ID for update
+            // book -> metadata work
+        }
+        // Actually just pass the whole damn Vec of tuples to the helper function
+    }
+
+    // Debug all the scans stored in the database
     let scans: Vec<(String, ScanDocument)> = db.get_all(DocumentTable::Scans)?;
     debug!(?scans, count = scans.len(), "All stored scans in database");
 
+    // Construct App state
     let state = AppState::new(config, db);
 
+    // Bind state to app
     let app = app(state);
 
     // Bind server to local port 3000
@@ -107,7 +130,7 @@ async fn main() -> Result<(), AppError> {
 
     info!(addr = ?listener.local_addr().unwrap(), "listening");
 
-    // Start serving HTTP requests
+    // Start serving HTTP requests with Axum
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }

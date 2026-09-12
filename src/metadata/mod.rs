@@ -2,6 +2,8 @@ pub(crate) mod epub;
 pub(crate) mod fetch_meta;
 mod hardcover;
 pub(crate) mod match_results;
+pub(crate) mod update_meta;
+
 pub use hardcover::graphql::HardcoverBookByPK;
 pub use hardcover::graphql::HardcoverBookSearch;
 pub use hardcover::graphql::book_by_pk_query;
