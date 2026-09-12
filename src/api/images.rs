@@ -1,19 +1,47 @@
-use std::io::Cursor;
-
 use crate::{
     AppState, api::make_requests::make_request_to_kobo_store, database::document::DocumentTable,
     error::AppError, library::book::Book,
 };
 use axum::{
-    body::Body,
     extract,
     http::{HeaderMap, Uri},
     response::{IntoResponse, Response},
 };
 use image::ImageFormat;
-use reqwest::{StatusCode, header};
+use reqwest::header;
+use std::io::Cursor;
 use tracing::{debug, error, info, warn};
-use url::Url;
+
+pub(crate) async fn image_handler_with_quality(
+    extract::State(state): extract::State<AppState>,
+    extract::Path((token, book_uuid, width, height, quality, is_greyscale)): extract::Path<(
+        String,
+        String,
+        u32,
+        u32,
+        String,
+        String,
+    )>,
+    uri: Uri,
+    method: reqwest::Method,
+    headers: HeaderMap,
+    body: bytes::Bytes,
+) -> Result<Response, AppError> {
+    image_handler_inner(
+        state,
+        token,
+        book_uuid,
+        width,
+        height,
+        Some(quality),
+        is_greyscale,
+        uri,
+        method,
+        headers,
+        body,
+    )
+    .await
+}
 
 pub(crate) async fn image_handler(
     extract::State(state): extract::State<AppState>,
@@ -24,6 +52,35 @@ pub(crate) async fn image_handler(
         u32,
         String,
     )>,
+    uri: Uri,
+    method: reqwest::Method,
+    headers: HeaderMap,
+    body: bytes::Bytes,
+) -> Result<Response, AppError> {
+    image_handler_inner(
+        state,
+        token,
+        book_uuid,
+        width,
+        height,
+        None,
+        is_greyscale,
+        uri,
+        method,
+        headers,
+        body,
+    )
+    .await
+}
+
+pub(crate) async fn image_handler_inner(
+    state: AppState,
+    token: String,
+    book_uuid: String,
+    width: u32,
+    height: u32,
+    quality: Option<String>,
+    is_greyscale: String,
     uri: Uri,
     method: reqwest::Method,
     headers: HeaderMap,
@@ -54,7 +111,8 @@ pub(crate) async fn image_handler(
             );
             let is_greyscale = is_greyscale.eq_ignore_ascii_case("true");
 
-            // TODO actually build image and respond
+            // TODO implment quality (JPEG image quality)
+            // book-images/b07219a4-41c4-4a51-8024-d009488df748/300/569/90/False/the-eye-of-the-world-1.jpg
             if let Some(canonical_cover) = book.image()? {
                 let mut cover_image =
                     canonical_cover.resize(width, u32::MAX, image::imageops::FilterType::Lanczos3);
@@ -113,41 +171,6 @@ pub(crate) async fn image_handler(
     Ok(Response::new(axum::body::Body::empty()))
 }
 
-/* ## Calibre-web Automated implementation
-
-@kobo.route("/<book_uuid>/<width>/<height>/<isGreyscale>/image.jpg", defaults={'Quality': ""})
-@kobo.route("/<book_uuid>/<width>/<height>/<Quality>/<isGreyscale>/image.jpg")
-@requires_kobo_auth
-def HandleCoverImageRequest(book_uuid, width, height, Quality, isGreyscale):
-    book_uuid = _normalize_cover_uuid(book_uuid)
-    try:
-        if int(height) > 1000:
-            resolution = COVER_THUMBNAIL_LARGE
-        elif int(height) > 500:
-            resolution = COVER_THUMBNAIL_MEDIUM
-        else:
-            resolution = COVER_THUMBNAIL_SMALL
-    except ValueError:
-        log.error("Requested height %s of book %s is invalid" % (height, book_uuid))
-        resolution = COVER_THUMBNAIL_SMALL
-    book_cover = helper.get_book_cover_with_uuid(book_uuid, resolution=resolution)
-    if book_cover:
-        log.debug("Serving local cover image of book %s" % book_uuid)
-        return book_cover
-
-    if not config.config_kobo_proxy:
-        log.debug("Returning 404 for cover image of unknown book %s" % book_uuid)
-        # additional proxy request make no sense, -> direct return
-        return abort(404)
-
-    log.debug("Redirecting request for cover image of unknown book %s to Kobo" % book_uuid)
-    return redirect(KOBO_IMAGEHOST_URL +
-                    "/{book_uuid}/{width}/{height}/false/image.jpg".format(book_uuid=book_uuid,
-                                                                           width=width,
-                                                                           height=height), 307)
-
-*/
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -166,8 +189,6 @@ mod tests {
 
     #[test(tokio::test)]
     async fn test_image_handler() -> Result<(), Box<dyn std::error::Error>> {
-        // test with lions
-        /* https://cdn.kobo.com/book-images/32c82528-667b-49d0-8daf-08a84c7732d5/353/569/90/False/the-lions-of-al-rassan.jpg */
         let epub_path = PathBuf::from("test ebooks/The Lions of Al-Rassan - Guy Gavriel Kay.epub");
 
         assert!(
