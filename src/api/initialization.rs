@@ -207,7 +207,7 @@ mod tests {
         let db = DocumentDB::open(&config.database_path).expect("Unable to open database");
         config.proxy_kobo_store = false;
 
-        let state = AppState::new(config, db);
+        let state = AppState::new(config, db, None);
 
         // Start the test application with the configured state
         let server = setup_test_app(state.clone());

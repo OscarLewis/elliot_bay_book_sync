@@ -3,6 +3,7 @@ use crate::{
     database::document::{DocumentDB, DocumentTable},
     error::AppError,
     library::book::Book,
+    metadata::update_meta::update_metadata,
     scan::scanner::{ScanDetails, ScanDocument, ScanResponse, ScanStatus, run_library_scan},
 };
 use axum::{
@@ -37,11 +38,16 @@ pub struct AppState {
     pub config: Arc<AppConfig>,
     pub req_client: reqwest::Client,
     pub db: Arc<DocumentDB>,
+    pub hardcover_api_token: Option<String>,
 }
 
 impl AppState {
     /// Creates a new `AppState` instance with the given configuration.
-    pub fn new(config: impl Into<Arc<AppConfig>>, db: DocumentDB) -> Self {
+    pub fn new(
+        config: impl Into<Arc<AppConfig>>,
+        db: DocumentDB,
+        hardcover_api_token: Option<String>,
+    ) -> Self {
         let client = reqwest::Client::builder()
             .user_agent("Kobo Touch/4.38.21908 (Linux 2.6.35.3; U; en-US)")
             .build()
@@ -51,6 +57,7 @@ impl AppState {
             db: Arc::new(db),
             config: config.into(),
             req_client: client,
+            hardcover_api_token,
         }
     }
 }
@@ -83,10 +90,16 @@ async fn main() -> Result<(), AppError> {
     // Load the .env file into the system environment
     dotenv().ok();
     // Panic if there is no Hardcover token for metadata
-    match env::var("HARDCOVER_TOKEN") {
-        Ok(val) => debug!("Hardcover Token loaded"),
-        Err(e) => error!("Could not find HARDCOVER_TOKEN: {e}"),
-    }
+    let hardcover_api_token = match env::var("HARDCOVER_TOKEN") {
+        Ok(val) => {
+            debug!("Hardcover Token loaded");
+            Some(val)
+        }
+        Err(e) => {
+            error!("Could not find HARDCOVER_TOKEN: {e}");
+            None
+        }
+    };
 
     // Open DB
     let db = DocumentDB::open(&config.database_path)?;
@@ -98,6 +111,12 @@ async fn main() -> Result<(), AppError> {
     // Fetch and debug all stored books & scans from redb
     let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
     debug!(?books, count = books.len(), "All stored books in database");
+
+    // Construct App state
+    let state = AppState::new(config, db, hardcover_api_token);
+
+    // Bind state to app
+    let app = app(state.clone());
 
     // Filter through set of all books for those with has_metadata = False
     let books_needing_metadata: Vec<(String, Book)> = books
@@ -111,19 +130,14 @@ async fn main() -> Result<(), AppError> {
     );
 
     if !books_needing_metadata.is_empty() {
-        for (id, book) in books_needing_metadata {
-            // TODO lets update some damn metadata
-            // id -> document ID for update
-            // book -> metadata work
-        }
-        // Actually just pass the whole damn Vec of tuples to the helper function
+        let metadata_state = state.clone();
+
+        tokio::spawn(async move {
+            if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
+                error!(?err, "Metadata update failed");
+            }
+        });
     }
-
-    // Construct App state
-    let state = AppState::new(config, db);
-
-    // Bind state to app
-    let app = app(state);
 
     // Bind server to local port 3000
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
@@ -219,7 +233,7 @@ mod tests {
     async fn test_root_handler() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db);
+        let state = AppState::new(config, db, None);
         let server = setup_test_app(state);
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
@@ -230,7 +244,7 @@ mod tests {
     async fn test_scan_handler_triggers_scan() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db);
+        let state = AppState::new(config, db, None);
 
         let server = setup_test_app(state);
 

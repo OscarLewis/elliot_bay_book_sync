@@ -1555,6 +1555,7 @@ dependencies = [
  "serde",
  "serde_json",
  "strsim",
+ "tempfile",
  "test-log",
  "thiserror 2.0.20",
  "tokio",

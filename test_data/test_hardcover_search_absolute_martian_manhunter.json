@@ -44,12 +44,8 @@
                 "slug": "deniz-camp"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -60,12 +56,6 @@
                 "slug": "javier-rodriguez"
               },
               "contribution": "Illustrator",
-              "contributor_role_blurb": null,
-              "contributor_role_id": null,
-              "contributor_role_name": null,
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": false
             }
           ],
@@ -120,8 +110,8 @@
           "moods": [],
           "pages": 160,
           "prompts_count": 0,
-          "rating": 4.21875,
-          "ratings_count": 32,
+          "rating": 4.183333333333334,
+          "ratings_count": 30,
           "release_date": "2025-11-18",
           "release_year": 2025,
           "reviews_count": 6,
@@ -137,8 +127,8 @@
           "subtitle": "Martian Vision",
           "tags": [],
           "title": "Absolute Martian Manhunter, Vol. 1: Martian Vision",
-          "users_count": 59,
-          "users_read_count": 44
+          "users_count": 55,
+          "users_read_count": 40
         },
         "highlight": {
           "alternative_titles": [
@@ -352,7 +342,7 @@
         }
       }
     ],
-    "out_of": 2575034,
+    "out_of": 2575140,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -361,6 +351,6 @@
       "q": "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp"
     },
     "search_cutoff": false,
-    "search_time_ms": 11
+    "search_time_ms": 18
   }
 }

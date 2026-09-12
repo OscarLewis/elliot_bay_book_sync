@@ -1,10 +1,11 @@
+.env
+
+
 /target
 sync_nc_log.log
 kobink/
 Calibre-Web-Automated/
 user_file.txt
 bruno http/
-
 test ebooks/
-
-.env
+static/images/*.webp

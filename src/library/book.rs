@@ -1,5 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::time::SystemTime;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -10,6 +12,7 @@ pub struct Book {
     pub author: Option<String>,
     pub title: Option<String>,
     pub size_kb: u64,
+    pub modified_at: String,
     #[serde(default)]
     pub hardcover_id: Option<u64>,
     #[serde(default)]
@@ -33,6 +36,7 @@ impl Book {
             size_kb: 0,
             hardcover_id: None,
             has_metadata: false,
+            modified_at: String::new(),
         }
     }
 
@@ -76,6 +80,12 @@ impl Book {
             .map(|meta| meta.len() / 1024)
             .unwrap_or(0);
 
+        let modified_at = std::fs::metadata(&path)
+            .ok()
+            .and_then(|metadata| metadata.modified().ok())
+            .map(|time| DateTime::<Utc>::from(time).to_rfc3339())
+            .unwrap_or_default();
+
         // TODO Add title and author from epub extraction
 
         Self {
@@ -83,6 +93,7 @@ impl Book {
             name,
             initial_format,
             size_kb,
+            modified_at,
             ..Default::default()
         }
     }

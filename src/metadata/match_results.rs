@@ -42,7 +42,10 @@ pub async fn match_metadata_for_book(
             (result, total)
         })
         .max_by(|(_, a_score), (_, b_score)| a_score.total_cmp(b_score))
-        .map(|(result, _)| result)
+        .map(|(result, _)| {
+            debug!(?result, "Matched search result");
+            result
+        })
         .ok_or_else(|| AppError::Internal("No search results found".to_string()))
 }
 
@@ -223,9 +226,7 @@ mod tests {
         let search_results =
             fetch_metadata_for_book(&authorization_token, book_title, &metadata).await?;
 
-        let result = match_metadata_for_book(book_title, search_results, &metadata).await?;
-
-        debug!(?result, "Matched result");
+        let _result = match_metadata_for_book(book_title, search_results, &metadata).await?;
 
         Ok(())
     }
@@ -245,9 +246,7 @@ mod tests {
         let search_results =
             fetch_metadata_for_book(&authorization_token, book_title, &metadata).await?;
 
-        let result = match_metadata_for_book(book_title, search_results, &metadata).await?;
-
-        debug!(?result, "Matched result");
+        let _result = match_metadata_for_book(book_title, search_results, &metadata).await?;
 
         Ok(())
     }
@@ -267,9 +266,7 @@ mod tests {
         let search_results =
             fetch_metadata_for_book(&authorization_token, book_title, &metadata).await?;
 
-        let result = match_metadata_for_book(book_title, search_results, &metadata).await?;
-
-        debug!(?result, "Matched result");
+        let _result = match_metadata_for_book(book_title, search_results, &metadata).await?;
 
         Ok(())
     }
