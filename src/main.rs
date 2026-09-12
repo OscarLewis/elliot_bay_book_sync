@@ -15,6 +15,7 @@ use axum::{
 };
 use chrono::Utc;
 use dotenvy::dotenv;
+use reqwest::StatusCode;
 use std::env;
 use std::{sync::Arc, time::Duration};
 use tower_http::trace::TraceLayer;
@@ -67,6 +68,7 @@ pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/", get(|| async { "Ebook Sync Server" }))
         .route("/scan", post(scan_handler))
+        .route("/metadata/refresh", post(refresh_metadata_handler))
         .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
         .layer(TraceLayer::new_for_http())
@@ -187,6 +189,13 @@ pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResp
     }))
 }
 
+/// Resolves the public base URL that Kobo should use when accessing this server.
+///
+/// Prefer an explicitly configured external URL when available.
+/// Otherwise, use reverse-proxy headers (`X-Forwarded-Host` and `X-Forwarded-Proto`)
+/// when present,falling back to the request's `Host` header and finally localhost.  
+/// This allows generated Kobo resource URLs to use the externally reachable
+/// address even when Axum itself is running behind a reverse proxy.
 pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<&str>) -> String {
     if let Some(ext_url) = config_external_url {
         return ext_url.trim_end_matches('/').to_string();
@@ -204,6 +213,30 @@ pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<
         .unwrap_or("http");
 
     format!("{scheme}://{host}")
+}
+
+pub async fn refresh_metadata_handler(
+    State(state): State<AppState>,
+) -> Result<StatusCode, AppError> {
+    let books = state.db.get_all::<Book>(DocumentTable::Books)?;
+
+    let books_needing_metadata: Vec<(String, Book)> = books
+        .into_iter()
+        .map(|(id, mut book)| {
+            book.has_metadata = false;
+            (id, book)
+        })
+        .collect();
+
+    let metadata_state = state.clone();
+
+    tokio::spawn(async move {
+        if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
+            error!(?err, "Metadata update failed");
+        }
+    });
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[cfg(test)]
