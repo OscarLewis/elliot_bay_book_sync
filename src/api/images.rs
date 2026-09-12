@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{AppState, database::document::DocumentTable, library::book::Book};
 use axum::{
     body::Body,
@@ -25,6 +23,7 @@ pub(crate) async fn image_handler(
     headers: HeaderMap,
     body: Bytes,
 ) -> Response {
+    // TODO Proxy images of unknown books to Kobo store
     let book = match state
         .db
         .clone()
