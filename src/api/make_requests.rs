@@ -6,6 +6,8 @@ use axum::{
 };
 use reqwest::{Client, Response as ReqwestResponse, StatusCode};
 
+/// Headers that are specific to a single connection and should not be forwarded
+/// in proxy requests. These are hop-by-hop headers as defined in HTTP specifications.
 #[allow(dead_code)]
 pub(crate) const CONNECTION_SPECIFIC_HEADERS: &[&str] = &[
     "connection",
@@ -14,6 +16,21 @@ pub(crate) const CONNECTION_SPECIFIC_HEADERS: &[&str] = &[
     "transfer-encoding",
 ];
 
+/// Makes an HTTP request to the Kobo store backend.
+///
+/// This function handles the low-level mechanics of forwarding a request to the Kobo store,
+/// including removing headers that should not be forwarded (Host and Accept-Encoding) and
+/// applying a 10-second timeout to prevent hanging requests.
+///
+/// # Arguments
+/// * `client` - The reqwest HTTP client to use for the request
+/// * `method` - The HTTP method (GET, POST, etc.)
+/// * `url` - The target URL on the Kobo store
+/// * `mut headers` - The headers to include in the request (will be modified in-place)
+/// * `body` - The request body bytes
+///
+/// # Returns
+/// A Result containing either the response from Kobo or a reqwest error
 pub(crate) async fn make_request_to_kobo_store(
     client: &Client,
     method: Method,
@@ -34,6 +51,24 @@ pub(crate) async fn make_request_to_kobo_store(
         .await
 }
 
+/// Routes requests based on proxy configuration, either returning a success response,
+/// performing a temporary redirect, or proxying the request to Kobo.
+///
+/// # Behavior
+/// - If `proxy_kobo_store` is false: returns a 200 OK with empty JSON response
+/// - If method is GET: returns a temporary redirect to the target URL
+/// - For other methods: proxies the request to Kobo and returns the store's response
+///
+/// # Arguments
+/// * `client` - The reqwest HTTP client for making proxied requests
+/// * `proxy_kobo_store` - Whether proxying is enabled
+/// * `method` - The HTTP method of the incoming request
+/// * `url` - The target URL to redirect/proxy to
+/// * `headers` - The incoming request headers
+/// * `body` - The incoming request body
+///
+/// # Returns
+/// An HTTP response (as an implementor of IntoResponse)
 pub(crate) async fn redirect_or_proxy_request(
     client: &Client,
     proxy_kobo_store: bool,
@@ -57,10 +92,22 @@ pub(crate) async fn redirect_or_proxy_request(
     }
 }
 
+/// Transforms a response from the Kobo store into an HTTP response suitable for forwarding to the client.
+///
+/// This function extracts the status code and body from the Kobo store response, filters out
+/// connection-specific headers (hop-by-hop headers), and constructs a new response to return
+/// to the client with the appropriate status and headers.
+///
+/// # Arguments
+/// * `store_response` - The raw response from the Kobo store
+///
+/// # Returns
+/// An HTTP response (as an implementor of IntoResponse)
 pub(crate) async fn make_proxy_response(store_response: ReqwestResponse) -> impl IntoResponse {
     let status = store_response.status();
     let mut response_headers = store_response.headers().clone();
 
+    // Remove hop-by-hop headers that should not be forwarded to the client
     for &header in CONNECTION_SPECIFIC_HEADERS {
         response_headers.remove(header);
     }
