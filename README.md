@@ -1,4 +1,4 @@
-# Elliot Bay Book (ebbook) Sync RS
+# Elliot Bay Book Sync (ebbook)
 
 Kobo sync API implementation in Rust.
 
