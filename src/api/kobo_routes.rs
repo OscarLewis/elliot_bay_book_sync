@@ -1,7 +1,7 @@
 use crate::{
     AppState,
     api::{
-        auth::auth_route::auth_request_handler,
+        auth::device_auth_route::auth_request_handler,
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
     },

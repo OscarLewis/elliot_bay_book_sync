@@ -1,1 +1,1 @@
-pub mod auth_route;
+pub mod device_auth_route;
