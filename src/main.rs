@@ -84,12 +84,18 @@ async fn main() -> Result<(), AppError> {
     dotenv().ok();
     // Panic if there is no Hardcover token for metadata
     match env::var("HARDCOVER_TOKEN") {
-        Ok(val) => debug!("Hardcover Token: {val}"),
+        Ok(val) => debug!("Hardcover Token loaded"),
         Err(e) => error!("Could not find HARDCOVER_TOKEN: {e}"),
     }
 
-    // Fetch and log all stored books & scans from redb
+    // Open DB
     let db = DocumentDB::open(&config.database_path)?;
+
+    // Debug all the scans stored in the database
+    let scans: Vec<(String, ScanDocument)> = db.get_all(DocumentTable::Scans)?;
+    debug!(?scans, count = scans.len(), "All stored scans in database");
+
+    // Fetch and debug all stored books & scans from redb
     let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
     debug!(?books, count = books.len(), "All stored books in database");
 
@@ -112,10 +118,6 @@ async fn main() -> Result<(), AppError> {
         }
         // Actually just pass the whole damn Vec of tuples to the helper function
     }
-
-    // Debug all the scans stored in the database
-    let scans: Vec<(String, ScanDocument)> = db.get_all(DocumentTable::Scans)?;
-    debug!(?scans, count = scans.len(), "All stored scans in database");
 
     // Construct App state
     let state = AppState::new(config, db);
