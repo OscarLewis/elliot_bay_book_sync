@@ -12,6 +12,7 @@ use reqwest::header;
 use std::io::Cursor;
 use tracing::{debug, error, info, warn};
 
+// Axum route handler
 pub(crate) async fn image_handler_with_quality(
     extract::State(state): extract::State<AppState>,
     extract::Path((token, book_uuid, width, height, quality, is_greyscale)): extract::Path<(
@@ -43,6 +44,7 @@ pub(crate) async fn image_handler_with_quality(
     .await
 }
 
+// Axum route handler
 pub(crate) async fn image_handler(
     extract::State(state): extract::State<AppState>,
     extract::Path((token, book_uuid, width, height, is_greyscale)): extract::Path<(
@@ -73,7 +75,8 @@ pub(crate) async fn image_handler(
     .await
 }
 
-pub(crate) async fn image_handler_inner(
+// Inner function
+async fn image_handler_inner(
     state: AppState,
     token: String,
     book_uuid: String,
