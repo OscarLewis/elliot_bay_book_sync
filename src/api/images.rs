@@ -140,25 +140,34 @@ async fn image_handler_inner(
         }
         None => {
             info!(%book_uuid, "Image requested for a book we don't have");
-            // TODO Proxy this request to KOBO
             let resources = state.kobo_resources.lock().await;
-
             let image_url_template = &resources.image_url_template;
-            let kobo_img_url = resources
-                .image_url_template
-                .replace("{ImageId}", &book_uuid.to_string())
-                .replace("{Width}", &width.to_string())
-                .replace("{Height}", &height.to_string());
+            let image_quality_url_template = &resources.image_url_quality_template;
+
+            let image_url_template = if let Some(quality_val) = quality {
+                image_quality_url_template
+                    .replace("{ImageId}", &book_uuid.to_string())
+                    .replace("{Width}", &width.to_string())
+                    .replace("{Height}", &height.to_string())
+                    .replace("{Quality}", &quality_val)
+                    .replace("{IsGreyscale}", &is_greyscale.to_string())
+            } else {
+                image_url_template
+                    .replace("{ImageId}", &book_uuid.to_string())
+                    .replace("{Width}", &width.to_string())
+                    .replace("{Height}", &height.to_string())
+                    .replace("{IsGreyscale}", &is_greyscale.to_string())
+            };
 
             debug!(
-                kobo_img_resource_url = kobo_img_url,
+                kobo_img_resource_url = image_url_template,
                 "Attempting to proxy image request to Kobo CDN"
             );
 
             let response = make_request_to_kobo_store(
                 &state.req_client,
                 reqwest::Method::GET,
-                &kobo_img_url,
+                &image_url_template,
                 HeaderMap::new(),
                 bytes::Bytes::new(),
             )
@@ -256,7 +265,7 @@ mod tests {
         debug!(
             width = image.width(),
             height = image.height(),
-            "Image recieved from server"
+            "Image received from server"
         );
         assert_eq!(image.width(), 300);
 
@@ -300,10 +309,43 @@ mod tests {
         debug!(
             width = image.width(),
             height = image.height(),
-            "Image recieved from server"
+            "Image received from server"
         );
         assert_eq!(image.width(), 300);
 
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_image_handler_proxy_quality() -> Result<(), Box<dyn std::error::Error>> {
+        let mut config = AppConfig::default();
+        config.proxy_kobo_store = false;
+        let db = DocumentDB::open_in_memory()?;
+        let state = AppState {
+            config: Arc::new(config),
+            req_client: reqwest::Client::new(),
+            db: Arc::new(db),
+            kobo_resources: Arc::new(Mutex::new(Resources::default())),
+            hardcover_api_token: None,
+        };
+        let server = setup_test_app(state);
+        let token = "test-token-123";
+        let book_id = "b07219a4-41c4-4a51-8024-d009488df748"; // The Eye of The World
+        let response = server
+            .get(&format!(
+                "/kobo/{token}/{book_id}/300/450/90/false/image.jpg"
+            ))
+            .await;
+        response.assert_status(StatusCode::OK);
+        let image =
+            image::load_from_memory_with_format(response.as_bytes(), image::ImageFormat::Jpeg)
+                .expect("response should contain a valid JPEG");
+        debug!(
+            width = image.width(),
+            height = image.height(),
+            "Image received from server"
+        );
+        assert_eq!(image.width(), 300);
         Ok(())
     }
 }
