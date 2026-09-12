@@ -20,11 +20,24 @@ pub struct SeriesDetails {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct BookImage {
+    pub url: Option<String>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+    pub id: Option<u64>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct IntermediateBookSearchResult {
     #[serde(deserialize_with = "deserialize_id")]
     pub id: u64,
     pub title: String,
     pub slug: String,
+    pub description: Option<String>,
+
+    #[serde(default)]
+    pub image: Option<BookImage>,
+
     // Primary series names array from the search document
     #[serde(default)]
     pub series_names: Vec<String>,
@@ -76,9 +89,15 @@ pub async fn fetch_metadata_for_book(
     let search_results = result
         .and_then(|s| s.results)
         .and_then(|v| {
-            debug!(?v, "Raw Hardcover search results");
+            // debug!(?v, "Raw Hardcover search results");
 
-            serde_json::from_value::<SearchHitsContainer>(v).ok()
+            match serde_json::from_value::<SearchHitsContainer>(v) {
+                Ok(container) => Some(container),
+                Err(err) => {
+                    debug!(?err, "Failed to deserialize Hardcover search results");
+                    None
+                }
+            }
         })
         .map(|container| {
             for hit in &container.hits {

@@ -11,6 +11,10 @@ pub struct Book {
     pub initial_format: Option<String>,
     pub author: Option<String>,
     pub title: Option<String>,
+    pub series_name: Option<String>,
+    pub series_position: Option<f64>,
+    #[serde(default)]
+    pub description: Option<String>,
     pub size_kb: u64,
     pub modified_at: String,
     #[serde(default)]
@@ -18,7 +22,17 @@ pub struct Book {
     #[serde(default)]
     pub hardcover_slug: Option<String>,
     #[serde(default)]
+    pub hardcover_img_id: Option<u64>,
+    #[serde(default)]
+    pub hardcover_img_url: Option<String>,
+    #[serde(default)]
+    pub hardcover_series_id: Option<u64>,
+    #[serde(default)]
     pub has_metadata: bool,
+    #[serde(default)]
+    pub has_image: bool,
+    #[serde(default)]
+    pub image_path: Option<String>,
 }
 
 impl Default for Book {
@@ -35,10 +49,18 @@ impl Book {
             initial_format: None,
             author: None,
             title: None,
+            series_name: None,
+            series_position: None,
+            description: None,
             size_kb: 0,
             hardcover_id: None,
             hardcover_slug: None,
+            hardcover_img_id: None,
+            hardcover_img_url: None,
+            hardcover_series_id: None,
             has_metadata: false,
+            has_image: false,
+            image_path: None,
             modified_at: String::new(),
         }
     }
@@ -88,8 +110,6 @@ impl Book {
             .and_then(|metadata| metadata.modified().ok())
             .map(|time| DateTime::<Utc>::from(time).to_rfc3339())
             .unwrap_or_default();
-
-        // TODO Add title and author from epub extraction
 
         Self {
             path,

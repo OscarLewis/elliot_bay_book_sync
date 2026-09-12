@@ -1,4 +1,5 @@
 pub(crate) mod epub;
+pub(crate) mod extract_images;
 pub(crate) mod fetch_meta;
 mod hardcover;
 pub(crate) mod match_results;

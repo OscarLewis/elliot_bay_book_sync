@@ -45,6 +45,9 @@ pub enum AppError {
 
     #[error("Internal error: {0}")]
     Internal(String),
+
+    #[error("Image error: {0}")]
+    Image(#[from] image::ImageError),
 }
 
 impl IntoResponse for AppError {
@@ -64,6 +67,7 @@ impl IntoResponse for AppError {
             AppError::Scan(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DocError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Image(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         (status, self.to_string()).into_response()

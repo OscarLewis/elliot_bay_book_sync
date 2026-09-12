@@ -69,6 +69,10 @@ pub fn app(state: AppState) -> Router {
         .route("/", get(|| async { "Ebook Sync Server" }))
         .route("/scan", post(scan_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
+        .route(
+            "/metadata/refresh/{book_doc_id}",
+            post(refresh_single_book_metadata_handler),
+        )
         .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
         .layer(TraceLayer::new_for_http())
@@ -133,7 +137,6 @@ async fn main() -> Result<(), AppError> {
 
     if !books_needing_metadata.is_empty() {
         let metadata_state = state.clone();
-        // TODO Add a Axum Route handler that sets all books has_metadata to false and then runs update_metadta() on the entire set
         tokio::spawn(async move {
             if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
                 error!(?err, "Metadata update failed");
@@ -239,6 +242,25 @@ pub async fn refresh_metadata_handler(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn refresh_single_book_metadata_handler(
+    axum::extract::Path(book_doc_id): axum::extract::Path<String>,
+    State(state): State<AppState>,
+) -> Result<StatusCode, AppError> {
+    let Some(book) = state.db.read::<Book>(DocumentTable::Books, &book_doc_id)? else {
+        return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
+    };
+
+    let metadata_state = state.clone();
+
+    tokio::spawn(async move {
+        if let Err(err) = update_metadata(metadata_state, vec![(book_doc_id, book)]).await {
+            error!(?err, "Metadata update failed");
+        }
+    });
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 #[cfg(test)]
 pub mod test_helpers {
     use crate::{AppState, app};
@@ -254,11 +276,18 @@ pub mod test_helpers {
 
 #[cfg(test)]
 mod tests {
+    use std::{env, path::PathBuf, sync::Arc};
+
     use crate::{
-        AppState, config::AppConfig, database::document::DocumentDB, scan::scanner::ScanResponse,
+        AppState,
+        config::AppConfig,
+        database::document::{DocumentDB, DocumentTable},
+        library::book::Book,
+        scan::scanner::ScanResponse,
         test_helpers::setup_test_app,
     };
     use axum::http::StatusCode;
+    use dotenvy::dotenv;
     use test_log::test;
 
     /// Tests the root endpoint response.
@@ -286,5 +315,42 @@ mod tests {
 
         let body: ScanResponse = response.json();
         assert!(!body.scan_id.is_nil());
+    }
+    #[test(tokio::test)]
+    async fn test_refresh_metadata_handler() {
+        let config = AppConfig::default();
+        let db = DocumentDB::open_in_memory().expect("Unable to open database");
+        let state = AppState::new(config, db, None);
+        let server = setup_test_app(state);
+
+        let response = server.post("/metadata/refresh").await;
+
+        response.assert_status(StatusCode::NO_CONTENT);
+    }
+
+    #[test(tokio::test)]
+    async fn test_refresh_single_book_metadata_handler() -> Result<(), Box<dyn std::error::Error>> {
+        let config = AppConfig::default();
+        let db = DocumentDB::open_in_memory()?;
+
+        let book = Book::from_path(PathBuf::from(
+            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
+        ));
+
+        let book_id = db.create(
+            DocumentTable::Books,
+            &book,
+            Some(|book: &Book| book.path.to_str().unwrap()),
+            None,
+        )?;
+
+        let state = AppState::new(config, db, None);
+        let server = setup_test_app(state);
+
+        let response = server.post(&format!("/metadata/refresh/{book_id}")).await;
+
+        response.assert_status(StatusCode::NO_CONTENT);
+
+        Ok(())
     }
 }

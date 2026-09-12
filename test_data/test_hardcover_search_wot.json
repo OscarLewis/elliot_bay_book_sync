@@ -292,7 +292,7 @@
       },
       {
         "document": {
-          "activities_count": 2522,
+          "activities_count": 2523,
           "alternative_titles": [
             "The Eye of the World",
             "The Eye of the World - Book One of The Wheel of Time",
@@ -361,8 +361,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -575,8 +579,8 @@
           ],
           "pages": 804,
           "prompts_count": 7,
-          "rating": 4.058585428206221,
-          "ratings_count": 2347,
+          "rating": 4.059386973180077,
+          "ratings_count": 2349,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 211,
@@ -601,8 +605,8 @@
             "#digitally-own"
           ],
           "title": "The Eye of the World",
-          "users_count": 5440,
-          "users_read_count": 3287
+          "users_count": 5445,
+          "users_read_count": 3291
         },
         "highlight": {
           "alternative_titles": [
@@ -1162,8 +1166,8 @@
           ],
           "pages": 720,
           "prompts_count": 0,
-          "rating": 4.189098660170524,
-          "ratings_count": 1642,
+          "rating": 4.190085158150851,
+          "ratings_count": 1644,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 101,
@@ -1188,8 +1192,8 @@
             "fiction"
           ],
           "title": "The Great Hunt",
-          "users_count": 2923,
-          "users_read_count": 2406
+          "users_count": 2926,
+          "users_read_count": 2409
         },
         "highlight": {
           "alternative_titles": [
@@ -1672,8 +1676,8 @@
           ],
           "pages": 672,
           "prompts_count": 0,
-          "rating": 4.198514517218096,
-          "ratings_count": 1481,
+          "rating": 4.200134770889488,
+          "ratings_count": 1484,
           "release_date": "1991-01-01",
           "release_year": 1991,
           "reviews_count": 82,
@@ -1697,8 +1701,8 @@
             "fiction"
           ],
           "title": "The Dragon Reborn",
-          "users_count": 2686,
-          "users_read_count": 2208
+          "users_count": 2690,
+          "users_read_count": 2212
         },
         "highlight": {
           "alternative_titles": [
@@ -1936,7 +1940,7 @@
       },
       {
         "document": {
-          "activities_count": 1675,
+          "activities_count": 1674,
           "alternative_titles": [
             "[Wheel of Time, Book 4] The Shadow Rising",
             "The Shadow Rising - Book Four of The Wheel of Time",
@@ -2135,8 +2139,8 @@
           ],
           "pages": 1024,
           "prompts_count": 1,
-          "rating": 4.205764611689352,
-          "ratings_count": 1249,
+          "rating": 4.206869009584665,
+          "ratings_count": 1252,
           "release_date": "1992-09-15",
           "release_year": 1992,
           "reviews_count": 66,
@@ -2161,8 +2165,8 @@
             "fiction"
           ],
           "title": "The Shadow Rising",
-          "users_count": 2400,
-          "users_read_count": 1941
+          "users_count": 2404,
+          "users_read_count": 1945
         },
         "highlight": {
           "alternative_titles": [
@@ -2605,7 +2609,7 @@
             "8580579864",
             "9788580579864"
           ],
-          "lists_count": 680,
+          "lists_count": 677,
           "moods": [
             "Adventurous",
             "tense",
@@ -2620,8 +2624,8 @@
           ],
           "pages": 928,
           "prompts_count": 1,
-          "rating": 4.0902394106814,
-          "ratings_count": 1086,
+          "rating": 4.091827364554637,
+          "ratings_count": 1089,
           "release_date": "1993-01-01",
           "release_year": 1993,
           "reviews_count": 52,
@@ -2646,8 +2650,8 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2179,
-          "users_read_count": 1716
+          "users_count": 2183,
+          "users_read_count": 1720
         },
         "highlight": {
           "alternative_titles": [
@@ -3102,7 +3106,7 @@
             "8448034570",
             "9788448034573"
           ],
-          "lists_count": 608,
+          "lists_count": 607,
           "moods": [
             "Adventurous",
             "dark",
@@ -3116,8 +3120,8 @@
           ],
           "pages": 1040,
           "prompts_count": 1,
-          "rating": 4.068560235063663,
-          "ratings_count": 1021,
+          "rating": 4.0703125,
+          "ratings_count": 1024,
           "release_date": "1994-01-01",
           "release_year": 1994,
           "reviews_count": 50,
@@ -3141,8 +3145,8 @@
             "fantlab-import"
           ],
           "title": "Lord of Chaos",
-          "users_count": 2061,
-          "users_read_count": 1613
+          "users_count": 2065,
+          "users_read_count": 1617
         },
         "highlight": {
           "alternative_titles": [
@@ -3543,7 +3547,7 @@
             "8377851903",
             "9788377851906"
           ],
-          "lists_count": 552,
+          "lists_count": 551,
           "moods": [
             "Adventurous",
             "dark",
@@ -3558,8 +3562,8 @@
           ],
           "pages": 768,
           "prompts_count": 1,
-          "rating": 3.861231101511879,
-          "ratings_count": 926,
+          "rating": 3.863685344827586,
+          "ratings_count": 928,
           "release_date": "1996-01-01",
           "release_year": 1996,
           "reviews_count": 41,
@@ -3583,8 +3587,8 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 1971,
-          "users_read_count": 1505
+          "users_count": 1974,
+          "users_read_count": 1508
         },
         "highlight": {
           "alternative_titles": [
@@ -3970,7 +3974,7 @@
             "9024564530",
             "9789024564538"
           ],
-          "lists_count": 531,
+          "lists_count": 530,
           "moods": [
             "Adventurous",
             "dark",
@@ -3983,8 +3987,8 @@
           ],
           "pages": 608,
           "prompts_count": 0,
-          "rating": 3.719626168224299,
-          "ratings_count": 856,
+          "rating": 3.722610722610723,
+          "ratings_count": 858,
           "release_date": "1998-01-01",
           "release_year": 1998,
           "reviews_count": 34,
@@ -4011,8 +4015,8 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1871,
-          "users_read_count": 1408
+          "users_count": 1874,
+          "users_read_count": 1411
         },
         "highlight": {
           "alternative_titles": [
@@ -4353,7 +4357,7 @@
             "9788445007112",
             "3492959431"
           ],
-          "lists_count": 504,
+          "lists_count": 503,
           "moods": [
             "Adventurous",
             "dark",
@@ -4368,8 +4372,8 @@
           ],
           "pages": 848,
           "prompts_count": 1,
-          "rating": 4.437273823884198,
-          "ratings_count": 829,
+          "rating": 4.438628158844765,
+          "ratings_count": 831,
           "release_date": "2009-11-07",
           "release_year": 2009,
           "reviews_count": 47,
@@ -4394,8 +4398,8 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1805,
-          "users_read_count": 1305
+          "users_count": 1808,
+          "users_read_count": 1308
         },
         "highlight": {
           "alternative_titles": [
@@ -4714,7 +4718,7 @@
             "030794123X",
             "9780307941237"
           ],
-          "lists_count": 530,
+          "lists_count": 529,
           "moods": [
             "Adventurous",
             "dark",
@@ -4729,8 +4733,8 @@
           ],
           "pages": 832,
           "prompts_count": 0,
-          "rating": 3.46002538071066,
-          "ratings_count": 788,
+          "rating": 3.463924050632911,
+          "ratings_count": 790,
           "release_date": "2003-01-01",
           "release_year": 2003,
           "reviews_count": 48,
@@ -4755,8 +4759,8 @@
             "Fantasy - Epic"
           ],
           "title": "Crossroads of Twilight",
-          "users_count": 1759,
-          "users_read_count": 1293
+          "users_count": 1762,
+          "users_read_count": 1296
         },
         "highlight": {
           "alternative_titles": [
@@ -5031,12 +5035,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -5054,12 +5054,8 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5175,8 +5171,8 @@
           ],
           "pages": 976,
           "prompts_count": 1,
-          "rating": 4.445222929936306,
-          "ratings_count": 785,
+          "rating": 4.447335025380711,
+          "ratings_count": 788,
           "release_date": "2010-11-02",
           "release_year": 2010,
           "reviews_count": 43,
@@ -5200,8 +5196,8 @@
             "fiction"
           ],
           "title": "Towers of Midnight",
-          "users_count": 1755,
-          "users_read_count": 1248
+          "users_count": 1759,
+          "users_read_count": 1252
         },
         "highlight": {
           "alternative_titles": [
@@ -5527,7 +5523,7 @@
             "0748115447",
             "9780748115440"
           ],
-          "lists_count": 522,
+          "lists_count": 521,
           "moods": [
             "Adventurous",
             "dark",
@@ -5542,8 +5538,8 @@
           ],
           "pages": 832,
           "prompts_count": 1,
-          "rating": 4.073834196891192,
-          "ratings_count": 772,
+          "rating": 4.074935400516796,
+          "ratings_count": 774,
           "release_date": "2005-10-03",
           "release_year": 2005,
           "reviews_count": 38,
@@ -5567,8 +5563,8 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1743,
-          "users_read_count": 1271
+          "users_count": 1746,
+          "users_read_count": 1274
         },
         "highlight": {
           "alternative_titles": [
@@ -5857,10 +5853,10 @@
             "9791028112462",
             "184149870X",
             "9781841498706",
-            "8377857103",
-            "9788377857106",
             "1548602523",
             "9781548602529",
+            "8377857103",
+            "9788377857106",
             "8445007130",
             "9788445007136",
             "142721025X",
@@ -5912,8 +5908,8 @@
           ],
           "pages": 1056,
           "prompts_count": 3,
-          "rating": 4.6,
-          "ratings_count": 790,
+          "rating": 4.601513240857503,
+          "ratings_count": 793,
           "release_date": "2013-01-01",
           "release_year": 2013,
           "reviews_count": 79,
@@ -5938,8 +5934,8 @@
             "dark"
           ],
           "title": "A Memory of Light",
-          "users_count": 1732,
-          "users_read_count": 1222
+          "users_count": 1736,
+          "users_read_count": 1226
         },
         "highlight": {
           "alternative_titles": [
@@ -6139,7 +6135,7 @@
       },
       {
         "document": {
-          "activities_count": 60,
+          "activities_count": 61,
           "alternative_titles": [
             "The Strike at Shayol Ghul",
             "El ataque a Shayol Ghul"
@@ -6229,8 +6225,8 @@
           "slug": "the-strike-at-shayol-ghul",
           "tags": [],
           "title": "The Strike at Shayol Ghul",
-          "users_count": 210,
-          "users_read_count": 98
+          "users_count": 211,
+          "users_read_count": 99
         },
         "highlight": {
           "alternative_titles": [
@@ -6349,12 +6345,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -6418,11 +6410,11 @@
           "moods": [],
           "pages": 304,
           "prompts_count": 0,
-          "rating": 3.697368421052631,
-          "ratings_count": 38,
+          "rating": 3.609375,
+          "ratings_count": 32,
           "release_date": "1997-01-01",
           "release_year": 1997,
-          "reviews_count": 2,
+          "reviews_count": 1,
           "series_ids": [
             1097
           ],
@@ -6432,8 +6424,8 @@
           "slug": "the-world-of-robert-jordans-the-wheel-of-time",
           "tags": [],
           "title": "The World of Robert Jordan's The Wheel of Time",
-          "users_count": 125,
-          "users_read_count": 67
+          "users_count": 113,
+          "users_read_count": 60
         },
         "highlight": {
           "alternative_titles": [
@@ -8552,7 +8544,7 @@
         }
       }
     ],
-    "out_of": 2575140,
+    "out_of": 2575811,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8561,6 +8553,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 112
+    "search_time_ms": 55
   }
 }

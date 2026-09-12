@@ -1,16 +1,15 @@
-use strsim::jaro_winkler;
-use tracing::debug;
-
 use crate::{
     AppState,
     database::document::DocumentTable,
     error::AppError,
     library::book::Book,
     metadata::{
-        epub::parse::parse_metadata_ebook, fetch_meta::fetch_metadata_for_book,
-        match_results::match_metadata_for_book,
+        epub::parse::parse_metadata_ebook, extract_images::extract_imgs_for_books,
+        fetch_meta::fetch_metadata_for_book, match_results::match_metadata_for_book,
     },
 };
+use strsim::jaro_winkler;
+use tracing::debug;
 
 pub async fn update_metadata(
     state: AppState,
@@ -32,6 +31,33 @@ pub async fn update_metadata(
             book.hardcover_id = Some(result.id);
             book.hardcover_slug = Some(result.slug);
             book.title = Some(result.title);
+            book.description = result.description;
+
+            book.hardcover_series_id = result
+                .featured_series
+                .as_ref()
+                .and_then(|series| series.series.as_ref())
+                .and_then(|series| series.id)
+                .map(|id| id as u64);
+
+            book.series_name = result
+                .featured_series
+                .as_ref()
+                .and_then(|series| series.series.as_ref())
+                .and_then(|series| series.name.clone());
+
+            book.series_position = result
+                .featured_series
+                .as_ref()
+                .and_then(|series| series.position);
+
+            book.hardcover_img_id = result
+                .image
+                .as_ref()
+                .and_then(|image| image.id as Option<u64>);
+
+            book.hardcover_img_url = result.image.as_ref().and_then(|image| image.url.clone());
+
             // Check this author name against the one in the epub
             book.author = metadata
                 .author
@@ -69,6 +95,16 @@ pub async fn update_metadata(
         )?;
     }
 
+    let books_needing_images = state
+        .db
+        .get_all(DocumentTable::Books)?
+        .into_iter()
+        .filter(|(_, book): &(String, Book)| !book.has_image)
+        .collect();
+
+    extract_imgs_for_books(books_needing_images, state, true).await?;
+
+    debug!("Finished metadata refresh");
     Ok(())
 }
 

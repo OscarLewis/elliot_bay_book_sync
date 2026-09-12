@@ -34,7 +34,7 @@ pub async fn parse_metadata_ebook(path: PathBuf) -> Result<EpubDiskMetadata, App
     })
 }
 
-pub async fn extract_epub_cover(
+pub async fn extract_epub_cover_to_fs(
     path: PathBuf,
     output_path: PathBuf,
 ) -> Result<Option<PathBuf>, AppError> {
@@ -62,6 +62,19 @@ pub async fn extract_epub_cover(
     Ok(Some(result))
 }
 
+pub fn extract_epub_cover(path: PathBuf) -> Result<Option<image::DynamicImage>, AppError> {
+    let mut doc = EpubDoc::new(path)?;
+
+    let Some((cover_data, _mime)) = doc.get_cover() else {
+        return Ok(None);
+    };
+
+    let image = image::load_from_memory(&cover_data)
+        .map_err(|err| AppError::Internal(format!("Failed to decode cover: {err}")))?;
+
+    Ok(Some(image))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -85,14 +98,14 @@ mod tests {
     }
 
     #[test(tokio::test)]
-    async fn test_extract_cover() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_extract_cover_to_fs() -> Result<(), Box<dyn std::error::Error>> {
         let path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
 
         let output_path = PathBuf::from("test_data/test-cover");
 
-        let cover_path = extract_epub_cover(path, output_path).await?;
+        let cover_path = extract_epub_cover_to_fs(path, output_path).await?;
 
         assert!(cover_path.is_some());
 
@@ -104,6 +117,26 @@ mod tests {
         assert!(cover_path_disk.exists());
 
         debug!("Cover extracted to: {}", cover_path_disk.display());
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_extract_cover() -> Result<(), Box<dyn std::error::Error>> {
+        let path = PathBuf::from(
+            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
+        );
+
+        let cover = extract_epub_cover(path)?;
+
+        assert!(cover.is_some());
+
+        let cover = cover.unwrap();
+
+        assert!(cover.width() > 0);
+        assert!(cover.height() > 0);
+
+        debug!("Cover extracted: {}x{}", cover.width(), cover.height());
 
         Ok(())
     }
