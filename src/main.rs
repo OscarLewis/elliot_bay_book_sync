@@ -79,7 +79,7 @@ pub fn app(state: AppState) -> Router {
         )
         .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
-        .layer(TraceLayer::new_for_http())
+        // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
 }
 
@@ -89,7 +89,7 @@ async fn main() -> Result<(), AppError> {
     tracing_subscriber::registry()
         .with(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("kobo_sync_rs=debug,tower_http=info")),
+                .unwrap_or_else(|_| EnvFilter::new("ebbooks=debug,tower_http=info")),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
