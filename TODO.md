@@ -28,9 +28,9 @@
 
 [x] - Device authentication - "/kobo/{token}/v1/auth/device"
 
-[ ] - OAuth token - "/kobo/{token}/oauth/token" 
+[X] - OAuth token - "/kobo/{token}/oauth/token" 
 
-[ ] - OAuth refresh - "/kobo/{token}/oauth/refresh"
+[X] - OAuth refresh - "/kobo/{token}/oauth/refresh"
 
 [ ] - OAuth discovery - "/kobo/{token}/oauth/.well-known/openid-configuration"
 
