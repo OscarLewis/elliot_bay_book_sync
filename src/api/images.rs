@@ -115,7 +115,6 @@ async fn image_handler_inner(
             let is_greyscale = is_greyscale.eq_ignore_ascii_case("true");
 
             // TODO implment quality (JPEG image quality)
-            // book-images/b07219a4-41c4-4a51-8024-d009488df748/300/569/90/False/the-eye-of-the-world-1.jpg
             if let Some(canonical_cover) = book.image()? {
                 let mut cover_image =
                     canonical_cover.resize(width, u32::MAX, image::imageops::FilterType::Lanczos3);
