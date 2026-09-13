@@ -1,7 +1,7 @@
 use crate::{
     AppState,
     api::{
-        auth::device_auth_route::device_auth_request_handler,
+        auth::{device_auth_route::device_auth_request_handler, oauth::oauth_token_handler},
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
     },
@@ -14,10 +14,12 @@ use axum::{
 /// Return a `Router<AppState>` so it can be merged with the main app router
 pub fn kobo_routes() -> Router<AppState> {
     Router::new()
+        // Initialization
         .route(
             "/kobo/{token}/v1/initialization",
             get(initialization_handler),
         )
+        // Image Routes
         .route(
             "/kobo/{token}/{book_uuid}/{width}/{height}/{isGreyscale}/image.jpg",
             get(image_handler),
@@ -26,8 +28,14 @@ pub fn kobo_routes() -> Router<AppState> {
             "/kobo/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}/image.jpg",
             get(image_handler_with_quality),
         )
+        // Auth Routes
         .route(
             "/kobo/{token}/v1/auth/device",
             post(device_auth_request_handler),
+        )
+        // Matches /kobo/{token}/oauth/token, /kobo/{token}/oauth/refresh, /kobo/{token}/oauth/foo/bar, etc.
+        .route(
+            "/kobo/{token}/oauth/{*subpath}",
+            get(oauth_token_handler).post(oauth_token_handler),
         )
 }
