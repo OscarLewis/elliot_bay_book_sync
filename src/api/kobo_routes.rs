@@ -1,7 +1,10 @@
 use crate::{
     AppState,
     api::{
-        auth::{device_auth_route::device_auth_request_handler, oauth::oauth_token_handler},
+        auth::{
+            device_auth_route::device_auth_request_handler, oauth::oauth_token_handler,
+            oidc::oidc_well_known_configuration_handler,
+        },
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
     },
@@ -37,5 +40,9 @@ pub fn kobo_routes() -> Router<AppState> {
         .route(
             "/kobo/{token}/oauth/{*subpath}",
             get(oauth_token_handler).post(oauth_token_handler),
+        )
+        .route(
+            "/kobo/{token}/oauth/.well-known/openid-configuration",
+            get(oidc_well_known_configuration_handler),
         )
 }

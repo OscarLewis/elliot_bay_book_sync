@@ -1,4 +1,4 @@
-use crate::{error::AppError, library::book::Book, scan::scanner::ScanStatus};
+use crate::{error::AppError, library::book::Book};
 use redb::{Builder, Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 const BOOK_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("book_docs");
 const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan_docs");
+const READING_STATE_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("reading_docs");
 
 const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
 const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
@@ -14,6 +15,7 @@ const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::ne
 pub enum DocumentTable {
     Books,
     Scans,
+    ReadingStates,
 }
 
 impl DocumentTable {
@@ -21,6 +23,7 @@ impl DocumentTable {
         match self {
             DocumentTable::Books => BOOK_COLLECTION,
             DocumentTable::Scans => SCAN_COLLECTION,
+            DocumentTable::ReadingStates => READING_STATE_COLLECTION,
         }
     }
 }
@@ -128,6 +131,12 @@ impl DocumentDB {
                         index_table.insert((time_fn(doc), id_uuid), id_str.as_str())?;
                     }
                 }
+                DocumentTable::ReadingStates => {
+                    if let Some(time_fn) = get_timestamp {
+                        let mut index_table = write_txn.open_table(SCAN_TIME_INDEX)?;
+                        index_table.insert((time_fn(doc), id_uuid), id_str.as_str())?;
+                    }
+                }
             }
         }
         write_txn.commit()?;
@@ -228,6 +237,9 @@ impl DocumentDB {
                             index_table.insert((new_time, id_uuid), id)?;
                         }
                     }
+                    DocumentTable::ReadingStates => {
+                        // TODO Update a Book ID / Reading State ID lookup table
+                    }
                 }
 
                 let payload = serde_json::to_vec(doc)?;
@@ -277,6 +289,9 @@ impl DocumentDB {
                                 }
                             }
                         }
+                    }
+                    DocumentTable::ReadingStates => {
+                        // TODO Delete from a Book ID / Reading State ID lookup table
                     }
                 }
                 table.remove(id)?;

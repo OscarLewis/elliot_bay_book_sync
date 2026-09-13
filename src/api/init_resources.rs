@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use tracing::debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ResourcesRoot {
@@ -452,27 +453,98 @@ impl Default for LocalizedPages {
 }
 
 pub fn patch_kobo_resources(
-    resources: &mut Resources,
+    resources: Resources,
     base_url: &str, // e.g. "https://books.example.com" or "http://192.168.1.50:8083"
     auth_token: &str,
     is_kobo_proxy_enabled: bool,
-) {
+) -> Resources {
     let clean_base = base_url.trim_end_matches('/');
 
+    let mut patched_resources = resources.clone();
+
     // Rewrite Cover Image Endpoints
-    resources.image_host = clean_base.to_string();
+    patched_resources.image_host = clean_base.to_string();
 
     let quality_url = format!(
         "{clean_base}/kobo/{auth_token}/cover/{{ImageId}}/{{width}}/{{height}}/{{Quality}}/isGreyscale"
     );
-    resources.image_url_quality_template = quality_url;
+    patched_resources.image_url_quality_template = quality_url;
 
     let standard_url =
         format!("{clean_base}/kobo/{auth_token}/cover/{{ImageId}}/{{width}}/{{height}}/false");
-    resources.image_url_template = standard_url;
+    patched_resources.image_url_template = standard_url;
 
     // Fallbacks when not proxying the official Kobo Store
     if !is_kobo_proxy_enabled {
-        resources.oauth_host = format!("{clean_base}/kobo/{auth_token}/oauth");
+        patched_resources.oauth_host = format!("{clean_base}/kobo/{auth_token}/oauth");
+    }
+
+    debug!(
+        original.image_host = %resources.image_host,
+        patched.image_host = %patched_resources.image_host,
+        original.image_url_quality_template = %resources.image_url_quality_template,
+        patched.image_url_quality_template = %patched_resources.image_url_quality_template,
+        original.image_url_template = %resources.image_url_template,
+        patched.image_url_template = %patched_resources.image_url_template,
+        original.oauth_host = %resources.oauth_host,
+        patched.oauth_host = %patched_resources.oauth_host,
+        is_kobo_proxy_enabled = is_kobo_proxy_enabled,
+        "Patched Kobo resources configuration"
+    );
+
+    patched_resources
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{AppState, config::AppConfig, database::document::DocumentDB};
+    use test_log::test;
+
+    #[test(tokio::test)]
+    async fn test_app_state_patched_resources_differ_from_defaults()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let custom_base_url = "https://books.example.com/";
+        let custom_auth_key = "secret_token_123";
+
+        let config = AppConfig {
+            base_url: custom_base_url.to_string(),
+            ebbooks_auth_key: custom_auth_key.to_string(),
+            proxy_kobo_store: false,
+            ..AppConfig::default()
+        };
+        let db = DocumentDB::open_in_memory()?;
+
+        let state = AppState::new(config, db, None);
+
+        // Lock both resource instances for comparison
+        let original = state.kobo_resources.lock().await;
+        let patched = state.patched_resources.lock().await;
+
+        let clean_base = custom_base_url.trim_end_matches('/');
+
+        // Image host should be updated to base_url without trailing slash
+        assert_ne!(original.image_host, patched.image_host);
+        assert_eq!(patched.image_host, clean_base);
+
+        // Image templates should include base_url and auth_token
+        assert_ne!(
+            original.image_url_quality_template,
+            patched.image_url_quality_template
+        );
+        assert!(patched.image_url_quality_template.contains(clean_base));
+        assert!(patched.image_url_quality_template.contains(custom_auth_key));
+
+        assert_ne!(original.image_url_template, patched.image_url_template);
+        assert!(patched.image_url_template.contains(clean_base));
+        assert!(patched.image_url_template.contains(custom_auth_key));
+
+        // OAuth host should be patched when proxy_kobo_store is false
+        assert_ne!(original.oauth_host, patched.oauth_host);
+        assert_eq!(
+            patched.oauth_host,
+            format!("{clean_base}/kobo/{custom_auth_key}/oauth")
+        );
+
+        Ok(())
     }
 }

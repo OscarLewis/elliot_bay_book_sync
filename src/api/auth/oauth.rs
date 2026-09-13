@@ -103,6 +103,7 @@ mod tests {
             db: Arc::new(db),
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         let server = setup_test_app(state);
@@ -169,6 +170,7 @@ mod tests {
             db: Arc::new(db),
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         let server = setup_test_app(state);
@@ -200,6 +202,7 @@ mod tests {
             db: Arc::new(db),
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
         let server = setup_test_app(state);
         let token = "test-token-123";

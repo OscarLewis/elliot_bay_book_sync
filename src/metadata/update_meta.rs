@@ -162,6 +162,7 @@ mod tests {
             db: Arc::new(db),
             hardcover_api_token,
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         update_metadata(state.clone(), vec![(book_id.clone(), book)]).await?;

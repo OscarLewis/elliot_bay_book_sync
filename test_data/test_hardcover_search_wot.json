@@ -22,9 +22,9 @@
     1123139,
     503242,
     543049,
-    584747,
     490423,
-    474308
+    474308,
+    498214
   ],
   "results": {
     "facet_counts": [],
@@ -560,7 +560,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1715,
+          "lists_count": 1716,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -575,8 +575,8 @@
           ],
           "pages": 804,
           "prompts_count": 7,
-          "rating": 4.06128074639525,
-          "ratings_count": 2358,
+          "rating": 4.060830860534125,
+          "ratings_count": 2359,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 211,
@@ -601,8 +601,8 @@
             "#digitally-own"
           ],
           "title": "The Eye of the World",
-          "users_count": 5464,
-          "users_read_count": 3303
+          "users_count": 5470,
+          "users_read_count": 3305
         },
         "highlight": {
           "alternative_titles": [
@@ -978,12 +978,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1166,8 +1162,8 @@
           ],
           "pages": 720,
           "prompts_count": 0,
-          "rating": 4.190865093768905,
-          "ratings_count": 1653,
+          "rating": 4.190145102781137,
+          "ratings_count": 1654,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 102,
@@ -1192,8 +1188,8 @@
             "fiction"
           ],
           "title": "The Great Hunt",
-          "users_count": 2941,
-          "users_read_count": 2423
+          "users_count": 2944,
+          "users_read_count": 2425
         },
         "highlight": {
           "alternative_titles": [
@@ -1672,8 +1668,8 @@
           ],
           "pages": 672,
           "prompts_count": 0,
-          "rating": 4.2,
-          "ratings_count": 1490,
+          "rating": 4.200536552649229,
+          "ratings_count": 1491,
           "release_date": "1991-01-01",
           "release_year": 1991,
           "reviews_count": 83,
@@ -1697,8 +1693,8 @@
             "fiction"
           ],
           "title": "The Dragon Reborn",
-          "users_count": 2703,
-          "users_read_count": 2224
+          "users_count": 2707,
+          "users_read_count": 2226
         },
         "highlight": {
           "alternative_titles": [
@@ -2139,8 +2135,8 @@
           ],
           "pages": 1024,
           "prompts_count": 1,
-          "rating": 4.20859872611465,
-          "ratings_count": 1256,
+          "rating": 4.208432776451869,
+          "ratings_count": 1257,
           "release_date": "1992-09-15",
           "release_year": 1992,
           "reviews_count": 66,
@@ -2165,8 +2161,8 @@
             "fiction"
           ],
           "title": "The Shadow Rising",
-          "users_count": 2413,
-          "users_read_count": 1951
+          "users_count": 2417,
+          "users_read_count": 1953
         },
         "highlight": {
           "alternative_titles": [
@@ -2624,8 +2620,8 @@
           ],
           "pages": 928,
           "prompts_count": 1,
-          "rating": 4.092948717948718,
-          "ratings_count": 1092,
+          "rating": 4.093778591033852,
+          "ratings_count": 1093,
           "release_date": "1993-01-01",
           "release_year": 1993,
           "reviews_count": 52,
@@ -2650,8 +2646,8 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2189,
-          "users_read_count": 1725
+          "users_count": 2193,
+          "users_read_count": 1727
         },
         "highlight": {
           "alternative_titles": [
@@ -3124,8 +3120,8 @@
           ],
           "pages": 1040,
           "prompts_count": 1,
-          "rating": 4.071011673151751,
-          "ratings_count": 1028,
+          "rating": 4.071914480077745,
+          "ratings_count": 1029,
           "release_date": "1994-01-01",
           "release_year": 1994,
           "reviews_count": 50,
@@ -3149,8 +3145,8 @@
             "fantlab-import"
           ],
           "title": "Lord of Chaos",
-          "users_count": 2072,
-          "users_read_count": 1623
+          "users_count": 2076,
+          "users_read_count": 1625
         },
         "highlight": {
           "alternative_titles": [
@@ -3566,8 +3562,8 @@
           ],
           "pages": 768,
           "prompts_count": 1,
-          "rating": 3.862808145766345,
-          "ratings_count": 933,
+          "rating": 3.861884368308351,
+          "ratings_count": 934,
           "release_date": "1996-01-01",
           "release_year": 1996,
           "reviews_count": 41,
@@ -3591,8 +3587,8 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 1982,
-          "users_read_count": 1515
+          "users_count": 1986,
+          "users_read_count": 1517
         },
         "highlight": {
           "alternative_titles": [
@@ -3987,8 +3983,8 @@
           ],
           "pages": 608,
           "prompts_count": 0,
-          "rating": 3.721577726218098,
-          "ratings_count": 862,
+          "rating": 3.720741599073001,
+          "ratings_count": 863,
           "release_date": "1998-01-01",
           "release_year": 1998,
           "reviews_count": 34,
@@ -4015,8 +4011,8 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1881,
-          "users_read_count": 1417
+          "users_count": 1885,
+          "users_read_count": 1419
         },
         "highlight": {
           "alternative_titles": [
@@ -4380,8 +4376,8 @@
           ],
           "pages": 848,
           "prompts_count": 1,
-          "rating": 4.438922155688623,
-          "ratings_count": 835,
+          "rating": 4.439593301435407,
+          "ratings_count": 836,
           "release_date": "2009-11-07",
           "release_year": 2009,
           "reviews_count": 47,
@@ -4406,8 +4402,8 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1814,
-          "users_read_count": 1314
+          "users_count": 1818,
+          "users_read_count": 1316
         },
         "highlight": {
           "alternative_titles": [
@@ -4741,8 +4737,8 @@
           ],
           "pages": 832,
           "prompts_count": 0,
-          "rating": 3.463476070528967,
-          "ratings_count": 794,
+          "rating": 3.461635220125786,
+          "ratings_count": 795,
           "release_date": "2003-01-01",
           "release_year": 2003,
           "reviews_count": 48,
@@ -4767,8 +4763,8 @@
             "Fantasy - Epic"
           ],
           "title": "Crossroads of Twilight",
-          "users_count": 1770,
-          "users_read_count": 1302
+          "users_count": 1774,
+          "users_read_count": 1304
         },
         "highlight": {
           "alternative_titles": [
@@ -4998,7 +4994,7 @@
       },
       {
         "document": {
-          "activities_count": 1034,
+          "activities_count": 1036,
           "alternative_titles": [
             "Towers of Midnight",
             "Towers of Midnight: Book Thirteen of the Wheel of Time",
@@ -5172,7 +5168,7 @@
             "1427210233",
             "9781427210234"
           ],
-          "lists_count": 459,
+          "lists_count": 460,
           "moods": [
             "Adventurous",
             "tense",
@@ -5187,8 +5183,8 @@
           ],
           "pages": 976,
           "prompts_count": 1,
-          "rating": 4.445638432364096,
-          "ratings_count": 791,
+          "rating": 4.445075757575758,
+          "ratings_count": 792,
           "release_date": "2010-11-02",
           "release_year": 2010,
           "reviews_count": 43,
@@ -5212,8 +5208,8 @@
             "fiction"
           ],
           "title": "Towers of Midnight",
-          "users_count": 1765,
-          "users_read_count": 1257
+          "users_count": 1769,
+          "users_read_count": 1259
         },
         "highlight": {
           "alternative_titles": [
@@ -5550,8 +5546,8 @@
           ],
           "pages": 832,
           "prompts_count": 1,
-          "rating": 4.073907455012853,
-          "ratings_count": 778,
+          "rating": 4.075096277278562,
+          "ratings_count": 779,
           "release_date": "2005-10-03",
           "release_year": 2005,
           "reviews_count": 38,
@@ -5575,8 +5571,8 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1753,
-          "users_read_count": 1280
+          "users_count": 1757,
+          "users_read_count": 1282
         },
         "highlight": {
           "alternative_titles": [
@@ -5786,8 +5782,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -5805,8 +5805,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5920,8 +5924,8 @@
           ],
           "pages": 1056,
           "prompts_count": 3,
-          "rating": 4.601758793969849,
-          "ratings_count": 796,
+          "rating": 4.602258469259724,
+          "ratings_count": 797,
           "release_date": "2013-01-01",
           "release_year": 2013,
           "reviews_count": 80,
@@ -5946,8 +5950,8 @@
             "dark"
           ],
           "title": "A Memory of Light",
-          "users_count": 1741,
-          "users_read_count": 1231
+          "users_count": 1745,
+          "users_read_count": 1233
         },
         "highlight": {
           "alternative_titles": [
@@ -6952,8 +6956,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -6971,8 +6979,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -7037,7 +7049,7 @@
           "subtitle": "Prologue to A Memory of Light",
           "tags": [],
           "title": "By Grace and Banners Fallen: Prologue to A Memory of Light",
-          "users_count": 94,
+          "users_count": 95,
           "users_read_count": 44
         },
         "highlight": {
@@ -7164,12 +7176,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -7187,12 +7195,8 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -7810,172 +7814,6 @@
       },
       {
         "document": {
-          "activities_count": 2,
-          "alternative_titles": [
-            "Glimmers: Prologue to Crossroads of Twilight"
-          ],
-          "author_names": [
-            "Robert Jordan"
-          ],
-          "book_category_id": 1,
-          "compilation": false,
-          "content_warnings": [],
-          "contribution_specializations": [],
-          "contribution_types": [
-            "Author"
-          ],
-          "contributions": [
-            {
-              "author": {
-                "id": 151072,
-                "image": {
-                  "color": "#671a08",
-                  "color_name": "Brown",
-                  "height": 330,
-                  "id": 5495291,
-                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
-                  "width": 330
-                },
-                "name": "Robert Jordan",
-                "slug": "robert-jordan"
-              },
-              "contribution": "Author",
-              "contributor_role_blurb": null,
-              "contributor_role_id": 1,
-              "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
-              "primary": true
-            }
-          ],
-          "featured_series": {
-            "collection": false,
-            "details": "prologue for 10",
-            "featured": true,
-            "id": 568561,
-            "position": 0.0,
-            "series": {
-              "books_count": 87,
-              "id": 1097,
-              "name": "The Wheel of Time",
-              "primary_books_count": 14,
-              "slug": "the-wheel-of-time"
-            },
-            "unreleased": false
-          },
-          "featured_series_position": 0.0,
-          "genres": [
-            "Fantasy",
-            "Adventure",
-            "Science Fiction"
-          ],
-          "has_audiobook": false,
-          "has_ebook": false,
-          "id": "584747",
-          "image": {},
-          "isbns": [],
-          "lists_count": 9,
-          "moods": [],
-          "prompts_count": 0,
-          "rating": 3.857142857142857,
-          "ratings_count": 7,
-          "release_date": "2002-07-01",
-          "release_year": 2002,
-          "reviews_count": 0,
-          "series_ids": [
-            1097
-          ],
-          "series_names": [
-            "The Wheel of Time"
-          ],
-          "slug": "glimmers",
-          "subtitle": "Prologue to Crossroads of Twilight",
-          "tags": [],
-          "title": "Glimmers: Prologue to Crossroads of Twilight",
-          "users_count": 63,
-          "users_read_count": 17
-        },
-        "highlight": {
-          "alternative_titles": [
-            {
-              "matched_tokens": [
-                "of"
-              ],
-              "snippet": "Glimmers: Prologue to Crossroads <mark>of</mark> Twilight"
-            }
-          ],
-          "series_names": [
-            {
-              "matched_tokens": [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            }
-          ],
-          "title": {
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "Glimmers: Prologue to Crossroads <mark>of</mark> Twilight"
-          }
-        },
-        "highlights": [
-          {
-            "field": "series_names",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ]
-            ],
-            "snippets": [
-              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            ]
-          },
-          {
-            "field": "title",
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "Glimmers: Prologue to Crossroads <mark>of</mark> Twilight"
-          },
-          {
-            "field": "alternative_titles",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "of"
-              ]
-            ],
-            "snippets": [
-              "Glimmers: Prologue to Crossroads <mark>of</mark> Twilight"
-            ]
-          }
-        ],
-        "text_match": 2314894167593451547,
-        "text_match_info": {
-          "best_field_score": "4419510927616",
-          "best_field_weight": 3,
-          "fields_matched": 3,
-          "num_tokens_dropped": 0,
-          "score": "2314894167593451547",
-          "tokens_matched": 4,
-          "typo_prefix_score": 0
-        }
-      },
-      {
-        "document": {
           "activities_count": 13,
           "alternative_titles": [
             "The Wheel of Time Companion",
@@ -8554,9 +8392,224 @@
           "tokens_matched": 4,
           "typo_prefix_score": 0
         }
+      },
+      {
+        "document": {
+          "activities_count": 2,
+          "alternative_titles": [
+            "What the Storm Means",
+            "What the Storm Means: Prologue to The Gathering Storm"
+          ],
+          "author_names": [
+            "Robert Jordan",
+            "Brandon Sanderson"
+          ],
+          "book_category_id": 2,
+          "compilation": false,
+          "content_warnings": [],
+          "contribution_specializations": [],
+          "contribution_types": [
+            "Author"
+          ],
+          "contributions": [
+            {
+              "author": {
+                "id": 151072,
+                "image": {
+                  "color": "#671a08",
+                  "color_name": "Brown",
+                  "height": 330,
+                  "id": 5495291,
+                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
+                  "width": 330
+                },
+                "name": "Robert Jordan",
+                "slug": "robert-jordan"
+              },
+              "contribution": "Author",
+              "contributor_role_blurb": null,
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
+              "primary": true
+            },
+            {
+              "author": {
+                "id": 204214,
+                "image": {
+                  "color": "#6f1c0f",
+                  "color_name": "Brown",
+                  "height": 1000,
+                  "id": 6948605,
+                  "url": "https://assets.hardcover.app/author/204214/aa7250c9-0529-4c95-882f-6c9975634b21.jpg",
+                  "width": 1000
+                },
+                "name": "Brandon Sanderson",
+                "slug": "brandon-sanderson"
+              },
+              "contribution": "Author",
+              "contributor_role_blurb": null,
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
+              "primary": true
+            }
+          ],
+          "cover_color": "Black",
+          "description": "The Wheel of Time turns, and Ages come and pass. What was, what will be, and what is, may yet fall under the Shadow. In the Prologue to The Gathering Storm, the first volume of the last trilogy of Robert Jordan's Wheel of Time epic, Rand al'Thor, the Dragon Reborn, struggles to unite a fractured network of kingdoms and alliances in preparation for the Last Battle. As he attempts to halt the Seanchan encroachment northward---wishing he could form at least a temporary truce with the invaders---his allies watch in terror the shadow that seems to be growing within the heart of the Dragon Reborn himself. As with the previous three titles in the Wheel of Time series, this prologue from Robert Jordan's The Gathering Storm, completed by Brandon Sanderson, is available for sale before the book's official release date (October 27, 2009). At the Publisher's request, this title is being sold without Digital Rights Management Software (DRM) applied.",
+          "featured_series": {
+            "collection": false,
+            "details": "12 Prologue",
+            "featured": true,
+            "id": 421859,
+            "position": 11.9,
+            "series": {
+              "books_count": 87,
+              "id": 1097,
+              "name": "The Wheel of Time",
+              "primary_books_count": 14,
+              "slug": "the-wheel-of-time"
+            },
+            "unreleased": false
+          },
+          "featured_series_position": 11.9,
+          "genres": [],
+          "has_audiobook": false,
+          "has_ebook": true,
+          "id": "498214",
+          "image": {
+            "color": "#232013",
+            "color_name": "Black",
+            "height": 500,
+            "id": 4285499,
+            "url": "https://assets.hardcover.app/books/498214/7496511547881313.jpg",
+            "width": 377
+          },
+          "isbns": [
+            "1429952555",
+            "9781429952552"
+          ],
+          "lists_count": 14,
+          "moods": [],
+          "pages": 43,
+          "prompts_count": 0,
+          "rating": 4.4,
+          "ratings_count": 5,
+          "release_date": "2009-01-01",
+          "release_year": 2009,
+          "reviews_count": 0,
+          "series_ids": [
+            1097
+          ],
+          "series_names": [
+            "The Wheel of Time"
+          ],
+          "slug": "what-the-storm-means",
+          "subtitle": "Prologue to the Gathering Storm",
+          "tags": [],
+          "title": "What the Storm Means: Prologue to The Gathering Storm",
+          "users_count": 55,
+          "users_read_count": 11
+        },
+        "highlight": {
+          "alternative_titles": [
+            {
+              "matched_tokens": [
+                "the"
+              ],
+              "snippet": "What <mark>the</mark> Storm Means"
+            },
+            {
+              "matched_tokens": [
+                "the",
+                "The"
+              ],
+              "snippet": "What <mark>the</mark> Storm Means: Prologue to <mark>The</mark> Gathering Storm"
+            }
+          ],
+          "series_names": [
+            {
+              "matched_tokens": [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            }
+          ],
+          "title": {
+            "matched_tokens": [
+              "the",
+              "The"
+            ],
+            "snippet": "What <mark>the</mark> Storm Means: Prologue to <mark>The</mark> Gathering Storm"
+          }
+        },
+        "highlights": [
+          {
+            "field": "series_names",
+            "indices": [
+              0
+            ],
+            "matched_tokens": [
+              [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ]
+            ],
+            "snippets": [
+              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            ]
+          },
+          {
+            "field": "title",
+            "matched_tokens": [
+              "the",
+              "The"
+            ],
+            "snippet": "What <mark>the</mark> Storm Means: Prologue to <mark>The</mark> Gathering Storm"
+          },
+          {
+            "field": "alternative_titles",
+            "indices": [
+              0,
+              1
+            ],
+            "matched_tokens": [
+              [
+                "the"
+              ],
+              [
+                "the",
+                "The"
+              ]
+            ],
+            "snippets": [
+              "What <mark>the</mark> Storm Means",
+              "What <mark>the</mark> Storm Means: Prologue to <mark>The</mark> Gathering Storm"
+            ]
+          }
+        ],
+        "text_match": 2314894167593451547,
+        "text_match_info": {
+          "best_field_score": "4419510927616",
+          "best_field_weight": 3,
+          "fields_matched": 3,
+          "num_tokens_dropped": 0,
+          "score": "2314894167593451547",
+          "tokens_matched": 4,
+          "typo_prefix_score": 0
+        }
       }
     ],
-    "out_of": 2577101,
+    "out_of": 2579008,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8565,6 +8618,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 87
+    "search_time_ms": 81
   }
 }
