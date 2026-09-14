@@ -241,43 +241,58 @@ pub async fn generate_sync_response(
                     .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
                     .collect();
 
-                // Consume response to get body
-                match store_response.json::<Vec<serde_json::Value>>().await {
-                    Ok(store_sync_results) => {
-                        // Convert serde_json::Value to SyncResult
-                        for val in store_sync_results {
-                            if let Ok(sync_result) = serde_json::from_value::<SyncResult>(val) {
-                                final_results.push(sync_result);
+                // Read body as text first so we can log it when it isn't what we expect
+                let body_text = match store_response.text().await {
+                    Ok(t) => t,
+                    Err(e) => {
+                        error!(?e, "Failed to read Kobo store response body");
+                        String::new()
+                    }
+                };
+
+                match serde_json::from_str::<serde_json::Value>(&body_text) {
+                    Ok(serde_json::Value::Array(items)) => {
+                        for val in items {
+                            match serde_json::from_value::<SyncResult>(val) {
+                                Ok(sync_result) => final_results.push(sync_result),
+                                Err(e) => debug!(?e, "Skipping unrecognized store sync result"),
                             }
                         }
-
-                        // Copy headers from store response
-                        if let Some(header) = sync_header {
-                            response_headers.insert(
-                                axum::http::HeaderName::from_static("x-kobo-sync"),
-                                header.clone(),
-                            );
-                        }
-                        if let Some(header) = sync_mode {
-                            response_headers.insert(
-                                axum::http::HeaderName::from_static("x-kobo-sync-mode"),
-                                header.clone(),
-                            );
-                        }
-                        if let Some(header) = recent_reads {
-                            response_headers.insert(
-                                axum::http::HeaderName::from_static("x-kobo-recent-reads"),
-                                header.clone(),
-                            );
-                        }
-
-                        // Merge store response token
-                        sync_token.merge_from_store_response(&store_headers);
+                    }
+                    Ok(other) => {
+                        error!(body = %other, "Kobo store returned non-array sync response");
                     }
                     Err(e) => {
-                        error!(?e, "Failed to parse Kobo store response");
+                        error!(
+                            ?e,
+                            body = %body_text.chars().take(500).collect::<String>(),
+                            "Failed to parse Kobo store response as JSON"
+                        );
                     }
                 }
+
+                // Copy headers from store response regardless of body shape
+                if let Some(header) = sync_header {
+                    response_headers.insert(
+                        axum::http::HeaderName::from_static("x-kobo-sync"),
+                        header.clone(),
+                    );
+                }
+                if let Some(header) = sync_mode {
+                    response_headers.insert(
+                        axum::http::HeaderName::from_static("x-kobo-sync-mode"),
+                        header.clone(),
+                    );
+                }
+                if let Some(header) = recent_reads {
+                    response_headers.insert(
+                        axum::http::HeaderName::from_static("x-kobo-recent-reads"),
+                        header.clone(),
+                    );
+                }
+
+                // Merge store response token
+                sync_token.merge_from_store_response(&store_headers);
             }
             Err(e) => {
                 error!(?e, "Failed to receive response from Kobo's sync endpoint");
