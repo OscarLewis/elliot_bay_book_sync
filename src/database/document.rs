@@ -9,8 +9,6 @@ const BOOK_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
     TableDefinition::new("book_docs");
 const SCAN_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
     TableDefinition::new("scan_docs");
-const READING_STATE_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
-    TableDefinition::new("reading_docs");
 const SYNCED_BOOKS: TableDefinition<&'static str, &'static [u8]> =
     TableDefinition::new("synced_books");
 
@@ -23,7 +21,6 @@ const SCAN_TIME_INDEX: TableDefinition<(&'static str, Uuid), &'static str> =
 pub enum DocumentTable {
     Books,
     Scans,
-    ReadingStates,
     SyncedBooks,
 }
 
@@ -32,7 +29,6 @@ impl DocumentTable {
         match self {
             DocumentTable::Books => BOOK_COLLECTION,
             DocumentTable::Scans => SCAN_COLLECTION,
-            DocumentTable::ReadingStates => READING_STATE_COLLECTION,
             DocumentTable::SyncedBooks => SYNCED_BOOKS,
         }
     }
@@ -141,9 +137,7 @@ impl DocumentDB {
                         index_table.insert((time_fn(doc), id_uuid), id_str.as_str())?;
                     }
                 }
-                DocumentTable::ReadingStates => {
-                    // TODO Create a Book ID / Reading State ID lookup table
-                }
+
                 DocumentTable::SyncedBooks => {}
             }
         }
@@ -245,9 +239,7 @@ impl DocumentDB {
                             index_table.insert((new_time, id_uuid), id)?;
                         }
                     }
-                    DocumentTable::ReadingStates => {
-                        // TODO Update a Book ID / Reading State ID lookup table
-                    }
+
                     DocumentTable::SyncedBooks => {}
                 }
 
@@ -299,9 +291,7 @@ impl DocumentDB {
                             }
                         }
                     }
-                    DocumentTable::ReadingStates => {
-                        // TODO Delete from a Book ID / Reading State ID lookup table
-                    }
+
                     DocumentTable::SyncedBooks => {}
                 }
                 table.remove(id)?;

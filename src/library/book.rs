@@ -36,6 +36,8 @@ pub struct Book {
     pub has_image: bool,
     #[serde(default)]
     pub image_path: Option<String>,
+    #[serde(default)]
+    pub reading_state: Option<ReadingStateDocument>,
 }
 
 impl Default for Book {
@@ -65,6 +67,7 @@ impl Book {
             has_image: false,
             image_path: None,
             modified_at: String::new(),
+            reading_state: None,
         }
     }
 
@@ -133,4 +136,71 @@ impl Book {
 
         Ok(Some(image))
     }
+}
+
+/** # Reading State tracking
+ * The Kobo ReadingState API keeps track of 4 timestamped entities: ReadingState, StatusInfo, Statistics, CurrentBookmark
+*/
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadingStateDocument {
+    pub book_id: String,
+    pub entitlement_id: String,
+    pub created: DateTime<Utc>,
+    pub last_modified: DateTime<Utc>,
+    pub priority_timestamp: DateTime<Utc>,
+    pub status_info: StatusInfoDocument,
+    pub statistics: Option<StatisticsDocument>,
+    pub current_bookmark: Option<CurrentBookmarkDocument>,
+}
+
+/// Read Status enum, 1 means finished, 2 means in progress
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReadStatus {
+    Unread,
+    Finished,
+    InProgress,
+}
+
+impl ReadStatus {
+    pub fn from_i32(value: i32) -> Self {
+        match value {
+            1 => ReadStatus::Finished,
+            2 => ReadStatus::InProgress,
+            _ => ReadStatus::Unread,
+        }
+    }
+
+    pub fn as_i32(self) -> i32 {
+        match self {
+            ReadStatus::Unread => 0,
+            ReadStatus::Finished => 1,
+            ReadStatus::InProgress => 2,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatusInfoDocument {
+    pub status: ReadStatus,
+    pub last_modified: DateTime<Utc>,
+    pub last_time_started_reading: Option<DateTime<Utc>>,
+    pub times_started_reading: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatisticsDocument {
+    pub last_modified: DateTime<Utc>,
+    pub remaining_time_minutes: Option<i32>,
+    pub spent_reading_minutes: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CurrentBookmarkDocument {
+    pub last_modified: DateTime<Utc>,
+    pub location_source: Option<String>,
+    pub location_type: Option<String>,
+    pub location_value: Option<String>,
+    pub progress_percent: Option<f64>,
+    pub content_source_progress_percent: Option<f64>,
 }
