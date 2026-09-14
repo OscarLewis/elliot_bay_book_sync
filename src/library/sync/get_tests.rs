@@ -28,7 +28,7 @@ def handle_getests():
 */
 
 pub async fn get_tests_handler(
-    extract::Path((token, book_id)): extract::Path<(String, String)>,
+    extract::Path(token): extract::Path<String>,
     extract::State(state): extract::State<AppState>,
     uri: Uri,
     method: Method,
