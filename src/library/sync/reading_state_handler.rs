@@ -16,6 +16,7 @@ pub async fn reading_state_handler(
 ) -> Result<Response, AppError> {
     // Handles both GET and PUT
     // TODO Finish implementing reading state handler
+    // TODO Fetch and store reading state in Books document DB
     Ok(StatusCode::OK.into_response())
 }
 
