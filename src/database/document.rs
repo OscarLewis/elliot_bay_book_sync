@@ -1,4 +1,5 @@
 use crate::{error::AppError, library::book::Book};
+use chrono::{DateTime, Utc};
 use redb::{Builder, Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -35,13 +36,6 @@ impl DocumentTable {
             DocumentTable::SyncedBooks => SYNCED_BOOKS,
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncedBook {
-    pub book_id: String,
-    pub user_id: String,
-    pub synced_at: chrono::DateTime<chrono::Utc>,
 }
 
 pub struct DocumentDB {

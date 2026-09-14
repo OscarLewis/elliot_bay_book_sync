@@ -8,11 +8,13 @@ use crate::{
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
     },
-    library::sync::sync_handler::library_sync_handler,
+    library::sync::{
+        reading_state_handler::reading_state_handler, sync_handler::library_sync_handler,
+    },
 };
 use axum::{
     Router,
-    routing::{get, post},
+    routing::{get, post, put},
 };
 
 /// Return a `Router<AppState>` so it can be merged with the main app router
@@ -47,4 +49,8 @@ pub fn kobo_routes() -> Router<AppState> {
             get(oidc_well_known_configuration_handler),
         )
         .route("/kobo/{token}/v1/library/sync", get(library_sync_handler))
+        .route(
+            "/kobo/{token}/v1/library/{book_uuid}/state",
+            get(reading_state_handler).put(reading_state_handler),
+        )
 }

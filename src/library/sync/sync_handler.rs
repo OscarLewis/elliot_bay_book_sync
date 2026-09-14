@@ -1,14 +1,13 @@
 use crate::{
     AppState,
     api::make_requests::{get_download_url_format_for_book, make_request_to_kobo_store},
-    database::document::{DocumentTable, SyncedBook},
+    database::document::DocumentTable,
     error::AppError,
     library::{
         book::Book,
         sync::{
-            entitlement_models::{
-                ActivePeriod, BookEntitlement, BookMetadata, Entitlement, SyncResult,
-            },
+            entitlement_models::{Entitlement, SyncResult},
+            sync_document::SyncedBookDocument,
             sync_token::{SYNC_TOKEN_HEADER, SyncToken},
         },
     },
@@ -19,7 +18,6 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use chrono::{TimeZone, Utc};
-use reqwest::StatusCode;
 use std::collections::{HashMap, HashSet};
 use tracing::{debug, error};
 
@@ -47,7 +45,8 @@ pub async fn library_sync_handler(
     debug!(url_format, "Download link format");
 
     // Fetch all synced book records and library books
-    let synced_books: Vec<(String, SyncedBook)> = state.db.get_all(DocumentTable::SyncedBooks)?;
+    let synced_books: Vec<(String, SyncedBookDocument)> =
+        state.db.get_all(DocumentTable::SyncedBooks)?;
     // let books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
 
     // Collect database results directly into a HashMap
@@ -116,9 +115,12 @@ pub async fn library_sync_handler(
                 });
             }
 
-            state
-                .db
-                .delete::<SyncedBook>(DocumentTable::SyncedBooks, book_id, None, None)?;
+            state.db.delete::<SyncedBookDocument>(
+                DocumentTable::SyncedBooks,
+                book_id,
+                None,
+                None,
+            )?;
         }
     }
 
@@ -183,7 +185,7 @@ pub async fn library_sync_handler(
         new_books_last_created = std::cmp::max(new_books_last_created, book_modified);
 
         // Mark book as synced
-        let synced = SyncedBook {
+        let synced = SyncedBookDocument {
             book_id: book_id.clone(),
             user_id: "default".to_string(),
             synced_at: Utc::now(),

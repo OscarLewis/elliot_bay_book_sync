@@ -1,11 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
-
+use crate::{config::AppConfig, library::book::Book};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
-
-use crate::{app, config::AppConfig, library::book::Book};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]

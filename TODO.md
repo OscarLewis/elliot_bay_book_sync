@@ -1,4 +1,6 @@
 # Todos
+## Features (soon)
+[ ] - Reading state sync
 
 
 ## Routes 
@@ -8,13 +10,13 @@
 
 [x] - Cover images with quality - "/kobo/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}/image.jpg"
 
-[ ] - Library sync - "/kobo/{token}/v1/library/sync"
+[x] - Library sync - "/kobo/{token}/v1/library/sync"
 
 [ ] - Book metadata - "/kobo/{token}/v1/library/{book_uuid}/metadata"
 
 [ ] - Book download - "/kobo/{token}/download/{book_id}/{book_format}"
 
-[ ] - Reading state - "/kobo/{token}/v1/library/{book_uuid}/state"
+[ ] - Reading state - "/kobo/{token}/v1/library/{book_uuid}/state" - PUT REQ to save state to DB
 
 [ ] - Create collection - "/kobo/{token}/v1/library/tags"
 
@@ -39,3 +41,6 @@
   - [ ] /api/v3/content/{...}/annotations
   - [ ] /api/UserStorage/{...}
   - [ ] /api/internal/notebooks/{...}
+
+## Features (far)
+[ ] - Hardcover reading percentage sync
