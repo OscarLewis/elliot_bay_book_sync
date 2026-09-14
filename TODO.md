@@ -15,6 +15,8 @@
 
 [x] - Reading state - "/kobo/{token}/v1/library/{book_uuid}/state"
 
+[ ] - Delete library item - DELETE req type "/v1/library/{book_uuid}"
+
 [ ] - Create collection - "/kobo/{token}/v1/library/tags"
 
 [ ] - Update/delete collection - "/kobo/{token}/v1/library/tags/{tag_id}"

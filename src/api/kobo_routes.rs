@@ -9,6 +9,7 @@ use crate::{
         initialization::initialization_handler,
     },
     library::sync::{
+        delete_library_item_handler::library_item_delete_handler,
         download_handler::{self, download_request_handler},
         get_tests::get_tests_handler,
         metadata_handler::metadata_request_handler,
@@ -19,7 +20,7 @@ use crate::{
 };
 use axum::{
     Router,
-    routing::{any, get, post, put},
+    routing::{any, delete, get, post},
 };
 
 /// Return a `Router<AppState>` so it can be merged with the main app router
@@ -89,4 +90,8 @@ pub fn kobo_routes() -> Router<AppState> {
             any(dummy_proxy_handler),
         )
         .route("/kobo/{token}/v1/assets", any(dummy_proxy_handler))
+        .route(
+            "/kobo/{token}/v1/library/{book_uuid}",
+            delete(library_item_delete_handler),
+        )
 }

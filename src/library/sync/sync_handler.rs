@@ -47,6 +47,7 @@ pub async fn library_sync_handler(
     // Fetch all synced book records and library books
     let synced_books: Vec<(String, SyncedBookDocument)> =
         state.db.get_all(DocumentTable::SyncedBooks)?;
+
     // let books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
 
     // Collect database results directly into a HashMap
@@ -122,12 +123,17 @@ pub async fn library_sync_handler(
                 });
             }
 
-            state.db.delete::<SyncedBookDocument>(
-                DocumentTable::SyncedBooks,
-                book_id,
-                None,
-                None,
-            )?;
+            if let Some((doc_key, _)) = synced_books
+                .iter()
+                .find(|(_, doc)| doc.book_id == book_id.as_ref())
+            {
+                state.db.delete::<SyncedBookDocument>(
+                    DocumentTable::SyncedBooks,
+                    doc_key,
+                    None,
+                    None,
+                )?;
+            }
         }
     }
 
