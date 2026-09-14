@@ -14,6 +14,8 @@ pub async fn reading_state_handler(
     extract::Path((token, book_id)): extract::Path<(String, String)>,
     extract::State(state): extract::State<AppState>,
 ) -> Result<Response, AppError> {
+    // Handles both GET and PUT
+    // TODO Finish implementing reading state handler
     Ok(StatusCode::OK.into_response())
 }
 
