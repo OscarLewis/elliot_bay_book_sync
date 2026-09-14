@@ -50,7 +50,7 @@ pub async fn metadata_request_handler(
         book_id, "Received Kobo Metadata request"
     );
 
-    Ok(Json(metadata_entitlement).into_response())
+    Ok(Json(vec![metadata_entitlement]).into_response())
 }
 
 #[cfg(test)]
