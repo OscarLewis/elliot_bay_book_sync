@@ -72,6 +72,12 @@ pub async fn library_sync_handler(
     let mut new_reading_state_last_modified = sync_token.data.reading_state_last_modified;
     let mut new_archived_last_modified = Utc.timestamp_opt(0, 0).unwrap();
 
+    // Track whether this sync involves any locally-added books.
+    // Local books are never registered with Kobo's real catalog, so a
+    // sync that includes them should not be validated/proxied upstream —
+    // Kobo's store has no record of them and will reject the request.
+    let mut has_local_books = false;
+
     // Handle sync logic by comparing synced books ids versus the ids in our database
     let synced_book_ids: HashSet<String> = synced_books
         .iter()
@@ -92,6 +98,7 @@ pub async fn library_sync_handler(
             "Kobo Sync: found {} books to remove from device",
             books_to_delete_ids.len()
         );
+        has_local_books = true;
 
         for book_id in &books_to_delete_ids {
             // TODO maybe loop this similar to how `for (book_id, book) in books_to_sync` instead of HashMap
@@ -136,6 +143,7 @@ pub async fn library_sync_handler(
     );
 
     for (book_id, book) in books_to_sync {
+        has_local_books = true;
         let book_modified: chrono::DateTime<Utc> =
             book.modified_at.parse().unwrap_or_else(|_| Utc::now());
         let bm_string = book_modified.to_string();
@@ -202,7 +210,12 @@ pub async fn library_sync_handler(
     sync_token.data.books_last_created = new_books_last_created;
     sync_token.data.archive_last_modified = new_archived_last_modified;
 
-    generate_sync_response(&mut sync_token, sync_results, false, &state).await
+    // Only proxy to Kobo's real store when this sync doesn't touch local
+    // content — proxying a sync that contains locally-added books will
+    // fail with RequestBindingException, since Kobo has no record of them.
+    let should_proxy = state.config.proxy_kobo_store && !has_local_books;
+
+    generate_sync_response(&mut sync_token, sync_results, false, &state, should_proxy).await
 }
 
 pub async fn generate_sync_response(
@@ -210,6 +223,7 @@ pub async fn generate_sync_response(
     sync_results: Vec<SyncResult>,
     set_cont: bool,
     state: &AppState,
+    should_proxy: bool,
 ) -> Result<Response, AppError> {
     let mut response_headers = HeaderMap::new();
     let resources = state.kobo_resources.lock().await;
@@ -218,7 +232,7 @@ pub async fn generate_sync_response(
     let kobo_sync_endpoint = &resources.library_sync;
 
     // Optionally merge results from Kobo store
-    if state.config.proxy_kobo_store && !set_cont {
+    if should_proxy && !set_cont {
         match make_request_to_kobo_store(
             &state.req_client,
             reqwest::Method::POST,
@@ -407,7 +421,8 @@ mod tests {
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
 
-        let response = generate_sync_response(&mut sync_token, sync_results, false, &state).await?;
+        let response =
+            generate_sync_response(&mut sync_token, sync_results, false, &state, false).await?;
 
         assert_eq!(response.status(), StatusCode::OK);
         Ok(())
@@ -429,7 +444,8 @@ mod tests {
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
 
-        let response = generate_sync_response(&mut sync_token, sync_results, true, &state).await?;
+        let response =
+            generate_sync_response(&mut sync_token, sync_results, true, &state, false).await?;
 
         assert_eq!(response.status(), StatusCode::OK);
         assert!(
@@ -457,7 +473,8 @@ mod tests {
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
 
-        let response = generate_sync_response(&mut sync_token, sync_results, false, &state).await?;
+        let response =
+            generate_sync_response(&mut sync_token, sync_results, false, &state, false).await?;
 
         assert!(response.headers().get("x-kobo-synctoken").is_some());
         assert_eq!(
