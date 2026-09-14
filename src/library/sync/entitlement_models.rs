@@ -1,5 +1,10 @@
-use crate::{config::AppConfig, library::book::Book};
-use chrono::{DateTime, Utc};
+use crate::{
+    config::AppConfig,
+    library::book::{
+        Book, CurrentBookmarkDocument, ReadingStateDocument, StatisticsDocument, StatusInfoDocument,
+    },
+};
+use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tracing::debug;
@@ -72,6 +77,31 @@ pub struct ReadingState {
     pub current_bookmark: CurrentBookmark,
 }
 
+impl ReadingState {
+    pub fn from_document(doc: &ReadingStateDocument) -> Self {
+        Self {
+            entitlement_id: doc.entitlement_id.clone(),
+            created: doc.created.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            last_modified: doc.last_modified.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            priority_timestamp: doc
+                .priority_timestamp
+                .format("%Y-%m-%dT%H:%M:%SZ")
+                .to_string(),
+            status_info: StatusInfo::from_document(doc.status_info.clone()),
+            statistics: doc
+                .statistics
+                .clone()
+                .map(Statistics::from_document)
+                .unwrap_or_default(),
+            current_bookmark: doc
+                .current_bookmark
+                .clone()
+                .map(CurrentBookmark::from_document)
+                .unwrap_or_default(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct StatusInfo {
@@ -82,7 +112,20 @@ pub struct StatusInfo {
     pub last_time_started_reading: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl StatusInfo {
+    pub fn from_document(doc: StatusInfoDocument) -> Self {
+        Self {
+            status: doc.status.to_string(),
+            last_modified: doc.last_modified.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            last_time_started_reading: doc
+                .last_time_started_reading
+                .map(|dt| dt.format("%Y-%m-%dT%H:%M:%SZ").to_string()),
+            times_started_reading: doc.times_started_reading,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct Statistics {
     pub last_modified: String,
@@ -92,7 +135,17 @@ pub struct Statistics {
     pub remaining_time_minutes: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl Statistics {
+    pub fn from_document(doc: StatisticsDocument) -> Self {
+        Self {
+            last_modified: doc.last_modified.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            remaining_time_minutes: doc.remaining_time_minutes,
+            spent_reading_minutes: doc.spent_reading_minutes,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct CurrentBookmark {
     pub last_modified: String,
@@ -104,6 +157,26 @@ pub struct CurrentBookmark {
     pub location: Option<Location>,
 }
 
+impl CurrentBookmark {
+    pub fn from_document(doc: CurrentBookmarkDocument) -> Self {
+        // Construct Location only if all required fields are present
+        let location = match (doc.location_value, doc.location_type, doc.location_source) {
+            (Some(value), Some(location_type), Some(source)) => Some(Location {
+                value,
+                location_type,
+                source,
+            }),
+            _ => None,
+        };
+
+        Self {
+            last_modified: doc.last_modified.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            progress_percent: doc.progress_percent.map(|p| p as i32),
+            content_source_progress_percent: doc.content_source_progress_percent.map(|p| p as i32),
+            location,
+        }
+    }
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Location {
@@ -370,7 +443,7 @@ impl BookMetadata {
         let title = book.title.clone().unwrap_or_else(|| book.name.clone());
 
         // TODO Clean this up
-        let _contributor_roles = book.author.as_ref().map(|author| {
+        let contributor_roles = book.author.as_ref().map(|author| {
             vec![ContributorRole {
                 name: author.clone(),
             }]
@@ -411,112 +484,3 @@ impl BookMetadata {
         }
     }
 }
-
-// TODO: Implement From (String, Book) for BookMetadata (part of an Entitlement)
-// impl From<(String, Book)> for BookMetadata {
-//     fn from((book_id, book): (String, Book)) -> Self {
-//         // TODO: Map fields from `book` as needed
-//         Self {
-//             // title: book.title, // example mapping
-
-//             // Fills all remaining fields with their type's default value
-//             ..Default::default()
-//         }
-//     }
-// }
-/*
-def get_metadata(book):
-    download_urls = []
-
-    kepub_data = next((d for d in book.data if d.format == 'KEPUB'), None)
-    epub_data  = next((d for d in book.data if d.format == 'EPUB'),  None)
-
-    if kepub_data:
-        book_data, dl_format, published_format = kepub_data, 'kepub', 'KEPUB'
-    elif epub_data and config.config_kepubifypath:
-        book_data, dl_format, published_format = epub_data, 'kepub', 'KEPUB'
-    elif epub_data:
-        book_data, dl_format, published_format = epub_data, 'epub', 'EPUB3'
-    else:
-        book_data = None
-
-    if book_data:
-        try:
-            if get_epub_layout(book, book_data) == 'pre-paginated':
-                published_format = 'EPUB3FL'
-        except (zipfile.BadZipfile, FileNotFoundError) as e:
-            log.error(e)
-        download_urls.append({
-            "Format": published_format,
-            "Size": book_data.uncompressed_size,
-            "Url": get_download_url_for_book(book.id, dl_format),
-            "Platform": "Generic",
-            "DrmType": "None",
-        })
-
-    book_uuid = book.uuid
-    cover_image_id = _get_cover_image_id(book)
-    if cover_image_id != str(book_uuid):
-        log.debug("Kobo Sync: cache-busting cover id for book %s: %s", book.id, cover_image_id)
-    metadata = {
-        "Categories": ["00000000-0000-0000-0000-000000000001", ],
-        # "Contributors": get_author(book),
-        "CoverImageId": cover_image_id,
-        "CrossRevisionId": book_uuid,
-        "CurrentDisplayPrice": {"CurrencyCode": "USD", "TotalAmount": 0},
-        "CurrentLoveDisplayPrice": {"TotalAmount": 0},
-        "Description": get_description(book),
-        "DownloadUrls": download_urls,
-        "EntitlementId": book_uuid,
-        "ExternalIds": [],
-        "Genre": "00000000-0000-0000-0000-000000000001",
-        "IsEligibleForKoboLove": False,
-        "IsInternetArchive": False,
-        "IsPreOrder": False,
-        "IsSocialEnabled": True,
-        "Language": get_language(book),
-        "PhoneticPronunciations": {},
-        "PublicationDate": convert_to_kobo_timestamp_string(book.pubdate),
-        "Publisher": {"Imprint": "", "Name": get_publisher(book), },
-        "RevisionId": book_uuid,
-        "Title": book.title,
-        "WorkId": book_uuid,
-    }
-    metadata.update(get_author(book))
-
-    series_name = get_series(book)
-    if series_name:
-        name = series_name
-        try:
-            metadata["Series"] = {
-                "Name": series_name,
-                "Number": get_seriesindex(book),        # ToDo Check int() ?
-                "NumberFloat": float(get_seriesindex(book)),
-                # Get a deterministic id based on the series name.
-                "Id": str(uuid.uuid3(uuid.NAMESPACE_DNS, name)),
-            }
-        except Exception as e:
-            print(e)
-    return metadata
-
-    def create_book_entitlement(book, archived):
-    book_uuid = str(book.uuid)
-    return {
-        "Accessibility": "Full",
-        "ActivePeriod": {"From": convert_to_kobo_timestamp_string(datetime.now(timezone.utc))},
-        "Created": convert_to_kobo_timestamp_string(book.timestamp),
-        "CrossRevisionId": book_uuid,
-        "Id": book_uuid,
-        "IsRemoved": archived,
-        "IsHiddenFromArchive": False,
-        "IsLocked": False,
-        "LastModified": convert_to_kobo_timestamp_string(book.last_modified),
-        "OriginCategory": "Imported",
-        "RevisionId": book_uuid,
-        "Status": "Active",
-    }
-
-
-
-
-*/

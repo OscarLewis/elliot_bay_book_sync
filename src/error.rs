@@ -50,6 +50,12 @@ pub enum AppError {
     #[error("Not Found error: {0}")]
     NotFound(String),
 
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+
+    #[error("Method not allowed")]
+    MethodNotAllowed,
+
     #[error("Image error: {0}")]
     Image(#[from] image::ImageError),
 
@@ -81,6 +87,8 @@ impl IntoResponse for AppError {
             AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::DocError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Image(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
             AppError::Url(_) => StatusCode::BAD_REQUEST,
             AppError::Base64Decode(_) => StatusCode::BAD_REQUEST,

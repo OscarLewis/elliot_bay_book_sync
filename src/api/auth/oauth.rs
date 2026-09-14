@@ -8,7 +8,7 @@ use base64::{Engine, engine::general_purpose::STANDARD};
 use rand::Rng;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, info};
 
 // Request payload extractor
 #[derive(Debug, Deserialize, Default)]
@@ -58,7 +58,7 @@ pub async fn oauth_token_handler(
     payload: Option<Json<OauthRequestPayload>>,
 ) -> Result<Response, AppError> {
     // params extracts both the token and wildcard subpath
-    debug!(uri = uri.to_string(), ?params, "Received oauth request");
+    info!(uri = uri.to_string(), ?params, "Received oauth request");
 
     let payload = payload.map(|Json(p)| p).unwrap_or_default();
 

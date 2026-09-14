@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::path::Path;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -177,6 +178,17 @@ impl ReadStatus {
             ReadStatus::Finished => 1,
             ReadStatus::InProgress => 2,
         }
+    }
+}
+
+impl fmt::Display for ReadStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let status_str = match self {
+            ReadStatus::Unread => "Unread",
+            ReadStatus::InProgress => "Reading",
+            ReadStatus::Finished => "Finished",
+        };
+        write!(f, "{}", status_str)
     }
 }
 

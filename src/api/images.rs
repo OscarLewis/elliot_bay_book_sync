@@ -89,6 +89,12 @@ async fn image_handler_inner(
     headers: HeaderMap,
     body: bytes::Bytes,
 ) -> Result<Response, AppError> {
+    info!(
+        uri = uri.to_string(),
+        book_id = book_uuid,
+        "Received Kobo image request"
+    );
+
     // TODO Proxy images of unknown books to Kobo store
     let book_res = match state
         .db

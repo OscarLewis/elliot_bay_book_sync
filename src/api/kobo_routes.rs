@@ -9,7 +9,11 @@ use crate::{
         initialization::initialization_handler,
     },
     library::sync::{
-        reading_state_handler::reading_state_handler, sync_handler::library_sync_handler,
+        download_handler::{self, download_request_handler},
+        get_tests::get_tests_handler,
+        metadata_handler::metadata_request_handler,
+        reading_state_handler::reading_state_handler,
+        sync_handler::library_sync_handler,
     },
 };
 use axum::{
@@ -52,5 +56,17 @@ pub fn kobo_routes() -> Router<AppState> {
         .route(
             "/kobo/{token}/v1/library/{book_uuid}/state",
             get(reading_state_handler).put(reading_state_handler),
+        )
+        .route(
+            "/kobo/{token}/v1/library/{book_uuid}/metadata",
+            get(metadata_request_handler),
+        )
+        .route(
+            "/kobo/{token}/download/{book_id}/{book_format}",
+            get(download_request_handler),
+        )
+        .route(
+            "/kobo/{token}/v1/analytics/gettests",
+            get(get_tests_handler).post(get_tests_handler),
         )
 }

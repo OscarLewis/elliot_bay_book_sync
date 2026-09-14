@@ -14,7 +14,7 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use rand::Rng;
 use reqwest::Method;
-use tracing::debug;
+use tracing::{debug, info};
 
 pub async fn device_auth_request_handler(
     extract::Path(token): extract::Path<String>,
@@ -23,7 +23,8 @@ pub async fn device_auth_request_handler(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Response, AppError> {
-    debug!(
+    info!(
+        uri = uri.to_string(),
         token,
         proxy_kobo_store = state.config.proxy_kobo_store,
         "Received auth request"

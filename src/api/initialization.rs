@@ -30,10 +30,10 @@ pub(crate) async fn initialization_handler(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<axum::response::Response, AppError> {
-    debug!(
+    info!(
         token = %token,
         proxy_kobo = state.config.proxy_kobo_store,
-        "Handling Kobo initialization request"
+        "Received Kobo initialization request"
     );
 
     // Resources returned by the Kobo store, when available

@@ -31,3 +31,4 @@ tempfile = "3.27.0"
 url = "2.5.8"
 base64 = "0.23.1"
 rand = "0.10.2"
+tokio-util = { version = "0.7.19", features = ["io"] }

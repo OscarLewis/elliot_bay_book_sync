@@ -7,7 +7,7 @@ use axum::{
 };
 use reqwest::StatusCode;
 use serde::Serialize;
-use tracing::debug;
+use tracing::{debug, info};
 
 #[derive(Serialize, Debug)]
 pub struct OidcConfiguration {
@@ -57,7 +57,7 @@ pub async fn oidc_well_known_configuration_handler(
         ],
     };
 
-    debug!(
+    info!(
         handler_uri = uri.to_string(),
         oauth_url,
         ?config,

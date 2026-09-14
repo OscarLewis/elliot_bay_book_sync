@@ -1,7 +1,4 @@
 # Todos
-## Features (soon)
-[ ] - Reading state sync
-
 
 ## Routes 
 [x] - Initialization - "/kobo/{token}/v1/initialization"
@@ -12,11 +9,11 @@
 
 [x] - Library sync - "/kobo/{token}/v1/library/sync"
 
-[ ] - Book metadata - "/kobo/{token}/v1/library/{book_uuid}/metadata"
+[x] - Book metadata - "/kobo/{token}/v1/library/{book_uuid}/metadata"
 
-[ ] - Book download - "/kobo/{token}/download/{book_id}/{book_format}"
+[x] - Book download - "/kobo/{token}/download/{book_id}/{book_format}"
 
-[ ] - Reading state - "/kobo/{token}/v1/library/{book_uuid}/state" - PUT REQ to save state to DB
+[x] - Reading state - "/kobo/{token}/v1/library/{book_uuid}/state"
 
 [ ] - Create collection - "/kobo/{token}/v1/library/tags"
 
