@@ -13,7 +13,7 @@ use crate::{
         get_tests::get_tests_handler,
         metadata_handler::metadata_request_handler,
         reading_state_handler::reading_state_handler,
-        stubs::dummy_proxy_handler,
+        stubs::{dummy_proxy_handler, wishlist_stub_handler},
         sync_handler::library_sync_handler,
     },
 };
@@ -37,6 +37,10 @@ pub fn kobo_routes() -> Router<AppState> {
         )
         .route(
             "/kobo/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}/image.jpg",
+            get(image_handler_with_quality),
+        )
+        .route(
+            "/kobo/{token}/cover/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}",
             get(image_handler_with_quality),
         )
         // Auth Routes
@@ -75,7 +79,7 @@ pub fn kobo_routes() -> Router<AppState> {
             any(dummy_proxy_handler),
         )
         .route("/kobo/{token}/v1/user/profile", any(dummy_proxy_handler))
-        .route("/kobo/{token}/v1/user/wishlist", any(dummy_proxy_handler))
+        .route("/kobo/{token}/v1/user/wishlist", get(wishlist_stub_handler))
         .route(
             "/kobo/{token}/v1/user/recommendations",
             any(dummy_proxy_handler),

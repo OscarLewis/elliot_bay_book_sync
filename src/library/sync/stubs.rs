@@ -57,3 +57,12 @@ pub async fn dummy_proxy_handler(
     // Return empty 200 OK or basic JSON payload to keep Nickel happy when not proxying
     Ok((StatusCode::OK, Json(json!({}))).into_response())
 }
+
+pub async fn wishlist_stub_handler() -> impl IntoResponse {
+    Json(json!({
+        "Items": [],
+        "Page": 0,
+        "PageSize": 100,
+        "TotalCount": 0
+    }))
+}
