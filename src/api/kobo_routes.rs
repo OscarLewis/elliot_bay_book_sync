@@ -13,12 +13,13 @@ use crate::{
         get_tests::get_tests_handler,
         metadata_handler::metadata_request_handler,
         reading_state_handler::reading_state_handler,
+        stubs::dummy_proxy_handler,
         sync_handler::library_sync_handler,
     },
 };
 use axum::{
     Router,
-    routing::{get, post, put},
+    routing::{any, get, post, put},
 };
 
 /// Return a `Router<AppState>` so it can be merged with the main app router
@@ -68,5 +69,20 @@ pub fn kobo_routes() -> Router<AppState> {
         .route(
             "/kobo/{token}/v1/analytics/gettests",
             get(get_tests_handler).post(get_tests_handler),
+        ) // Stubbed / Proxied Kobo Store Routes
+        .route(
+            "/kobo/{token}/v1/user/loyalty/{*subpath}",
+            any(dummy_proxy_handler),
         )
+        .route("/kobo/{token}/v1/user/profile", any(dummy_proxy_handler))
+        .route("/kobo/{token}/v1/user/wishlist", any(dummy_proxy_handler))
+        .route(
+            "/kobo/{token}/v1/user/recommendations",
+            any(dummy_proxy_handler),
+        )
+        .route(
+            "/kobo/{token}/v1/analytics/{*subpath}",
+            any(dummy_proxy_handler),
+        )
+        .route("/kobo/{token}/v1/assets", any(dummy_proxy_handler))
 }
