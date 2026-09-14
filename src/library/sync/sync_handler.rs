@@ -140,7 +140,7 @@ pub async fn library_sync_handler(
     // TODO sync logic
     let books_to_sync: Vec<(&String, &Book)> = books
         .iter()
-        .filter(|(_, book)| !synced_book_ids.contains(&book.name))
+        .filter(|(book_id, _)| !synced_book_ids.contains(*book_id))
         .take(SYNC_ITEM_LIMIT)
         .collect();
     debug!(
