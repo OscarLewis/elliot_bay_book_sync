@@ -85,10 +85,10 @@ pub fn kobo_routes() -> Router<AppState> {
             "/kobo/{token}/v1/user/recommendations",
             any(dummy_proxy_handler),
         )
-        .route(
-            "/kobo/{token}/v1/analytics/{*subpath}",
-            any(dummy_proxy_handler),
-        )
+        // .route(
+        //     "/kobo/{token}/v1/analytics/{*subpath}",
+        //     any(dummy_proxy_handler),
+        // )
         .route("/kobo/{token}/v1/assets", any(dummy_proxy_handler))
         .route(
             "/kobo/{token}/v1/library/{book_uuid}",
