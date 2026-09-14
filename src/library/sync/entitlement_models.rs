@@ -289,6 +289,7 @@ pub struct SyncResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Entitlement {
     pub book_entitlement: BookEntitlement,
     pub book_metadata: BookMetadata,
