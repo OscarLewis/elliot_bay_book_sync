@@ -1,3 +1,5 @@
+use std::{collections::HashMap, str::FromStr};
+
 use axum::{
     Json,
     body::Bytes,
@@ -8,7 +10,11 @@ use reqwest::{Client, Response as ReqwestResponse, StatusCode};
 use tracing::debug;
 use url::Url;
 
-use crate::{AppState, error::AppError};
+use crate::{
+    AppState,
+    error::AppError,
+    library::sync::sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+};
 
 /// Headers that are specific to a single connection and should not be forwarded
 /// in proxy requests. These are hop-by-hop headers as defined in HTTP specifications.
@@ -32,6 +38,7 @@ pub(crate) const CONNECTION_SPECIFIC_HEADERS: &[&str] = &[
 /// * `url` - The target URL on the Kobo store
 /// * `mut headers` - The headers to include in the request (will be modified in-place)
 /// * `body` - The request body bytes
+/// * `sync_token` - Optional SyncToken to include in the request headers
 ///
 /// # Returns
 /// A Result containing either the response from Kobo or a reqwest error
@@ -41,9 +48,24 @@ pub(crate) async fn make_request_to_kobo_store(
     url: &str,
     mut headers: HeaderMap,
     body: bytes::Bytes,
+    sync_token: Option<&SyncToken>,
 ) -> Result<ReqwestResponse, reqwest::Error> {
     headers.remove(axum::http::header::HOST);
     headers.remove(axum::http::header::ACCEPT_ENCODING);
+
+    // Add sync token to headers if provided
+    if let Some(token) = sync_token {
+        let mut token_headers = HashMap::new();
+        token.to_headers(&mut token_headers);
+
+        if let Some(token_value) = token_headers.get(SYNC_TOKEN_HEADER) {
+            headers.insert(
+                axum::http::HeaderName::from_static(SYNC_TOKEN_HEADER),
+                axum::http::HeaderValue::from_str(token_value)
+                    .unwrap_or_else(|_| axum::http::HeaderValue::from_static("")),
+            );
+        }
+    }
 
     client
         .request(method, url)
@@ -69,6 +91,7 @@ pub(crate) async fn make_request_to_kobo_store(
 /// * `url` - The target URL to redirect/proxy to
 /// * `headers` - The incoming request headers
 /// * `body` - The incoming request body
+/// * `sync_token` - Optional SyncToken to include in proxied requests
 ///
 /// # Returns
 /// An HTTP response (as an implementor of IntoResponse)
@@ -79,6 +102,7 @@ pub(crate) async fn redirect_or_proxy_request(
     url: &str,
     headers: HeaderMap,
     body: Bytes,
+    sync_token: Option<&SyncToken>,
 ) -> impl IntoResponse {
     if !proxy_kobo_store {
         return (StatusCode::OK, Json(serde_json::json!({}))).into_response();
@@ -89,7 +113,7 @@ pub(crate) async fn redirect_or_proxy_request(
     }
 
     // Proxy non-GET requests manually
-    match make_request_to_kobo_store(client, method, url, headers, body).await {
+    match make_request_to_kobo_store(client, method, url, headers, body, sync_token).await {
         Ok(store_response) => make_proxy_response(store_response).await.into_response(),
         Err(_) => StatusCode::BAD_GATEWAY.into_response(),
     }
@@ -161,6 +185,38 @@ pub(crate) async fn get_store_url_for_current_request(
         "Resolved target Kobo store URL"
     );
     Ok(validated_url.to_string())
+}
+
+/// Get the download URL format for a book.
+///
+/// # Arguments
+/// * `uri` - The incoming request URI
+/// * `auth_token` - The Kobo authentication token
+///
+/// # Returns
+/// The download URL format string with placeholders
+pub fn get_download_url_format_for_book(uri: &str, auth_token: &str) -> String {
+    let uri = Uri::from_str(uri).unwrap_or_else(|_| Uri::from_static("https://localhost"));
+
+    let host = uri
+        .authority()
+        .map(|auth| {
+            let host = auth.host();
+            // Strip port if IPv4
+            if host.contains(':') && !host.ends_with(']') {
+                host.split(':').next().unwrap_or(host)
+            } else {
+                host
+            }
+        })
+        .unwrap_or("localhost");
+
+    format!(
+        "{}://{}/kobo/{}/download/[bookid]/[bookformat]",
+        uri.scheme_str().unwrap_or("https"),
+        host.trim_end_matches('/'),
+        auth_token,
+    )
 }
 
 #[cfg(test)]

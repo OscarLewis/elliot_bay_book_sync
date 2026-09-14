@@ -1,0 +1,452 @@
+use crate::{
+    AppState,
+    api::make_requests::{get_download_url_format_for_book, make_request_to_kobo_store},
+    database::document::{DocumentTable, SyncedBook},
+    error::AppError,
+    library::{
+        book::Book,
+        sync::{
+            entitlement_models::{
+                ActivePeriod, BookEntitlement, BookMetadata, Entitlement, SyncResult,
+            },
+            sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+        },
+    },
+};
+use axum::{
+    extract::{self},
+    http::{HeaderMap, uri},
+    response::{IntoResponse, Response},
+};
+use chrono::{TimeZone, Utc};
+use reqwest::StatusCode;
+use std::collections::{HashMap, HashSet};
+use tracing::{debug, error};
+
+pub const SYNC_ITEM_LIMIT: usize = 100;
+
+pub async fn library_sync_handler(
+    uri: uri::Uri,
+    extract::Path(token): extract::Path<String>,
+    extract::State(state): extract::State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, AppError> {
+    // Convert HeaderMap to HashMap<String, String>
+    let headers_map: HashMap<String, String> = headers
+        .iter()
+        .filter_map(|(k, v)| v.to_str().ok().map(|s| (k.to_string(), s.to_string())))
+        .collect();
+    debug!(
+        orgin_uri = &uri.to_string(),
+        headers = ?headers_map,
+        "Sync request received"
+    );
+    let mut sync_token = SyncToken::from_headers(&headers_map);
+    debug!(?sync_token, "Sync token generated from headers");
+    let url_format = get_download_url_format_for_book(&state.config.base_url, &token);
+    debug!(url_format, "Download link format");
+
+    // Fetch all synced book records and library books
+    let synced_books: Vec<(String, SyncedBook)> = state.db.get_all(DocumentTable::SyncedBooks)?;
+    // let books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
+
+    // Collect database results directly into a HashMap
+    let books: HashMap<String, Book> = state
+        .db
+        .get_all(DocumentTable::Books)?
+        .into_iter()
+        .collect();
+
+    // If we have no synced books, we disrespect the SyncToken
+    // His shoes wack
+    if synced_books.is_empty() {
+        debug!("No previously synced ebooks found, disregarding SyncToken");
+        // Reset sync token dates for first sync
+        sync_token.data.books_last_modified = Utc.timestamp_opt(0, 0).unwrap();
+        sync_token.data.books_last_created = Utc.timestamp_opt(0, 0).unwrap();
+        sync_token.data.reading_state_last_modified = Utc.timestamp_opt(0, 0).unwrap();
+    }
+
+    let mut sync_results: Vec<SyncResult> = Vec::new();
+    let mut new_books_last_modified = sync_token.data.books_last_modified;
+    let mut new_books_last_created = sync_token.data.books_last_created;
+    let mut new_reading_state_last_modified = sync_token.data.reading_state_last_modified;
+    let mut new_archived_last_modified = Utc.timestamp_opt(0, 0).unwrap();
+
+    // Handle sync logic by comparing synced books ids versus the ids in our database
+    let synced_book_ids: HashSet<String> = synced_books
+        .iter()
+        .map(|(_, sb)| sb.book_id.clone())
+        .collect();
+
+    let allowed_book_ids: HashSet<String> =
+        books.iter().map(|(book_id, _)| book_id.clone()).collect();
+
+    // TODO deletion logic
+    let books_to_delete_ids: HashSet<String> = synced_book_ids
+        .difference(&allowed_book_ids)
+        .cloned()
+        .collect();
+
+    if !books_to_delete_ids.is_empty() {
+        debug!(
+            "Kobo Sync: found {} books to remove from device",
+            books_to_delete_ids.len()
+        );
+
+        for book_id in &books_to_delete_ids {
+            // TODO maybe loop this similar to how `for (book_id, book) in books_to_sync` instead of HashMap
+            if let Some(book) = books.get(book_id) {
+                // Deletion logic using `book_id` and `book`
+                let entitlement = Entitlement::from_book_tuple(
+                    (book_id, book),
+                    state.config.clone(),
+                    None,
+                    None,
+                    None,
+                    true,
+                );
+                sync_results.push(SyncResult {
+                    changed_entitlement: Some(entitlement),
+                    new_entitlement: None,
+                    changed_reading_state: None,
+                    deleted_tag: None,
+                    new_tag: None,
+                    changed_tag: None,
+                });
+            }
+
+            state
+                .db
+                .delete::<SyncedBook>(DocumentTable::SyncedBooks, book_id, None, None)?;
+        }
+    }
+
+    // TODO sync logic
+    let books_to_sync: Vec<(&String, &Book)> = books
+        .iter()
+        .filter(|(_, book)| !synced_book_ids.contains(&book.name))
+        .take(SYNC_ITEM_LIMIT)
+        .collect();
+    debug!(
+        num_books_to_sync = books_to_sync.len(),
+        "Found books to sync"
+    );
+
+    for (book_id, book) in books_to_sync {
+        let book_modified: chrono::DateTime<Utc> =
+            book.modified_at.parse().unwrap_or_else(|_| Utc::now());
+        let bm_string = book_modified.to_string();
+
+        let is_new = book_modified > sync_token.data.books_last_created;
+
+        let entitlement = Entitlement::from_book_tuple(
+            (book_id, book),
+            state.config.clone(),
+            None,
+            None,
+            None,
+            false,
+        );
+
+        // TODO Add support for changed_reading_state
+
+        if is_new {
+            sync_results.push(SyncResult {
+                changed_entitlement: None,
+                new_entitlement: Some(entitlement),
+                changed_reading_state: None,
+                deleted_tag: None,
+                new_tag: None,
+                changed_tag: None,
+            });
+        } else {
+            sync_results.push(SyncResult {
+                changed_entitlement: Some(entitlement),
+                new_entitlement: None,
+                changed_reading_state: None,
+                deleted_tag: None,
+                new_tag: None,
+                changed_tag: None,
+            });
+            // sync_results.push(serde_json::json!({"ChangedEntitlement": entitlement}));
+        }
+
+        debug!(
+            book_id = book_id,
+            title = book.title,
+            is_new,
+            "Attempting to sync book"
+        );
+
+        new_books_last_modified = std::cmp::max(new_books_last_modified, book_modified);
+        new_books_last_created = std::cmp::max(new_books_last_created, book_modified);
+
+        // Mark book as synced
+        let synced = SyncedBook {
+            book_id: book_id.clone(),
+            user_id: "default".to_string(),
+            synced_at: Utc::now(),
+        };
+        state
+            .db
+            .create(DocumentTable::SyncedBooks, &synced, None, None)?;
+    }
+
+    // TODO Finish implementing sync handler
+
+    // Update sync token
+    sync_token.data.books_last_modified = new_books_last_modified;
+    sync_token.data.books_last_created = new_books_last_created;
+    sync_token.data.archive_last_modified = new_archived_last_modified;
+
+    generate_sync_response(&mut sync_token, sync_results, false, &state).await
+}
+
+pub async fn generate_sync_response(
+    sync_token: &mut SyncToken,
+    sync_results: Vec<SyncResult>,
+    set_cont: bool,
+    state: &AppState,
+) -> Result<Response, AppError> {
+    let mut response_headers = HeaderMap::new();
+    let resources = state.kobo_resources.lock().await;
+    let mut final_results = sync_results;
+
+    let kobo_sync_endpoint = &resources.library_sync;
+
+    // Optionally merge results from Kobo store
+    if state.config.proxy_kobo_store && !set_cont {
+        match make_request_to_kobo_store(
+            &state.req_client,
+            reqwest::Method::POST,
+            kobo_sync_endpoint,
+            response_headers.clone(),
+            serde_json::to_vec(sync_token)?.into(),
+            Some(sync_token),
+        )
+        .await
+        {
+            Ok(store_response) => {
+                // Extract headers before consuming response
+                let sync_header = store_response.headers().get("x-kobo-sync").cloned();
+                let sync_mode = store_response.headers().get("x-kobo-sync-mode").cloned();
+                let recent_reads = store_response.headers().get("x-kobo-recent-reads").cloned();
+
+                let store_headers: HashMap<String, String> = store_response
+                    .headers()
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
+                    .collect();
+
+                // Consume response to get body
+                match store_response.json::<Vec<serde_json::Value>>().await {
+                    Ok(store_sync_results) => {
+                        // Convert serde_json::Value to SyncResult
+                        for val in store_sync_results {
+                            if let Ok(sync_result) = serde_json::from_value::<SyncResult>(val) {
+                                final_results.push(sync_result);
+                            }
+                        }
+
+                        // Copy headers from store response
+                        if let Some(header) = sync_header {
+                            response_headers.insert(
+                                axum::http::HeaderName::from_static("x-kobo-sync"),
+                                header.clone(),
+                            );
+                        }
+                        if let Some(header) = sync_mode {
+                            response_headers.insert(
+                                axum::http::HeaderName::from_static("x-kobo-sync-mode"),
+                                header.clone(),
+                            );
+                        }
+                        if let Some(header) = recent_reads {
+                            response_headers.insert(
+                                axum::http::HeaderName::from_static("x-kobo-recent-reads"),
+                                header.clone(),
+                            );
+                        }
+
+                        // Merge store response token
+                        sync_token.merge_from_store_response(&store_headers);
+                    }
+                    Err(e) => {
+                        error!(?e, "Failed to parse Kobo store response");
+                    }
+                }
+            }
+            Err(e) => {
+                error!(?e, "Failed to receive response from Kobo's sync endpoint");
+            }
+        }
+    }
+
+    // Add continuation header if needed
+    if set_cont {
+        response_headers.insert(
+            axum::http::HeaderName::from_static("x-kobo-sync"),
+            axum::http::HeaderValue::from_static("continue"),
+        );
+    }
+
+    // Add sync token to response headers
+    let mut token_headers = HashMap::new();
+    sync_token.to_headers(&mut token_headers);
+    if let Some(token_value) = token_headers.get(SYNC_TOKEN_HEADER) {
+        response_headers.insert(
+            axum::http::HeaderName::from_static(SYNC_TOKEN_HEADER),
+            axum::http::HeaderValue::from_str(token_value)?,
+        );
+    }
+
+    debug!(books_synced = final_results.len(), "Kobo sync completed");
+
+    // Build JSON response with proper encoding
+    let json_body = serde_json::to_string(&final_results)?;
+    response_headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("application/json; charset=utf-8"),
+    );
+
+    Ok((response_headers, json_body).into_response())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        AppState,
+        config::AppConfig,
+        database::document::{DocumentDB, DocumentTable},
+        library::{
+            book::Book,
+            sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
+        },
+        metadata::update_meta::update_metadata,
+        test_helpers::setup_test_app,
+    };
+    use reqwest::StatusCode;
+    use test_log::test;
+    use tokio::time::{Duration, sleep};
+
+    #[test(tokio::test)]
+    #[ignore]
+    async fn test_library_sync() -> Result<(), Box<dyn std::error::Error>> {
+        let test_base_url = "http://books.example.com/";
+        let token = "test-token-123";
+
+        let config = AppConfig {
+            base_url: test_base_url.to_string(),
+            ebbooks_auth_key: token.to_string(),
+            proxy_kobo_store: false,
+            ..AppConfig::default()
+        };
+
+        let db = DocumentDB::open_in_memory()?;
+        let state = AppState::new(config, db, None);
+        let server = setup_test_app(state.clone());
+
+        // Scan first to populate the library
+        let scan_response = server.post("/scan").await;
+        scan_response.assert_status(StatusCode::OK);
+
+        sleep(Duration::from_millis(500)).await;
+
+        // TODO fetch metadata before sync
+        // Fetch all books and update metadata
+        let books_needing_metadata = state.db.get_all(DocumentTable::Books)?;
+        update_metadata(state.clone(), books_needing_metadata).await?;
+
+        // Wait for metadata update to complete
+        tokio::time::sleep(tokio::time::Duration::from_millis(2500)).await;
+
+        // Now sync
+        let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
+        response.assert_status(StatusCode::OK);
+
+        // Cleanup: remove all downloaded images
+        let all_books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
+        for (_, book) in all_books {
+            if let Some(image_path) = book.image_path {
+                let _ = tokio::fs::remove_file(&image_path).await;
+            }
+        }
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_generate_sync_response_no_proxy() -> Result<(), Box<dyn std::error::Error>> {
+        let config = AppConfig {
+            base_url: "http://books.example.com/".to_string(),
+            ebbooks_auth_key: "test-token".to_string(),
+            proxy_kobo_store: false,
+            ..AppConfig::default()
+        };
+
+        let db = DocumentDB::open_in_memory()?;
+        let state = AppState::new(config, db, None);
+
+        let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
+        let sync_results = vec![];
+
+        let response = generate_sync_response(&mut sync_token, sync_results, false, &state).await?;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_generate_sync_response_with_continuation()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let config = AppConfig {
+            base_url: "http://books.example.com/".to_string(),
+            ebbooks_auth_key: "test-token".to_string(),
+            proxy_kobo_store: false,
+            ..AppConfig::default()
+        };
+
+        let db = DocumentDB::open_in_memory()?;
+        let state = AppState::new(config, db, None);
+
+        let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
+        let sync_results = vec![];
+
+        let response = generate_sync_response(&mut sync_token, sync_results, true, &state).await?;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(
+            response
+                .headers()
+                .get("x-kobo-sync")
+                .is_some_and(|v| v == "continue")
+        );
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_generate_sync_response_includes_token() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let config = AppConfig {
+            base_url: "http://books.example.com/".to_string(),
+            ebbooks_auth_key: "test-token".to_string(),
+            proxy_kobo_store: false,
+            ..AppConfig::default()
+        };
+
+        let db = DocumentDB::open_in_memory()?;
+        let state = AppState::new(config, db, None);
+
+        let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
+        let sync_results = vec![];
+
+        let response = generate_sync_response(&mut sync_token, sync_results, false, &state).await?;
+
+        assert!(response.headers().get("x-kobo-synctoken").is_some());
+        assert_eq!(
+            response.headers().get("content-type").unwrap().to_str()?,
+            "application/json; charset=utf-8"
+        );
+        Ok(())
+    }
+}

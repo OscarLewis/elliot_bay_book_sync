@@ -32,7 +32,7 @@
 
 [X] - OAuth refresh - "/kobo/{token}/oauth/refresh"
 
-[ ] - OAuth discovery - "/kobo/{token}/oauth/.well-known/openid-configuration"
+[X] - OAuth discovery - "/kobo/{token}/oauth/.well-known/openid-configuration"
 
 [ ] Reading services stubs
   - [ ] /api/v3/content/checkforchanges

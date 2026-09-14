@@ -4,28 +4,44 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
 
-const BOOK_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("book_docs");
-const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan_docs");
-const READING_STATE_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("reading_docs");
+const BOOK_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("book_docs");
+const SCAN_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("scan_docs");
+const READING_STATE_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("reading_docs");
+const SYNCED_BOOKS: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("synced_books");
 
-const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
-const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
+const BOOK_PATH_INDEX: TableDefinition<&'static str, &'static str> =
+    TableDefinition::new("book_path_idx");
+const SCAN_TIME_INDEX: TableDefinition<(&'static str, Uuid), &'static str> =
+    TableDefinition::new("scan_time_idx");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DocumentTable {
     Books,
     Scans,
     ReadingStates,
+    SyncedBooks,
 }
 
 impl DocumentTable {
-    fn definition(&self) -> TableDefinition<&'static str, &'static [u8]> {
+    fn definition(&self) -> TableDefinition<'_, &'static str, &'static [u8]> {
         match self {
             DocumentTable::Books => BOOK_COLLECTION,
             DocumentTable::Scans => SCAN_COLLECTION,
             DocumentTable::ReadingStates => READING_STATE_COLLECTION,
+            DocumentTable::SyncedBooks => SYNCED_BOOKS,
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncedBook {
+    pub book_id: String,
+    pub user_id: String,
+    pub synced_at: chrono::DateTime<chrono::Utc>,
 }
 
 pub struct DocumentDB {
@@ -132,11 +148,9 @@ impl DocumentDB {
                     }
                 }
                 DocumentTable::ReadingStates => {
-                    if let Some(time_fn) = get_timestamp {
-                        let mut index_table = write_txn.open_table(SCAN_TIME_INDEX)?;
-                        index_table.insert((time_fn(doc), id_uuid), id_str.as_str())?;
-                    }
+                    // TODO Create a Book ID / Reading State ID lookup table
                 }
+                DocumentTable::SyncedBooks => {}
             }
         }
         write_txn.commit()?;
@@ -240,6 +254,7 @@ impl DocumentDB {
                     DocumentTable::ReadingStates => {
                         // TODO Update a Book ID / Reading State ID lookup table
                     }
+                    DocumentTable::SyncedBooks => {}
                 }
 
                 let payload = serde_json::to_vec(doc)?;
@@ -293,6 +308,7 @@ impl DocumentDB {
                     DocumentTable::ReadingStates => {
                         // TODO Delete from a Book ID / Reading State ID lookup table
                     }
+                    DocumentTable::SyncedBooks => {}
                 }
                 table.remove(id)?;
                 deleted = true;

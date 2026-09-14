@@ -1,5 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use reqwest::header::InvalidHeaderValue;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -54,6 +55,12 @@ pub enum AppError {
 
     #[error("URL parse error: {0}")]
     Url(#[from] url::ParseError),
+
+    #[error("base64 decode parse error: {0}")]
+    Base64Decode(#[from] base64::DecodeError),
+
+    #[error("Invalid header value: {0}")]
+    InvalidHeaderValue(#[from] InvalidHeaderValue),
 }
 
 impl IntoResponse for AppError {
@@ -76,6 +83,8 @@ impl IntoResponse for AppError {
             AppError::Image(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
             AppError::Url(_) => StatusCode::BAD_REQUEST,
+            AppError::Base64Decode(_) => StatusCode::BAD_REQUEST,
+            AppError::InvalidHeaderValue(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         (status, self.to_string()).into_response()

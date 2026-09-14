@@ -38,6 +38,7 @@ pub async fn device_auth_request_handler(
             &store_url,
             headers,
             body,
+            None,
         )
         .await
         .into_response());

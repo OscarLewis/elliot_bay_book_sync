@@ -57,6 +57,7 @@ pub(crate) async fn initialization_handler(
             &store_url,
             headers.clone(),
             body,
+            None,
         )
         .await
         {

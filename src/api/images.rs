@@ -169,6 +169,7 @@ async fn image_handler_inner(
                 &image_url_template,
                 HeaderMap::new(),
                 bytes::Bytes::new(),
+                None,
             )
             .await?
             .error_for_status()?;

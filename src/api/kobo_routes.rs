@@ -8,6 +8,7 @@ use crate::{
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
     },
+    library::sync::sync_handler::library_sync_handler,
 };
 use axum::{
     Router,
@@ -45,4 +46,5 @@ pub fn kobo_routes() -> Router<AppState> {
             "/kobo/{token}/oauth/.well-known/openid-configuration",
             get(oidc_well_known_configuration_handler),
         )
+        .route("/kobo/{token}/v1/library/sync", get(library_sync_handler))
 }
