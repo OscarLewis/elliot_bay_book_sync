@@ -12,9 +12,11 @@ use axum::{
     Json,
     body::{Body, Bytes},
     extract::{self, OriginalUri},
-    http::{HeaderMap, HeaderValue, Method, StatusCode, header},
+    http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     response::{IntoResponse, Response},
 };
+use tower::ServiceExt;
+use tower_http::services::ServeFile;
 use tracing::{debug, info, warn};
 
 // `/kobo/{token}/download/{book_id}/{book_format}`
@@ -67,15 +69,25 @@ pub async fn download_request_handler(
         .await
         .map_err(AppError::Io)?;
 
-    let stream = tokio_util::io::ReaderStream::new(file);
+    let metadata = tokio::fs::metadata(&book.path)
+        .await
+        .map_err(AppError::Io)?;
 
-    let mut response = Body::from_stream(stream).into_response();
+    let file = tokio::fs::File::open(&book.path)
+        .await
+        .map_err(AppError::Io)?;
 
-    response.headers_mut().insert(
-        header::CONTENT_DISPOSITION,
-        HeaderValue::from_str(&format!("attachment; filename=\"{filename}\""))
-            .map_err(|err| AppError::InvalidHeaderValue(err))?,
-    );
+    let mut request = Request::builder()
+        .method(method)
+        .uri(uri)
+        .body(Body::from(body))?;
+
+    *request.headers_mut() = headers;
+
+    let response = ServeFile::new(&book.path)
+        .oneshot(request)
+        .await
+        .into_response();
 
     debug!(
         book_id,
@@ -85,7 +97,7 @@ pub async fn download_request_handler(
         "Serving Kobo book download"
     );
 
-    Ok(response)
+    Ok(response.into_response())
 
     // TODO implement download handler
 }

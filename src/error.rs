@@ -67,6 +67,9 @@ pub enum AppError {
 
     #[error("Invalid header value: {0}")]
     InvalidHeaderValue(#[from] InvalidHeaderValue),
+
+    #[error("HTTP error: {0}")]
+    Http(#[from] axum::http::Error),
 }
 
 impl IntoResponse for AppError {
@@ -92,6 +95,7 @@ impl IntoResponse for AppError {
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
             AppError::Url(_) => StatusCode::BAD_REQUEST,
             AppError::Base64Decode(_) => StatusCode::BAD_REQUEST,
+            AppError::Http(_) => StatusCode::BAD_REQUEST,
             AppError::InvalidHeaderValue(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
