@@ -1,5 +1,7 @@
 use std::{path::Path, sync::Arc};
 
+use serde::Deserialize;
+
 const LIBRARY_PATH: &str = "test ebooks";
 const PROXY_KOBO_STORE: bool = true;
 const DB_PATH: &str = "sync_db.redb";
@@ -15,6 +17,40 @@ pub struct AppConfig {
     pub image_path: String,
     pub ebbooks_auth_key: String,
     pub base_url: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ConfigFile {
+    library_path: Option<String>,
+    proxy_kobo_store: Option<bool>,
+    database_path: Option<String>,
+    image_path: Option<String>,
+    ebbooks_auth_key: Option<String>,
+    base_url: Option<String>,
+}
+
+impl AppConfig {
+    pub fn load() -> Result<Self, config::ConfigError> {
+        let config: ConfigFile = config::Config::builder()
+            .add_source(config::File::with_name("config").required(false))
+            .add_source(config::Environment::with_prefix("EBBOOKS"))
+            .build()?
+            .try_deserialize()?;
+
+        let default = Self::default();
+
+        Ok(Self {
+            library_path: config
+                .library_path
+                .map(|path| Arc::from(Path::new(&path)))
+                .unwrap_or(default.library_path),
+            proxy_kobo_store: config.proxy_kobo_store.unwrap_or(default.proxy_kobo_store),
+            database_path: config.database_path.unwrap_or(default.database_path),
+            image_path: config.image_path.unwrap_or(default.image_path),
+            ebbooks_auth_key: config.ebbooks_auth_key.unwrap_or(default.ebbooks_auth_key),
+            base_url: config.base_url.unwrap_or(default.base_url),
+        })
+    }
 }
 
 impl Default for AppConfig {

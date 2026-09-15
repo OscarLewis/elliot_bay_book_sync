@@ -62,6 +62,9 @@ pub enum AppError {
     #[error("URL parse error: {0}")]
     Url(#[from] url::ParseError),
 
+    #[error("Config error: {0}")]
+    Config(#[from] config::ConfigError),
+
     #[error("base64 decode parse error: {0}")]
     Base64Decode(#[from] base64::DecodeError),
 
@@ -81,6 +84,7 @@ impl IntoResponse for AppError {
             | AppError::Transaction(_)
             | AppError::Commit(_)
             | AppError::Storage(_)
+            | AppError::Config(_)
             | AppError::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Json(_) => StatusCode::BAD_REQUEST,
             AppError::Uuid(_) => StatusCode::BAD_REQUEST,

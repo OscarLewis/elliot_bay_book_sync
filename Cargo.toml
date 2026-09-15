@@ -33,3 +33,4 @@ base64 = "0.23.1"
 rand = "0.10.2"
 tokio-util = { version = "0.7.19", features = ["io"] }
 tower = { version = "0.5.3", features = ["tokio", "tracing"] }
+config = { version = "0.15.25", features = ["toml"] }

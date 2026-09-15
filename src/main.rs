@@ -105,8 +105,8 @@ async fn main() -> Result<(), AppError> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Load default config
-    let config = AppConfig::default();
+    // Load config from file and environment
+    let config = AppConfig::load()?;
 
     // Load the .env file into the system environment
     dotenv().ok();
