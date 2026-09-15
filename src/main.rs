@@ -108,6 +108,8 @@ async fn main() -> Result<(), AppError> {
     // Load config from file and environment
     let config = AppConfig::load()?;
 
+    debug!(?config, "Loaded config");
+
     // Load the .env file into the system environment
     dotenv().ok();
     // Panic if there is no Hardcover token for metadata
