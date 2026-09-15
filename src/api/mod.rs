@@ -1,4 +1,4 @@
-pub mod get_uri_for_req;
+pub mod auth;
 pub mod images;
 pub mod init_resources;
 pub mod initialization;

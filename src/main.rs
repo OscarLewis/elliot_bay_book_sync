@@ -1,5 +1,5 @@
 use crate::{
-    api::init_resources::Resources,
+    api::init_resources::{Resources, patch_kobo_resources},
     config::AppConfig,
     database::document::{DocumentDB, DocumentTable},
     error::AppError,
@@ -18,9 +18,8 @@ use chrono::Utc;
 use dotenvy::dotenv;
 use reqwest::StatusCode;
 use std::env;
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use tokio::sync::Mutex;
-use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
@@ -43,6 +42,7 @@ pub struct AppState {
     pub db: Arc<DocumentDB>,
     pub hardcover_api_token: Option<String>,
     pub kobo_resources: Arc<Mutex<Resources>>,
+    pub patched_resources: Arc<Mutex<Resources>>,
 }
 
 impl AppState {
@@ -52,17 +52,28 @@ impl AppState {
         db: DocumentDB,
         hardcover_api_token: Option<String>,
     ) -> Self {
+        let config: Arc<AppConfig> = config.into();
         let client = reqwest::Client::builder()
             .user_agent("Kobo Touch/4.38.21908 (Linux 2.6.35.3; U; en-US)")
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
 
+        // Create base resources and apply patches using config values
+        let kobo_resources = Resources::default();
+        let patched_resources = patch_kobo_resources(
+            kobo_resources.clone(),
+            &config.base_url,
+            &config.ebbooks_auth_key,
+            config.proxy_kobo_store,
+        );
+
         AppState {
             db: Arc::new(db),
-            config: config.into(),
+            config,
             req_client: client,
             hardcover_api_token,
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
+            kobo_resources: Arc::new(Mutex::new(kobo_resources)),
+            patched_resources: Arc::new(Mutex::new(patched_resources)),
         }
     }
 }
@@ -79,7 +90,7 @@ pub fn app(state: AppState) -> Router {
         )
         .merge(api::kobo_routes::kobo_routes())
         .with_state(state)
-        .layer(TraceLayer::new_for_http())
+        // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
 }
 
@@ -89,7 +100,7 @@ async fn main() -> Result<(), AppError> {
     tracing_subscriber::registry()
         .with(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("kobo_sync_rs=debug,tower_http=info")),
+                .unwrap_or_else(|_| EnvFilter::new("ebbooks=debug,tower_http=info")),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -280,8 +291,6 @@ pub mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, path::PathBuf, sync::Arc};
-
     use crate::{
         AppState,
         config::AppConfig,
@@ -291,7 +300,7 @@ mod tests {
         test_helpers::setup_test_app,
     };
     use axum::http::StatusCode;
-    use dotenvy::dotenv;
+    use std::path::PathBuf;
     use test_log::test;
 
     /// Tests the root endpoint response.
@@ -320,6 +329,7 @@ mod tests {
         let body: ScanResponse = response.json();
         assert!(!body.scan_id.is_nil());
     }
+
     #[test(tokio::test)]
     async fn test_refresh_metadata_handler() {
         let config = AppConfig::default();

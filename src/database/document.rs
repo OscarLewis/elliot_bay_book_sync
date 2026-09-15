@@ -1,26 +1,35 @@
-use crate::{error::AppError, library::book::Book, scan::scanner::ScanStatus};
+use crate::{error::AppError, library::book::Book};
+use chrono::{DateTime, Utc};
 use redb::{Builder, Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
 
-const BOOK_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("book_docs");
-const SCAN_COLLECTION: TableDefinition<&str, &[u8]> = TableDefinition::new("scan_docs");
+const BOOK_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("book_docs");
+const SCAN_COLLECTION: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("scan_docs");
+const SYNCED_BOOKS: TableDefinition<&'static str, &'static [u8]> =
+    TableDefinition::new("synced_books");
 
-const BOOK_PATH_INDEX: TableDefinition<&str, &str> = TableDefinition::new("book_path_idx");
-const SCAN_TIME_INDEX: TableDefinition<(&str, Uuid), &str> = TableDefinition::new("scan_time_idx");
+const BOOK_PATH_INDEX: TableDefinition<&'static str, &'static str> =
+    TableDefinition::new("book_path_idx");
+const SCAN_TIME_INDEX: TableDefinition<(&'static str, Uuid), &'static str> =
+    TableDefinition::new("scan_time_idx");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DocumentTable {
     Books,
     Scans,
+    SyncedBooks,
 }
 
 impl DocumentTable {
-    fn definition(&self) -> TableDefinition<&'static str, &'static [u8]> {
+    fn definition(&self) -> TableDefinition<'_, &'static str, &'static [u8]> {
         match self {
             DocumentTable::Books => BOOK_COLLECTION,
             DocumentTable::Scans => SCAN_COLLECTION,
+            DocumentTable::SyncedBooks => SYNCED_BOOKS,
         }
     }
 }
@@ -128,6 +137,8 @@ impl DocumentDB {
                         index_table.insert((time_fn(doc), id_uuid), id_str.as_str())?;
                     }
                 }
+
+                DocumentTable::SyncedBooks => {}
             }
         }
         write_txn.commit()?;
@@ -228,6 +239,8 @@ impl DocumentDB {
                             index_table.insert((new_time, id_uuid), id)?;
                         }
                     }
+
+                    DocumentTable::SyncedBooks => {}
                 }
 
                 let payload = serde_json::to_vec(doc)?;
@@ -278,6 +291,8 @@ impl DocumentDB {
                             }
                         }
                     }
+
+                    DocumentTable::SyncedBooks => {}
                 }
                 table.remove(id)?;
                 deleted = true;

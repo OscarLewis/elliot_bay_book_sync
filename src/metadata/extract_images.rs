@@ -148,6 +148,7 @@ mod tests {
             db: Arc::new(db),
             hardcover_api_token: None,
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         extract_imgs_for_books(book_list, state, false).await?;

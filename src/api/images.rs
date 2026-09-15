@@ -89,6 +89,12 @@ async fn image_handler_inner(
     headers: HeaderMap,
     body: bytes::Bytes,
 ) -> Result<Response, AppError> {
+    info!(
+        uri = uri.to_string(),
+        book_id = book_uuid,
+        "Received Kobo image request"
+    );
+
     // TODO Proxy images of unknown books to Kobo store
     let book_res = match state
         .db
@@ -115,7 +121,6 @@ async fn image_handler_inner(
             let is_greyscale = is_greyscale.eq_ignore_ascii_case("true");
 
             // TODO implment quality (JPEG image quality)
-            // book-images/b07219a4-41c4-4a51-8024-d009488df748/300/569/90/False/the-eye-of-the-world-1.jpg
             if let Some(canonical_cover) = book.image()? {
                 let mut cover_image =
                     canonical_cover.resize(width, u32::MAX, image::imageops::FilterType::Lanczos3);
@@ -170,6 +175,7 @@ async fn image_handler_inner(
                 &image_url_template,
                 HeaderMap::new(),
                 bytes::Bytes::new(),
+                None,
             )
             .await?
             .error_for_status()?;
@@ -237,6 +243,7 @@ mod tests {
             db: Arc::new(db),
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         let image_paths = extract_imgs_for_books(book_list, state.clone(), true).await?;
@@ -289,6 +296,7 @@ mod tests {
             db: Arc::new(db),
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
 
         let server = setup_test_app(state);
@@ -327,6 +335,7 @@ mod tests {
             db: Arc::new(db),
             kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
         };
         let server = setup_test_app(state);
         let token = "test-token-123";
