@@ -16,17 +16,6 @@ use reqwest::Method;
 use serde_json::json;
 use tracing::{debug, info};
 
-/*
-@csrf.exempt
-@kobo.route("/v1/analytics/gettests", methods=["GET", "POST"])
-def handle_getests():
-    if config.config_kobo_proxy:
-        return redirect_or_proxy_request()
-    else:
-        testkey = request.headers.get("X-Kobo-userkey", "")
-        return make_response(jsonify({"Result": "Success", "TestKey": testkey, "Tests": {}}))
-*/
-
 pub async fn get_tests_handler(
     extract::Path(token): extract::Path<String>,
     extract::State(state): extract::State<AppState>,

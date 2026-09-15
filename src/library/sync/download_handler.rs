@@ -102,16 +102,6 @@ pub async fn download_request_handler(
     // TODO implement download handler
 }
 
-/*
-    @kobo.route("/download/<book_id>/<book_format>")
-    @requires_kobo_auth
-    @download_required
-    def download_book(book_id, book_format):
-        return get_download_link(book_id, book_format, "kobo")
-
-
-*/
-
 #[cfg(test)]
 mod tests {
     use crate::{
