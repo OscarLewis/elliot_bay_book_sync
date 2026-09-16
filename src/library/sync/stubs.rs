@@ -11,16 +11,6 @@ use tracing::info;
 
 use crate::{AppState, api::make_requests::redirect_or_proxy_request, error::AppError};
 
-pub fn stub_routes() -> Router<AppState> {
-    Router::new()
-        .route("/v1/user/loyalty/*path", any(dummy_proxy_handler))
-        .route("/v1/user/profile", any(dummy_proxy_handler))
-        .route("/v1/user/wishlist", any(dummy_proxy_handler))
-        .route("/v1/user/recommendations", any(dummy_proxy_handler))
-        .route("/v1/analytics/*path", any(dummy_proxy_handler))
-        .route("/v1/assets", any(dummy_proxy_handler))
-}
-
 pub async fn dummy_proxy_handler(
     State(state): State<AppState>,
     OriginalUri(uri): OriginalUri,
