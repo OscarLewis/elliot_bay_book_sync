@@ -35,3 +35,4 @@ tokio-util = { version = "0.7.19", features = ["io"] }
 tower = { version = "0.5.3", features = ["tokio", "tracing"] }
 config = { version = "0.15.25", features = ["toml"] }
 directories = "6.0.0"
+mongodb = "3.9.1"

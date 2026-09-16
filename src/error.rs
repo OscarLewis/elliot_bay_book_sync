@@ -73,6 +73,12 @@ pub enum AppError {
 
     #[error("HTTP error: {0}")]
     Http(#[from] axum::http::Error),
+
+    #[error("MongoDB error: {0}")]
+    MongoDB(#[from] mongodb::error::Error),
+
+    #[error("BSON serialization error: {0}")]
+    BsonSer(#[from] mongodb::bson::ser::Error),
 }
 
 impl IntoResponse for AppError {
@@ -84,7 +90,9 @@ impl IntoResponse for AppError {
             | AppError::Transaction(_)
             | AppError::Commit(_)
             | AppError::Storage(_)
+            | AppError::BsonSer(_)
             | AppError::Config(_)
+            | AppError::MongoDB(_)
             | AppError::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Json(_) => StatusCode::BAD_REQUEST,
             AppError::Uuid(_) => StatusCode::BAD_REQUEST,
