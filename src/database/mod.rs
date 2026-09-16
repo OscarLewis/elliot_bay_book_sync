@@ -20,8 +20,8 @@ impl MongoDatabase {
         let db = client.database(database);
 
         Ok(Self {
-            books: BookRepository::new(&db),
-            scans: ScanRepository::new(&db),
+            books: BookRepository::new(&db).await?,
+            scans: ScanRepository::new(&db).await?,
             db,
         })
     }

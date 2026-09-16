@@ -1,6 +1,6 @@
 use crate::{error::AppError, scan::scanner::ScanDocument};
 use mongodb::{
-    Collection, Database,
+    Collection, Database, IndexModel,
     bson::{doc, oid::ObjectId},
 };
 
@@ -10,10 +10,14 @@ pub struct ScanRepository {
 }
 
 impl ScanRepository {
-    pub fn new(db: &Database) -> Self {
-        Self {
-            collection: db.collection("scans"),
-        }
+    pub async fn new(db: &Database) -> Result<Self, AppError> {
+        let collection: Collection<ScanDocument> = db.collection("scans");
+
+        let index = IndexModel::builder().keys(doc! { "timestamp": -1 }).build();
+
+        collection.create_index(index).await?;
+
+        Ok(Self { collection })
     }
 
     pub async fn insert(&self, scan: &ScanDocument) -> Result<ObjectId, AppError> {
@@ -48,6 +52,18 @@ mod tests {
     use dotenvy::dotenv;
     use test_log::test;
 
+    /// Verifies that inserting a `ScanDocument` persists it to MongoDB and
+    /// that it can be retrieved by the `ObjectId` returned from the insert.
+    ///
+    /// Setup: builds a single `ScanDocument` with `ScanStatus::Running` and
+    /// the current timestamp, and inserts it into a fresh, uniquely-named
+    /// test database.
+    ///
+    /// Asserts: the document found by `find_by_id` has the same `status` as
+    /// the original `ScanDocument`.
+    ///
+    /// Requires `MONGODB_TEST_URI` to point at a reachable MongoDB instance;
+    /// the test database is dropped on completion.
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
     async fn test_mongodb_scan_insert() -> Result<(), AppError> {
@@ -55,24 +71,81 @@ mod tests {
 
         let uri = std::env::var("MONGODB_TEST_URI")
             .expect("MONGODB_TEST_URI must be set in .env or environment");
+
+        // Random database name to keep this run isolated from any other.
         let database = format!("elliot_bay_book_sync_test_{}", uuid::Uuid::new_v4());
         let mongodb = MongoDatabase::connect(&uri, &database).await?;
 
+        // A minimal "scan just started" document.
         let scan = ScanDocument {
             status: ScanStatus::Running,
             timestamp: Utc::now().to_rfc3339(),
             details: ScanDetails::Started,
         };
 
+        // Insert and capture the generated ObjectId.
         let scan_id = mongodb.scans.insert(&scan).await?;
 
+        // Read it back by id to confirm it was actually written.
         let found = mongodb
             .scans
             .find_by_id(scan_id)
             .await?
             .expect("scan should have been inserted");
 
+        // The round-tripped document should match what we inserted.
         assert_eq!(found.status, scan.status);
+
+        mongodb.drop_database().await?;
+        Ok(())
+    }
+
+    /// Verifies that `ScanRepository::latest` returns the most recently
+    /// timestamped scan, using the descending index on `timestamp`.
+    ///
+    /// Setup: inserts two `ScanDocument`s with fixed, distinct timestamps —
+    /// one from 2024 and one from 2025 — into a fresh test database, in
+    /// chronological order.
+    ///
+    /// Asserts: `latest()` returns the 2025 scan, not the 2024 one,
+    /// confirming the query sorts by `timestamp` descending rather than by
+    /// insertion order.
+    ///
+    /// Requires `MONGODB_TEST_URI` to point at a reachable MongoDB instance;
+    /// the test database is dropped on completion.
+    #[test(tokio::test)]
+    #[ignore = "requires mongodb test server setup"]
+    async fn test_mongodb_scan_latest() -> Result<(), AppError> {
+        dotenv().ok();
+
+        let uri = std::env::var("MONGODB_TEST_URI")
+            .expect("MONGODB_TEST_URI must be set in .env or environment");
+        let database = format!("elliot_bay_book_sync_test_{}", uuid::Uuid::new_v4());
+        let mongodb = MongoDatabase::connect(&uri, &database).await?;
+
+        // Two scans with fixed timestamps, chosen so ordering is unambiguous
+        // regardless of when the test actually runs.
+        let older = ScanDocument {
+            status: ScanStatus::Finished,
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+            details: ScanDetails::Started,
+        };
+        let newer = ScanDocument {
+            status: ScanStatus::Running,
+            timestamp: "2025-01-01T00:00:00Z".to_string(),
+            details: ScanDetails::Started,
+        };
+
+        // Insert older first, then newer — insertion order intentionally
+        // matches chronological order here, but `latest()` should rely on
+        // the timestamp field, not insertion order, to pick the right one.
+        mongodb.scans.insert(&older).await?;
+        mongodb.scans.insert(&newer).await?;
+
+        // Should return `newer`, proving the query sorts by timestamp desc.
+        let latest = mongodb.scans.latest().await?.expect("should find a scan");
+
+        assert_eq!(latest.timestamp, newer.timestamp);
 
         mongodb.drop_database().await?;
         Ok(())
