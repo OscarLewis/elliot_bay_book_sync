@@ -108,7 +108,6 @@ async fn main() -> Result<(), AppError> {
 
     // Load config from file and environment
     let config = AppConfig::load()?;
-
     debug!(?config, "Loaded config");
 
     // Load the .env file into the system environment
@@ -126,6 +125,7 @@ async fn main() -> Result<(), AppError> {
     };
 
     // Open DB
+    // TODO Switch to being backed by MongoDB
     let db = DocumentDB::open(&config.database_path)?;
 
     // Debug all the scans stored in the database
