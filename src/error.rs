@@ -79,6 +79,9 @@ pub enum AppError {
 
     #[error("BSON serialization error: {0}")]
     BsonSer(#[from] mongodb::bson::ser::Error),
+
+    #[error("MongoDB did not return an ObjectId for the inserted document")]
+    InvalidObjectId,
 }
 
 impl IntoResponse for AppError {
@@ -93,6 +96,7 @@ impl IntoResponse for AppError {
             | AppError::BsonSer(_)
             | AppError::Config(_)
             | AppError::MongoDB(_)
+            | AppError::InvalidObjectId
             | AppError::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Json(_) => StatusCode::BAD_REQUEST,
             AppError::Uuid(_) => StatusCode::BAD_REQUEST,

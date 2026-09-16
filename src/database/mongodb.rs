@@ -1,6 +1,9 @@
 use crate::{error::AppError, library::book::Book, scan::scanner::ScanDocument};
 
-use mongodb::{Client, Collection, bson::to_document};
+use mongodb::{
+    Client, Collection,
+    bson::{oid::ObjectId, to_document},
+};
 
 pub struct MongoDB {
     pub books: Collection<mongodb::bson::Document>,
@@ -19,20 +22,24 @@ impl MongoDB {
         Ok(Self { books, scans, db })
     }
 
-    pub async fn insert_book(&self, book: &Book) -> Result<(), AppError> {
+    pub async fn insert_book(&self, book: &Book) -> Result<ObjectId, AppError> {
         let document = to_document(book)?;
+        let result = self.books.insert_one(document).await?;
 
-        self.books.insert_one(document).await?;
-
-        Ok(())
+        result
+            .inserted_id
+            .as_object_id()
+            .ok_or(AppError::InvalidObjectId)
     }
 
-    pub async fn insert_scan(&self, scan: &ScanDocument) -> Result<(), AppError> {
+    pub async fn insert_scan(&self, scan: &ScanDocument) -> Result<ObjectId, AppError> {
         let document = to_document(scan)?;
+        let result = self.scans.insert_one(document).await?;
 
-        self.scans.insert_one(document).await?;
-
-        Ok(())
+        result
+            .inserted_id
+            .as_object_id()
+            .ok_or(AppError::InvalidObjectId)
     }
 
     pub async fn drop_database(&self) -> Result<(), AppError> {
@@ -71,11 +78,11 @@ mod tests {
 
         let mongodb = MongoDB::connect(&uri, &database).await?;
 
-        mongodb.insert_book(&book).await?;
+        let book_id = mongodb.insert_book(&book).await?;
 
         let document = mongodb
             .books
-            .find_one(mongodb::bson::doc! {})
+            .find_one(mongodb::bson::doc! { "_id": book_id })
             .await?
             .expect("book should have been inserted");
 
@@ -103,11 +110,11 @@ mod tests {
             details: ScanDetails::Started,
         };
 
-        mongodb.insert_scan(&scan).await?;
+        let scan_id = mongodb.insert_scan(&scan).await?;
 
         let document = mongodb
             .scans
-            .find_one(mongodb::bson::doc! {})
+            .find_one(mongodb::bson::doc! { "_id": scan_id })
             .await?
             .expect("scan should have been inserted");
 
