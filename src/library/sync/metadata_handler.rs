@@ -101,6 +101,35 @@ mod tests {
 
         metadata_response.assert_status(StatusCode::OK);
 
+        // The handler must return a JSON array containing one metadata
+        // object (matching Kobo's `{Ids}`-batched endpoint shape), not a
+        // bare object — a bare object silently looks like "zero results"
+        // to the device and it never proceeds to download.
+        let metadata_list: Vec<BookMetadata> = metadata_response.json();
+        assert_eq!(metadata_list.len(), 1);
+        let metadata = &metadata_list[0];
+
+        // All book-scoped ids should be derived from the book_id
+        assert_eq!(metadata.cover_image_id, book_id);
+        assert_eq!(metadata.cross_revision_id, book_id);
+        assert_eq!(metadata.entitlement_id, book_id);
+        assert_eq!(metadata.revision_id, book_id);
+        assert_eq!(metadata.work_id, book_id);
+
+        // Title falls back to the parsed name if no title was found
+        let expected_title = book.title.clone().unwrap_or_else(|| book.name.clone());
+        assert_eq!(metadata.title, expected_title);
+        assert_eq!(metadata.description, book.description);
+
+        // Download url is derived from the book's size/format/id
+        assert_eq!(metadata.download_urls.len(), 1);
+        let download_url = &metadata.download_urls[0];
+        assert_eq!(download_url.size, (book.size_kb * 1024) as i64);
+        assert_eq!(download_url.platform, "Generic");
+        assert_eq!(download_url.drm_type, "None");
+        assert!(download_url.url.starts_with(test_base_url));
+        assert!(download_url.url.contains(&book_id));
+
         Ok(())
     }
 }

@@ -136,6 +136,19 @@ mod tests {
             None,
         )?;
 
+        let expected_body = tokio::fs::read(&epub_path).await?;
+
+        let download_response = server
+            .get(&format!(
+                "/kobo/{token}/download/{book_id}/{book_format_str}"
+            ))
+            .await;
+
+        download_response.assert_status(StatusCode::OK);
+
+        let body = download_response.into_bytes();
+        assert_eq!(body.as_ref(), expected_body.as_slice());
+
         Ok(())
     }
 }
