@@ -153,6 +153,30 @@ async fn main() -> Result<(), AppError> {
         "Files needing metadata"
     );
 
+    // TODO Move this initial scan into helper function
+    /*
+    let initial_record = ScanDocument {
+        status: ScanStatus::Running,
+        timestamp: Utc::now().to_rfc3339(),
+        details: ScanDetails::Started,
+    };
+
+    let record_doc_id = state.db.create(
+        DocumentTable::Scans,
+        &initial_record,
+        None,
+        Some(|s| s.timestamp.as_str()),
+    )?;
+
+    debug!(doc_id = %record_doc_id, "Initialized scan execution record");
+
+    tokio::spawn(run_library_scan(
+        state.db.clone(),
+        record_doc_id.clone(),
+        state.config.library_path.clone(),
+    ));
+    */
+
     if !books_needing_metadata.is_empty() {
         let metadata_state = state.clone();
         tokio::spawn(async move {
