@@ -4,3 +4,5 @@ database_path = "sync_db.redb"
 image_path = "static/images"
 ebbooks_auth_key = "test-key-456"
 base_url = "http://localhost:3000"
+host="0.0.0.0"
+port=3000
