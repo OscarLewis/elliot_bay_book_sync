@@ -1,6 +1,9 @@
-use std::{path::Path, sync::Arc};
-
 use serde::Deserialize;
+use std::{
+    net::{IpAddr, SocketAddr, ToSocketAddrs},
+    path::Path,
+    sync::Arc,
+};
 
 const LIBRARY_PATH: &str = "test ebooks";
 const PROXY_KOBO_STORE: bool = true;
@@ -8,6 +11,8 @@ const DB_PATH: &str = "sync_db.redb";
 const IMG_PATH: &str = "static/images";
 const TEST_AUTH_KEY: &str = "test-key-123";
 const BASE_URL: &str = "http://localhost:3000";
+const HOST: &str = "0.0.0.0";
+const PORT: u16 = 3000;
 
 #[derive(Clone, Debug)]
 pub struct AppConfig {
@@ -17,6 +22,13 @@ pub struct AppConfig {
     pub image_path: String,
     pub ebbooks_auth_key: String,
     pub base_url: String,
+
+    /// Fully resolved address (IP + port) to bind the server to.
+    pub bind_addr: SocketAddr,
+    /// Optional network interface name (e.g. "eth0", "wlan0") to bind the
+    /// listening socket to. Linux-only (`SO_BINDTODEVICE`); applied when the
+    /// listener is actually constructed, see `build_listener` below.
+    pub network_interface: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -27,6 +39,11 @@ struct ConfigFile {
     image_path: Option<String>,
     ebbooks_auth_key: Option<String>,
     base_url: Option<String>,
+
+    /// IP address or hostname, e.g. "0.0.0.0", "127.0.0.1", "::1", "localhost".
+    host: Option<String>,
+    port: Option<u16>,
+    network_interface: Option<String>,
 }
 
 impl AppConfig {
@@ -38,6 +55,10 @@ impl AppConfig {
             .try_deserialize()?;
 
         let default = Self::default();
+        let host = config.host.unwrap_or_else(|| HOST.to_string());
+        let port = config.port.unwrap_or(PORT);
+        let bind_addr = resolve_bind_addr(&host, port)
+            .map_err(|e| config::ConfigError::Message(e.to_string()))?;
 
         Ok(Self {
             library_path: config
@@ -49,6 +70,8 @@ impl AppConfig {
             image_path: config.image_path.unwrap_or(default.image_path),
             ebbooks_auth_key: config.ebbooks_auth_key.unwrap_or(default.ebbooks_auth_key),
             base_url: config.base_url.unwrap_or(default.base_url),
+            bind_addr,
+            network_interface: config.network_interface,
         })
     }
 }
@@ -62,11 +85,14 @@ impl Default for AppConfig {
             image_path: IMG_PATH.to_string(),
             ebbooks_auth_key: TEST_AUTH_KEY.to_string(),
             base_url: BASE_URL.to_string(),
+            bind_addr: resolve_bind_addr(HOST, PORT).expect("default HOST/PORT must be valid"),
+            network_interface: None,
         }
     }
 }
 
 impl AppConfig {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         library_path: Option<impl AsRef<Path>>,
         proxy_kobo_store: Option<bool>,
@@ -74,6 +100,8 @@ impl AppConfig {
         image_path: Option<impl Into<String>>,
         ebbooks_auth_key: Option<impl Into<String>>,
         base_url: Option<impl Into<String>>,
+        bind_addr: Option<SocketAddr>,
+        network_interface: Option<String>,
     ) -> Self {
         let default = Self::default();
 
@@ -90,6 +118,25 @@ impl AppConfig {
                 .map(Into::into)
                 .unwrap_or(default.ebbooks_auth_key),
             base_url: base_url.map(Into::into).unwrap_or(default.base_url),
+            bind_addr: bind_addr.unwrap_or(default.bind_addr),
+            network_interface: network_interface.or(default.network_interface),
         }
     }
+}
+
+/// Resolve a user-supplied host string + port into a concrete `SocketAddr`.
+/// Accepts plain IPv4/IPv6, bracketed IPv6 ("[::1]"), and hostnames (via DNS).
+fn resolve_bind_addr(host: &str, port: u16) -> std::io::Result<SocketAddr> {
+    let trimmed = host.trim().trim_start_matches('[').trim_end_matches(']');
+
+    if let Ok(ip) = trimmed.parse::<IpAddr>() {
+        return Ok(SocketAddr::new(ip, port));
+    }
+
+    (trimmed, port).to_socket_addrs()?.next().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("could not resolve host '{host}' to a socket address"),
+        )
+    })
 }

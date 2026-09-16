@@ -27,6 +27,7 @@ use uuid::Uuid;
 pub mod api;
 pub(crate) mod config;
 pub(crate) mod database;
+pub(crate) mod directories;
 pub mod error;
 pub mod library;
 pub mod logging;
@@ -162,7 +163,7 @@ async fn main() -> Result<(), AppError> {
     }
 
     // Bind server to local port 3000
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    let listener = tokio::net::TcpListener::bind(state.config.bind_addr)
         .await
         .unwrap();
 
