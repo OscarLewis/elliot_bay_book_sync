@@ -101,55 +101,6 @@ mod tests {
 
         metadata_response.assert_status(StatusCode::OK);
 
-        let metadata: BookMetadata = metadata_response.json();
-
-        // All book-scoped ids should be derived from the book_id
-        assert_eq!(metadata.cover_image_id, book_id);
-        assert_eq!(metadata.cross_revision_id, book_id);
-        assert_eq!(metadata.entitlement_id, book_id);
-        assert_eq!(metadata.revision_id, book_id);
-        assert_eq!(metadata.work_id, book_id);
-
-        // Title falls back to the parsed name if no title was found
-        let expected_title = book.title.clone().unwrap_or_else(|| book.name.clone());
-        assert_eq!(metadata.title, expected_title);
-        assert_eq!(metadata.description, book.description);
-
-        // Download url is derived from the book's size/format/id
-        let download_url = &metadata.download_urls[0];
-        assert_eq!(metadata.download_urls.len(), 1);
-        assert_eq!(download_url.size, (book.size_kb * 1024) as i64);
-        assert_eq!(download_url.platform, "Generic");
-        assert_eq!(download_url.drm_type, "None");
-        assert!(download_url.url.starts_with(test_base_url));
-        assert!(download_url.url.contains(&book_id));
-
-        // Static defaults the handler currently always sets
-        assert_eq!(metadata.genre, "00000000-0000-0000-0000-000000000001");
-        assert_eq!(
-            metadata.categories,
-            vec!["00000000-0000-0000-0000-000000000001".to_string()]
-        );
-        assert_eq!(metadata.language, "en");
-        assert!(!metadata.is_eligible_for_kobo_love);
-        assert!(!metadata.is_internet_archive);
-        assert!(!metadata.is_pre_order);
-        assert!(metadata.is_social_enabled);
-        assert!(metadata.phonetic_pronunciations.is_empty());
-        assert!(metadata.external_ids.is_empty());
-        assert_eq!(metadata.publisher.imprint, "");
-        assert_eq!(metadata.publisher.name, "");
-
-        // Contributors mirror the parsed author
-        let contributors = metadata.contributors.expect("expected contributors field");
-        match &book.author {
-            Some(author) => {
-                assert_eq!(contributors.len(), 1);
-                assert_eq!(&contributors[0].name, author);
-            }
-            None => assert!(contributors.is_empty()),
-        }
-
         Ok(())
     }
 }

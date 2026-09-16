@@ -1,7 +1,5 @@
 {
   "ids": [
-    1648646,
-    2607415,
     77104,
     427352,
     48701,
@@ -17,6 +15,8 @@
     81913,
     460393,
     508756,
+    1648646,
+    2607415,
     1885097,
     481728,
     1123139,
@@ -32,267 +32,7 @@
     "hits": [
       {
         "document": {
-          "activities_count": 0,
-          "alternative_titles": [
-            "Demigods Academy - Book 9: The Wheel Of Time",
-            "Die Akademie der Götter - Jahr 9"
-          ],
-          "author_names": [
-            "Elisa S. Amore",
-            "Kiera Legend"
-          ],
-          "book_category_id": 1,
-          "compilation": false,
-          "content_warnings": [],
-          "contribution_types": [
-            "Author",
-            "Author"
-          ],
-          "contributions": [
-            {
-              "author": {
-                "id": 360426,
-                "image": {
-                  "color": "#754529",
-                  "color_name": "Brown",
-                  "height": 622,
-                  "id": 4968434,
-                  "url": "https://assets.hardcover.app/author/360426/a761942a-cb0d-44e4-a100-5da3d4e60ce7.jpg",
-                  "width": 700
-                },
-                "name": "Elisa S. Amore",
-                "slug": "elisa-s-amore"
-              }
-            },
-            {
-              "author": {
-                "id": 346827,
-                "image": {},
-                "name": "Kiera Legend",
-                "slug": "kiera-legend"
-              }
-            }
-          ],
-          "cover_color": "Blue",
-          "description": "Dive into the season's finale with Nicole and her Demigods friends.\n\nBeing a superhero is exhausting−Nicole knows that well. Since the Gods have done nothing but put her through unimaginable tortures, she’d have every reason to join the Corpse King in his quest for revenge. Yet, joining the vengeful king would be a terrible and drastic action.\nAs she tries to stop him from leaving Olympus, after kidnapping the twelve Hours, Nicole’s power arises—revealing that she can jump through time. An ability unheard of by the Gods, because only Chronos himself can control time…\nAnd now that the Corpse King knows Nicole’s secret, her life is in jeopardy.\nEven worse, her power is still a liability, more than a weapon she can use against him. She knows that fighting a whole undead army, is basically her only option to rescue the Hours before he uses them for whatever he has planned. Except, Nicole has been trapped in his diabolical plan.",
-          "featured_series": {
-            "details": "9",
-            "featured": true,
-            "id": 415427,
-            "position": 9.0,
-            "series": {
-              "books_count": 13,
-              "id": 31825,
-              "name": "Demigods Academy",
-              "primary_books_count": 12,
-              "slug": "demigods-academy"
-            },
-            "unreleased": false
-          },
-          "featured_series_position": 9.0,
-          "genres": [
-            "Fantasy"
-          ],
-          "has_audiobook": false,
-          "has_ebook": false,
-          "id": "1648646",
-          "image": {
-            "color": "#02559d",
-            "color_name": "Blue",
-            "height": 1524,
-            "id": 4968493,
-            "url": "https://assets.hardcover.app/editions/31731695/350f73d0-cb5f-4d5f-bdf3-b23abb081cc9.jpg",
-            "width": 1000
-          },
-          "isbns": [
-            "9798768239718"
-          ],
-          "lists_count": 0,
-          "moods": [],
-          "pages": 216,
-          "prompts_count": 0,
-          "rating": 0.0,
-          "ratings_count": 0,
-          "release_date": "2021-11-16",
-          "release_year": 2021,
-          "reviews_count": 0,
-          "series_ids": [
-            31825
-          ],
-          "series_names": [
-            "Demigods Academy"
-          ],
-          "slug": "the-wheel-of-time-2021",
-          "subtitle": "The Wheel Of Time",
-          "tags": [],
-          "title": "The Wheel Of Time",
-          "users_count": 4,
-          "users_read_count": 1
-        },
-        "highlight": {
-          "alternative_titles": [
-            {
-              "matched_tokens": [
-                "The",
-                "Wheel",
-                "Of",
-                "Time"
-              ],
-              "snippet": "Demigods Academy - Book 9: <mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Die Akademie der Götter - Jahr 9"
-            }
-          ],
-          "title": {
-            "matched_tokens": [
-              "The",
-              "Wheel",
-              "Of",
-              "Time"
-            ],
-            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
-          }
-        },
-        "highlights": [
-          {
-            "field": "title",
-            "matched_tokens": [
-              "The",
-              "Wheel",
-              "Of",
-              "Time"
-            ],
-            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
-          },
-          {
-            "field": "alternative_titles",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "The",
-                "Wheel",
-                "Of",
-                "Time"
-              ]
-            ],
-            "snippets": [
-              "Demigods Academy - Book 9: <mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
-            ]
-          }
-        ],
-        "text_match": 2314894167593451562,
-        "text_match_info": {
-          "best_field_score": "4419510927616",
-          "best_field_weight": 5,
-          "fields_matched": 2,
-          "num_tokens_dropped": 0,
-          "score": "2314894167593451562",
-          "tokens_matched": 4,
-          "typo_prefix_score": 0
-        }
-      },
-      {
-        "document": {
-          "activities_count": 0,
-          "alternative_titles": [
-            "The Wheel of Time"
-          ],
-          "author_names": [],
-          "book_category_id": 1,
-          "compilation": false,
-          "content_warnings": [],
-          "contribution_types": [],
-          "contributions": [],
-          "featured_series": {},
-          "genres": [],
-          "has_audiobook": false,
-          "has_ebook": false,
-          "id": "2607415",
-          "image": {},
-          "isbns": [],
-          "lists_count": 0,
-          "moods": [],
-          "prompts_count": 0,
-          "rating": 0.0,
-          "ratings_count": 0,
-          "reviews_count": 0,
-          "series_ids": [],
-          "series_names": [],
-          "slug": "the-wheel-of-time-96494adb-9266-4d2e-ba2f-71e2713f83ed",
-          "tags": [],
-          "title": "The Wheel of Time",
-          "users_count": 0,
-          "users_read_count": 0
-        },
-        "highlight": {
-          "alternative_titles": [
-            {
-              "matched_tokens": [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            }
-          ],
-          "title": {
-            "matched_tokens": [
-              "The",
-              "Wheel",
-              "of",
-              "Time"
-            ],
-            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-          }
-        },
-        "highlights": [
-          {
-            "field": "title",
-            "matched_tokens": [
-              "The",
-              "Wheel",
-              "of",
-              "Time"
-            ],
-            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-          },
-          {
-            "field": "alternative_titles",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ]
-            ],
-            "snippets": [
-              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            ]
-          }
-        ],
-        "text_match": 2314894167593451562,
-        "text_match_info": {
-          "best_field_score": "4419510927616",
-          "best_field_weight": 5,
-          "fields_matched": 2,
-          "num_tokens_dropped": 0,
-          "score": "2314894167593451562",
-          "tokens_matched": 4,
-          "typo_prefix_score": 0
-        }
-      },
-      {
-        "document": {
-          "activities_count": 2533,
+          "activities_count": 2538,
           "alternative_titles": [
             "The Eye of the World",
             "The Eye of the World - Book One of The Wheel of Time",
@@ -560,7 +300,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1720,
+          "lists_count": 1731,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -575,11 +315,11 @@
           ],
           "pages": 804,
           "prompts_count": 7,
-          "rating": 4.060304697418536,
-          "ratings_count": 2363,
+          "rating": 4.061314791403287,
+          "ratings_count": 2373,
           "release_date": "1990-01-01",
           "release_year": 1990,
-          "reviews_count": 211,
+          "reviews_count": 212,
           "series_ids": [
             1097
           ],
@@ -594,15 +334,15 @@
             "Strong Character Development",
             "Diverse Characters",
             "Not Diverse Characters",
-            "Unloveable Characters",
             "Weak Character Development",
+            "Unloveable Characters",
             "Plot driven",
             "Action & Adventure",
             "#digitally-own"
           ],
           "title": "The Eye of the World",
-          "users_count": 5484,
-          "users_read_count": 3313
+          "users_count": 5501,
+          "users_read_count": 3325
         },
         "highlight": {
           "alternative_titles": [
@@ -908,7 +648,7 @@
       },
       {
         "document": {
-          "activities_count": 1639,
+          "activities_count": 1643,
           "alternative_titles": [
             "El Despertar de los Heroes",
             "Great Hunt",
@@ -978,8 +718,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1147,12 +891,12 @@
             "605776241X",
             "9786057762412"
           ],
-          "lists_count": 944,
+          "lists_count": 949,
           "moods": [
             "Adventurous",
             "tense",
-            "dark",
             "mysterious",
+            "dark",
             "emotional",
             "challenging",
             "inspiring",
@@ -1162,8 +906,8 @@
           ],
           "pages": 720,
           "prompts_count": 0,
-          "rating": 4.188707729468599,
-          "ratings_count": 1656,
+          "rating": 4.19009009009009,
+          "ratings_count": 1665,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 102,
@@ -1188,8 +932,8 @@
             "fiction"
           ],
           "title": "The Great Hunt",
-          "users_count": 2949,
-          "users_read_count": 2428
+          "users_count": 2962,
+          "users_read_count": 2439
         },
         "highlight": {
           "alternative_titles": [
@@ -1473,7 +1217,7 @@
       },
       {
         "document": {
-          "activities_count": 1446,
+          "activities_count": 1449,
           "alternative_titles": [
             "The Dragon Reborn - Book Three of The Wheel of Time",
             "The Dragon Reborn",
@@ -1523,8 +1267,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1653,7 +1401,7 @@
             "9788834739549",
             "2820506119"
           ],
-          "lists_count": 825,
+          "lists_count": 831,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -1668,8 +1416,8 @@
           ],
           "pages": 672,
           "prompts_count": 0,
-          "rating": 4.199731903485254,
-          "ratings_count": 1492,
+          "rating": 4.200333333333333,
+          "ratings_count": 1500,
           "release_date": "1991-01-01",
           "release_year": 1991,
           "reviews_count": 83,
@@ -1693,8 +1441,8 @@
             "fiction"
           ],
           "title": "The Dragon Reborn",
-          "users_count": 2710,
-          "users_read_count": 2227
+          "users_count": 2722,
+          "users_read_count": 2237
         },
         "highlight": {
           "alternative_titles": [
@@ -1932,7 +1680,7 @@
       },
       {
         "document": {
-          "activities_count": 1676,
+          "activities_count": 1678,
           "alternative_titles": [
             "[Wheel of Time, Book 4] The Shadow Rising",
             "The Shadow Rising - Book Four of The Wheel of Time",
@@ -1989,8 +1737,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2116,7 +1868,7 @@
             "1250390338",
             "9781250390332"
           ],
-          "lists_count": 748,
+          "lists_count": 751,
           "moods": [
             "Adventurous",
             "dark",
@@ -2131,8 +1883,8 @@
           ],
           "pages": 1024,
           "prompts_count": 1,
-          "rating": 4.208101667990468,
-          "ratings_count": 1259,
+          "rating": 4.208695652173913,
+          "ratings_count": 1265,
           "release_date": "1992-09-15",
           "release_year": 1992,
           "reviews_count": 66,
@@ -2157,8 +1909,8 @@
             "fiction"
           ],
           "title": "The Shadow Rising",
-          "users_count": 2421,
-          "users_read_count": 1955
+          "users_count": 2431,
+          "users_read_count": 1963
         },
         "highlight": {
           "alternative_titles": [
@@ -2406,7 +2158,7 @@
       },
       {
         "document": {
-          "activities_count": 1317,
+          "activities_count": 1321,
           "alternative_titles": [
             "The Fires of Heaven",
             "Wheel of Time 05 - The Fires of Heaven",
@@ -2464,8 +2216,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2597,7 +2353,7 @@
             "8580579864",
             "9788580579864"
           ],
-          "lists_count": 679,
+          "lists_count": 678,
           "moods": [
             "Adventurous",
             "tense",
@@ -2612,8 +2368,8 @@
           ],
           "pages": 928,
           "prompts_count": 1,
-          "rating": 4.093692870201097,
-          "ratings_count": 1094,
+          "rating": 4.092188919164396,
+          "ratings_count": 1101,
           "release_date": "1993-01-01",
           "release_year": 1993,
           "reviews_count": 52,
@@ -2638,8 +2394,8 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2195,
-          "users_read_count": 1728
+          "users_count": 2205,
+          "users_read_count": 1737
         },
         "highlight": {
           "alternative_titles": [
@@ -2920,7 +2676,7 @@
       },
       {
         "document": {
-          "activities_count": 1233,
+          "activities_count": 1236,
           "alternative_titles": [
             "Lord of Chaos: Book Six of The Wheel of Time",
             "Lord of Chaos",
@@ -3098,7 +2854,7 @@
             "8448034570",
             "9788448034573"
           ],
-          "lists_count": 607,
+          "lists_count": 609,
           "moods": [
             "Adventurous",
             "dark",
@@ -3112,8 +2868,8 @@
           ],
           "pages": 1040,
           "prompts_count": 1,
-          "rating": 4.070873786407767,
-          "ratings_count": 1030,
+          "rating": 4.070877531340405,
+          "ratings_count": 1037,
           "release_date": "1994-01-01",
           "release_year": 1994,
           "reviews_count": 50,
@@ -3137,8 +2893,8 @@
             "fantlab-import"
           ],
           "title": "Lord of Chaos",
-          "users_count": 2078,
-          "users_read_count": 1626
+          "users_count": 2088,
+          "users_read_count": 1635
         },
         "highlight": {
           "alternative_titles": [
@@ -3345,7 +3101,7 @@
       },
       {
         "document": {
-          "activities_count": 1172,
+          "activities_count": 1176,
           "alternative_titles": [
             "Korona mieczy",
             "A Crown of Swords",
@@ -3403,12 +3159,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3539,7 +3291,7 @@
             "8377851903",
             "9788377851906"
           ],
-          "lists_count": 552,
+          "lists_count": 554,
           "moods": [
             "Adventurous",
             "dark",
@@ -3554,8 +3306,8 @@
           ],
           "pages": 768,
           "prompts_count": 1,
-          "rating": 3.86096256684492,
-          "ratings_count": 935,
+          "rating": 3.858660998937301,
+          "ratings_count": 941,
           "release_date": "1996-01-01",
           "release_year": 1996,
           "reviews_count": 41,
@@ -3579,8 +3331,8 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 1989,
-          "users_read_count": 1518
+          "users_count": 2000,
+          "users_read_count": 1526
         },
         "highlight": {
           "alternative_titles": [
@@ -3802,7 +3554,7 @@
       },
       {
         "document": {
-          "activities_count": 1002,
+          "activities_count": 1004,
           "alternative_titles": [
             "The Path of Daggers Part 2 of 2",
             "Path of Daggers",
@@ -3962,7 +3714,7 @@
             "9024564530",
             "9789024564538"
           ],
-          "lists_count": 531,
+          "lists_count": 533,
           "moods": [
             "Adventurous",
             "dark",
@@ -3975,8 +3727,8 @@
           ],
           "pages": 608,
           "prompts_count": 0,
-          "rating": 3.721064814814815,
-          "ratings_count": 864,
+          "rating": 3.718066743383199,
+          "ratings_count": 869,
           "release_date": "1998-01-01",
           "release_year": 1998,
           "reviews_count": 34,
@@ -4003,8 +3755,8 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1888,
-          "users_read_count": 1420
+          "users_count": 1897,
+          "users_read_count": 1427
         },
         "highlight": {
           "alternative_titles": [
@@ -4180,7 +3932,7 @@
       },
       {
         "document": {
-          "activities_count": 977,
+          "activities_count": 980,
           "alternative_titles": [
             "The Gathering Storm",
             "Sturm der Finsternis",
@@ -4345,7 +4097,7 @@
             "9786060066774",
             "3492959431"
           ],
-          "lists_count": 503,
+          "lists_count": 506,
           "moods": [
             "Adventurous",
             "dark",
@@ -4360,8 +4112,8 @@
           ],
           "pages": 848,
           "prompts_count": 1,
-          "rating": 4.43854415274463,
-          "ratings_count": 838,
+          "rating": 4.436611374407583,
+          "ratings_count": 844,
           "release_date": "2009-11-07",
           "release_year": 2009,
           "reviews_count": 47,
@@ -4386,8 +4138,8 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1821,
-          "users_read_count": 1318
+          "users_count": 1830,
+          "users_read_count": 1325
         },
         "highlight": {
           "alternative_titles": [
@@ -4541,7 +4293,7 @@
       },
       {
         "document": {
-          "activities_count": 1088,
+          "activities_count": 1090,
           "alternative_titles": [
             "[Wheel of Time, Book 10] Crossroads of Twilight",
             "Crossroads Of Twilight: Book 10 of the Wheel of Time",
@@ -4592,12 +4344,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4706,7 +4454,7 @@
             "030794123X",
             "9780307941237"
           ],
-          "lists_count": 529,
+          "lists_count": 531,
           "moods": [
             "Adventurous",
             "dark",
@@ -4721,8 +4469,8 @@
           ],
           "pages": 832,
           "prompts_count": 0,
-          "rating": 3.459798994974874,
-          "ratings_count": 796,
+          "rating": 3.458125,
+          "ratings_count": 800,
           "release_date": "2003-01-01",
           "release_year": 2003,
           "reviews_count": 48,
@@ -4747,8 +4495,8 @@
             "Fantasy - Epic"
           ],
           "title": "Crossroads of Twilight",
-          "users_count": 1776,
-          "users_read_count": 1305
+          "users_count": 1784,
+          "users_read_count": 1311
         },
         "highlight": {
           "alternative_titles": [
@@ -4978,7 +4726,7 @@
       },
       {
         "document": {
-          "activities_count": 1037,
+          "activities_count": 1043,
           "alternative_titles": [
             "Towers of Midnight",
             "Towers of Midnight: Book Thirteen of the Wheel of Time",
@@ -5152,7 +4900,7 @@
             "1427210233",
             "9781427210234"
           ],
-          "lists_count": 460,
+          "lists_count": 461,
           "moods": [
             "Adventurous",
             "tense",
@@ -5167,8 +4915,8 @@
           ],
           "pages": 976,
           "prompts_count": 1,
-          "rating": 4.445214105793451,
-          "ratings_count": 794,
+          "rating": 4.44139650872818,
+          "ratings_count": 802,
           "release_date": "2010-11-02",
           "release_year": 2010,
           "reviews_count": 43,
@@ -5192,8 +4940,8 @@
             "fiction"
           ],
           "title": "Towers of Midnight",
-          "users_count": 1773,
-          "users_read_count": 1261
+          "users_count": 1783,
+          "users_read_count": 1271
         },
         "highlight": {
           "alternative_titles": [
@@ -5365,7 +5113,7 @@
       },
       {
         "document": {
-          "activities_count": 995,
+          "activities_count": 997,
           "alternative_titles": [
             "Knife of Dreams",
             "Cuchillo de Sueños",
@@ -5515,7 +5263,7 @@
             "0748115447",
             "9780748115440"
           ],
-          "lists_count": 521,
+          "lists_count": 523,
           "moods": [
             "Adventurous",
             "dark",
@@ -5530,8 +5278,8 @@
           ],
           "pages": 832,
           "prompts_count": 1,
-          "rating": 4.073717948717949,
-          "ratings_count": 780,
+          "rating": 4.074617346938775,
+          "ratings_count": 784,
           "release_date": "2005-10-03",
           "release_year": 2005,
           "reviews_count": 38,
@@ -5555,8 +5303,8 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1759,
-          "users_read_count": 1283
+          "users_count": 1767,
+          "users_read_count": 1289
         },
         "highlight": {
           "alternative_titles": [
@@ -5718,7 +5466,7 @@
       },
       {
         "document": {
-          "activities_count": 1093,
+          "activities_count": 1096,
           "alternative_titles": [
             "A Memory of Light",
             "A Memory of Light: Wheel of Time, Book 14",
@@ -5766,8 +5514,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -5785,8 +5537,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5885,7 +5641,7 @@
             "9791028112561",
             "9780748117222"
           ],
-          "lists_count": 485,
+          "lists_count": 487,
           "moods": [
             "Adventurous",
             "emotional",
@@ -5900,8 +5656,8 @@
           ],
           "pages": 1056,
           "prompts_count": 3,
-          "rating": 4.602002503128911,
-          "ratings_count": 799,
+          "rating": 4.598136645962733,
+          "ratings_count": 805,
           "release_date": "2013-01-01",
           "release_year": 2013,
           "reviews_count": 80,
@@ -5926,8 +5682,8 @@
             "dark"
           ],
           "title": "A Memory of Light",
-          "users_count": 1748,
-          "users_read_count": 1235
+          "users_count": 1760,
+          "users_read_count": 1243
         },
         "highlight": {
           "alternative_titles": [
@@ -6221,7 +5977,7 @@
           "slug": "the-strike-at-shayol-ghul",
           "tags": [],
           "title": "The Strike at Shayol Ghul",
-          "users_count": 211,
+          "users_count": 212,
           "users_read_count": 99
         },
         "highlight": {
@@ -6563,6 +6319,266 @@
           "fields_matched": 3,
           "num_tokens_dropped": 0,
           "score": "2314894167593451547",
+          "tokens_matched": 4,
+          "typo_prefix_score": 0
+        }
+      },
+      {
+        "document": {
+          "activities_count": 0,
+          "alternative_titles": [
+            "Demigods Academy - Book 9: The Wheel Of Time",
+            "Die Akademie der Götter - Jahr 9"
+          ],
+          "author_names": [
+            "Elisa S. Amore",
+            "Kiera Legend"
+          ],
+          "book_category_id": 1,
+          "compilation": false,
+          "content_warnings": [],
+          "contribution_types": [
+            "Author",
+            "Author"
+          ],
+          "contributions": [
+            {
+              "author": {
+                "id": 360426,
+                "image": {
+                  "color": "#754529",
+                  "color_name": "Brown",
+                  "height": 622,
+                  "id": 4968434,
+                  "url": "https://assets.hardcover.app/author/360426/a761942a-cb0d-44e4-a100-5da3d4e60ce7.jpg",
+                  "width": 700
+                },
+                "name": "Elisa S. Amore",
+                "slug": "elisa-s-amore"
+              }
+            },
+            {
+              "author": {
+                "id": 346827,
+                "image": {},
+                "name": "Kiera Legend",
+                "slug": "kiera-legend"
+              }
+            }
+          ],
+          "cover_color": "Blue",
+          "description": "Dive into the season's finale with Nicole and her Demigods friends.\n\nBeing a superhero is exhausting−Nicole knows that well. Since the Gods have done nothing but put her through unimaginable tortures, she’d have every reason to join the Corpse King in his quest for revenge. Yet, joining the vengeful king would be a terrible and drastic action.\nAs she tries to stop him from leaving Olympus, after kidnapping the twelve Hours, Nicole’s power arises—revealing that she can jump through time. An ability unheard of by the Gods, because only Chronos himself can control time…\nAnd now that the Corpse King knows Nicole’s secret, her life is in jeopardy.\nEven worse, her power is still a liability, more than a weapon she can use against him. She knows that fighting a whole undead army, is basically her only option to rescue the Hours before he uses them for whatever he has planned. Except, Nicole has been trapped in his diabolical plan.",
+          "featured_series": {
+            "details": "9",
+            "featured": true,
+            "id": 415427,
+            "position": 9.0,
+            "series": {
+              "books_count": 13,
+              "id": 31825,
+              "name": "Demigods Academy",
+              "primary_books_count": 12,
+              "slug": "demigods-academy"
+            },
+            "unreleased": false
+          },
+          "featured_series_position": 9.0,
+          "genres": [
+            "Fantasy"
+          ],
+          "has_audiobook": false,
+          "has_ebook": false,
+          "id": "1648646",
+          "image": {
+            "color": "#02559d",
+            "color_name": "Blue",
+            "height": 1524,
+            "id": 4968493,
+            "url": "https://assets.hardcover.app/editions/31731695/350f73d0-cb5f-4d5f-bdf3-b23abb081cc9.jpg",
+            "width": 1000
+          },
+          "isbns": [
+            "9798768239718"
+          ],
+          "lists_count": 0,
+          "moods": [],
+          "pages": 216,
+          "prompts_count": 0,
+          "rating": 0.0,
+          "ratings_count": 0,
+          "release_date": "2021-11-16",
+          "release_year": 2021,
+          "reviews_count": 0,
+          "series_ids": [
+            31825
+          ],
+          "series_names": [
+            "Demigods Academy"
+          ],
+          "slug": "the-wheel-of-time-2021",
+          "subtitle": "The Wheel Of Time",
+          "tags": [],
+          "title": "The Wheel Of Time",
+          "users_count": 4,
+          "users_read_count": 1
+        },
+        "highlight": {
+          "alternative_titles": [
+            {
+              "matched_tokens": [
+                "The",
+                "Wheel",
+                "Of",
+                "Time"
+              ],
+              "snippet": "Demigods Academy - Book 9: <mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Die Akademie der Götter - Jahr 9"
+            }
+          ],
+          "title": {
+            "matched_tokens": [
+              "The",
+              "Wheel",
+              "Of",
+              "Time"
+            ],
+            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
+          }
+        },
+        "highlights": [
+          {
+            "field": "title",
+            "matched_tokens": [
+              "The",
+              "Wheel",
+              "Of",
+              "Time"
+            ],
+            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
+          },
+          {
+            "field": "alternative_titles",
+            "indices": [
+              0
+            ],
+            "matched_tokens": [
+              [
+                "The",
+                "Wheel",
+                "Of",
+                "Time"
+              ]
+            ],
+            "snippets": [
+              "Demigods Academy - Book 9: <mark>The</mark> <mark>Wheel</mark> <mark>Of</mark> <mark>Time</mark>"
+            ]
+          }
+        ],
+        "text_match": 2314894167593451562,
+        "text_match_info": {
+          "best_field_score": "4419510927616",
+          "best_field_weight": 5,
+          "fields_matched": 2,
+          "num_tokens_dropped": 0,
+          "score": "2314894167593451562",
+          "tokens_matched": 4,
+          "typo_prefix_score": 0
+        }
+      },
+      {
+        "document": {
+          "activities_count": 0,
+          "alternative_titles": [
+            "The Wheel of Time"
+          ],
+          "author_names": [],
+          "book_category_id": 1,
+          "compilation": false,
+          "content_warnings": [],
+          "contribution_types": [],
+          "contributions": [],
+          "featured_series": {},
+          "genres": [],
+          "has_audiobook": false,
+          "has_ebook": false,
+          "id": "2607415",
+          "image": {},
+          "isbns": [],
+          "lists_count": 0,
+          "moods": [],
+          "prompts_count": 0,
+          "rating": 0.0,
+          "ratings_count": 0,
+          "reviews_count": 0,
+          "series_ids": [],
+          "series_names": [],
+          "slug": "the-wheel-of-time-96494adb-9266-4d2e-ba2f-71e2713f83ed",
+          "tags": [],
+          "title": "The Wheel of Time",
+          "users_count": 0,
+          "users_read_count": 0
+        },
+        "highlight": {
+          "alternative_titles": [
+            {
+              "matched_tokens": [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            }
+          ],
+          "title": {
+            "matched_tokens": [
+              "The",
+              "Wheel",
+              "of",
+              "Time"
+            ],
+            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+          }
+        },
+        "highlights": [
+          {
+            "field": "title",
+            "matched_tokens": [
+              "The",
+              "Wheel",
+              "of",
+              "Time"
+            ],
+            "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+          },
+          {
+            "field": "alternative_titles",
+            "indices": [
+              0
+            ],
+            "matched_tokens": [
+              [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ]
+            ],
+            "snippets": [
+              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            ]
+          }
+        ],
+        "text_match": 2314894167593451562,
+        "text_match_info": {
+          "best_field_score": "4419510927616",
+          "best_field_weight": 5,
+          "fields_matched": 2,
+          "num_tokens_dropped": 0,
+          "score": "2314894167593451562",
           "tokens_matched": 4,
           "typo_prefix_score": 0
         }
@@ -7152,12 +7168,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -7175,12 +7187,8 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -8540,7 +8548,7 @@
         }
       }
     ],
-    "out_of": 2581928,
+    "out_of": 2583280,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8549,6 +8557,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 80
+    "search_time_ms": 88
   }
 }

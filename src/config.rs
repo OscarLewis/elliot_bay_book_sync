@@ -2,6 +2,7 @@ use serde::Deserialize;
 use std::{
     net::{IpAddr, SocketAddr, ToSocketAddrs},
     path::Path,
+    str::FromStr,
     sync::Arc,
 };
 
@@ -28,6 +29,7 @@ pub struct AppConfig {
     /// Optional network interface name (e.g. "eth0", "wlan0") to bind the
     /// listening socket to. Linux-only (`SO_BINDTODEVICE`); applied when the
     /// listener is actually constructed, see `build_listener` below.
+    // TODO Implement the network interface feature
     pub network_interface: Option<String>,
 }
 
@@ -124,19 +126,74 @@ impl AppConfig {
     }
 }
 
-/// Resolve a user-supplied host string + port into a concrete `SocketAddr`.
-/// Accepts plain IPv4/IPv6, bracketed IPv6 ("[::1]"), and hostnames (via DNS).
+/// Address or hostname to listen on, e.g. "0.0.0.0", "127.0.0.1",
+/// "::1", "[::1]", or "localhost".
 fn resolve_bind_addr(host: &str, port: u16) -> std::io::Result<SocketAddr> {
-    let trimmed = host.trim().trim_start_matches('[').trim_end_matches(']');
+    let host = host.trim();
 
-    if let Ok(ip) = trimmed.parse::<IpAddr>() {
+    if host.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "bind host cannot be empty",
+        ));
+    }
+
+    // Accept bracketed IPv6 addresses, e.g. "[::1]".
+    let host = host
+        .strip_prefix('[')
+        .and_then(|host| host.strip_suffix(']'))
+        .unwrap_or(host);
+
+    // Avoid DNS resolution when the host is already an IP address.
+    if let Ok(ip) = IpAddr::from_str(host) {
         return Ok(SocketAddr::new(ip, port));
     }
 
-    (trimmed, port).to_socket_addrs()?.next().ok_or_else(|| {
+    (host, port).to_socket_addrs()?.next().ok_or_else(|| {
         std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!("could not resolve host '{host}' to a socket address"),
+            std::io::ErrorKind::AddrNotAvailable,
+            format!("could not resolve bind host '{host}'"),
         )
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_ipv4() {
+        assert_eq!(
+            resolve_bind_addr("127.0.0.1", 3000).unwrap(),
+            "127.0.0.1:3000".parse().unwrap()
+        );
+    }
+
+    #[test]
+    fn resolves_ipv6() {
+        assert_eq!(
+            resolve_bind_addr("::1", 3000).unwrap(),
+            "[::1]:3000".parse().unwrap()
+        );
+    }
+
+    #[test]
+    fn resolves_bracketed_ipv6() {
+        assert_eq!(
+            resolve_bind_addr("[::1]", 3000).unwrap(),
+            "[::1]:3000".parse().unwrap()
+        );
+    }
+
+    #[test]
+    fn rejects_empty_host() {
+        assert!(resolve_bind_addr("", 3000).is_err());
+        assert!(resolve_bind_addr("   ", 3000).is_err());
+    }
+
+    #[test]
+    fn resolves_hostname() {
+        let addr = resolve_bind_addr("localhost", 3000).unwrap();
+        assert_eq!(addr.port(), 3000);
+    }
 }

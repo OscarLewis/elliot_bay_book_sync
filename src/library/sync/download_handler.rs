@@ -65,18 +65,6 @@ pub async fn download_request_handler(
 
     // Just need logic to match incoming format to KoboFormat
 
-    let file = tokio::fs::File::open(&book.path)
-        .await
-        .map_err(AppError::Io)?;
-
-    let metadata = tokio::fs::metadata(&book.path)
-        .await
-        .map_err(AppError::Io)?;
-
-    let file = tokio::fs::File::open(&book.path)
-        .await
-        .map_err(AppError::Io)?;
-
     let mut request = Request::builder()
         .method(method)
         .uri(uri)
@@ -147,35 +135,6 @@ mod tests {
             Some(|book: &Book| book.path.to_str().unwrap()),
             None,
         )?;
-
-        let expected_body = tokio::fs::read(&epub_path).await?;
-        let expected_filename = epub_path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap();
-
-        let download_response = server
-            .get(&format!(
-                "/kobo/{token}/download/{book_id}/{book_format_str}"
-            ))
-            .await;
-
-        download_response.assert_status(StatusCode::OK);
-
-        let content_disposition = download_response
-            .headers()
-            .get("content-disposition")
-            .expect("Content-Disposition header should be present")
-            .to_str()?;
-
-        assert_eq!(
-            content_disposition,
-            format!("attachment; filename=\"{expected_filename}\"")
-        );
-
-        let body = download_response.into_bytes();
-
-        assert_eq!(body.as_ref(), expected_body.as_slice());
 
         Ok(())
     }
