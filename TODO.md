@@ -25,15 +25,15 @@
 
 [ ] - Remove books from collection - "/kobo/{token}/v1/library/tags/{tag_id}/items/delete"
 
-[ ] - Delete book from device - "/kobo/{token}/v1/library/{book_uuid}"
+[x] - Delete book from device - "/kobo/{token}/v1/library/{book_uuid}"
 
 [x] - Device authentication - "/kobo/{token}/v1/auth/device"
 
-[X] - OAuth token - "/kobo/{token}/oauth/token" 
+[x] - OAuth token - "/kobo/{token}/oauth/token" 
 
-[X] - OAuth refresh - "/kobo/{token}/oauth/refresh"
+[x] - OAuth refresh - "/kobo/{token}/oauth/refresh"
 
-[X] - OAuth discovery - "/kobo/{token}/oauth/.well-known/openid-configuration"
+[x] - OAuth discovery - "/kobo/{token}/oauth/.well-known/openid-configuration"
 
 [ ] Reading services stubs
   - [ ] /api/v3/content/checkforchanges
