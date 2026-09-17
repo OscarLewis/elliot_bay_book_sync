@@ -166,10 +166,10 @@ pub(crate) async fn run_library_scan(
                 let updated_count = updated_books.len();
 
                 for (id, book) in updated_books {
-                    // TODO Diff this with what's in mongodb and update changed fields
-                    // Diff with what's in mongodb and update only changed fields
-                    // TODO This ID needs to be ObjectID from MongoDB
-                    // mongodb.books.update_diff(id, &book).await?;
+                    mongodb
+                        .books
+                        .update_diff(book.id.expect("Book must have a MongoDB ID"), &book)
+                        .await?;
 
                     db.update(
                         DocumentTable::Books,

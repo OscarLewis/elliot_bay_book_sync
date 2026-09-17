@@ -103,7 +103,7 @@ pub(crate) async fn extract_imgs_for_books(
     Ok(image_paths)
 }
 
-// TODO Fix tests
+// FIXME Fix tests
 /*
 #[cfg(test)]
 mod tests {
