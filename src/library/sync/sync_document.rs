@@ -1,3 +1,5 @@
+use crate::database::bson_chrono_datetime::bson_chrono_datetime;
+use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -5,5 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct SyncedBookDocument {
     pub book_id: String,
     pub user_id: String,
+    #[serde(rename = "_id", default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<ObjectId>,
+    #[serde(with = "bson_chrono_datetime")]
     pub synced_at: DateTime<Utc>,
 }

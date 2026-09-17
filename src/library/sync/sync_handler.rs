@@ -201,6 +201,7 @@ pub async fn library_sync_handler(
         let synced = SyncedBookDocument {
             book_id: book_id.clone(),
             user_id: "default".to_string(),
+            id: None, // TODO put mongodb doc id here
             synced_at: Utc::now(),
         };
         state
