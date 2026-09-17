@@ -1,4 +1,5 @@
 use crate::{error::AppError, library::book::Book};
+use futures_util::stream::TryStreamExt;
 use mongodb::{
     Collection, Database, IndexModel,
     bson::{self, Document, doc, oid::ObjectId},
@@ -44,30 +45,44 @@ impl BookRepository {
         Ok(self.collection.find_one(doc! { "path": path }).await?)
     }
 
+    pub async fn fetch_all(&self) -> Result<Vec<Book>, AppError> {
+        let mut cursor = self.collection.find(doc! {}).await?;
+        let mut books = Vec::new();
+
+        while let Some(book) = cursor.try_next().await? {
+            books.push(book);
+        }
+
+        Ok(books)
+    }
+
     pub async fn delete(&self, id: ObjectId) -> Result<bool, AppError> {
         let result = self.collection.delete_one(doc! { "_id": id }).await?;
         Ok(result.deleted_count == 1)
     }
+
     /// Inserts multiple `Book` documents into the database in a single batch request.
     ///
-    /// Returns a vector of the generated `ObjectId`s for each inserted document in the
-    /// order they were provided. Returns an empty vector without making a database call
-    /// if `books` is empty.
-    pub async fn insert_many(&self, books: &[Book]) -> Result<Vec<ObjectId>, AppError> {
+    /// Assigns the generated `ObjectId` to each `Book` and preserves the input sequence.
+    /// Returns an empty vector without making a database call if `books` is empty.
+    pub async fn insert_many(&self, books: &mut [Book]) -> Result<Vec<ObjectId>, AppError> {
         if books.is_empty() {
             return Ok(Vec::new());
         }
 
-        let result = self.collection.insert_many(books).await?;
+        let result = self.collection.insert_many(&*books).await?;
 
         // Extract ObjectIds mapping from index order to preserve input sequence.
         let mut ids = Vec::with_capacity(result.inserted_ids.len());
+
         for i in 0..books.len() {
             let id = result
                 .inserted_ids
                 .get(&i)
                 .and_then(|bson| bson.as_object_id())
                 .ok_or(AppError::InvalidObjectId)?;
+
+            books[i].id = Some(id);
             ids.push(id);
         }
 
@@ -177,6 +192,30 @@ impl BookRepository {
             .await?;
 
         Ok(result.matched_count == 1)
+    }
+
+    pub async fn find_books_needing_metadata(&self) -> Result<Vec<Book>, AppError> {
+        let mut cursor = self.collection.find(doc! { "has_metadata": false }).await?;
+
+        let mut books = Vec::new();
+
+        while let Some(book) = cursor.try_next().await? {
+            books.push(book);
+        }
+
+        Ok(books)
+    }
+
+    pub async fn find_books_needing_images(&self) -> Result<Vec<Book>, AppError> {
+        let mut cursor = self.collection.find(doc! { "has_image": false }).await?;
+
+        let mut books = Vec::new();
+
+        while let Some(book) = cursor.try_next().await? {
+            books.push(book);
+        }
+
+        Ok(books)
     }
 }
 
@@ -420,12 +459,12 @@ mod tests {
 
         let book_a = Book::from_path(path_a);
         let book_b = Book::from_path(path_b);
-        let books = vec![book_a.clone(), book_b.clone()];
+        let mut books = vec![book_a.clone(), book_b.clone()];
 
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
-            let ids = mongodb.books.insert_many(&books).await?;
+            let ids = mongodb.books.insert_many(&mut books).await?;
             assert_eq!(ids.len(), 2);
             inserted_ids.extend(&ids);
 
@@ -443,7 +482,7 @@ mod tests {
             assert_eq!(found_a.name, book_a.name);
             assert_eq!(found_b.name, book_b.name);
 
-            let empty_ids = mongodb.books.insert_many(&[]).await?;
+            let empty_ids = mongodb.books.insert_many(&mut []).await?;
             assert!(empty_ids.is_empty());
 
             Ok(())

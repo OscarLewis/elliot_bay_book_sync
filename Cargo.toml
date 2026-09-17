@@ -37,3 +37,4 @@ config = { version = "0.15.25", features = ["toml"] }
 directories = "6.0.0"
 mongodb = "3.9.1"
 bson = { version = "3.1.0", features = ["chrono-0_4", "serde"] }
+futures-util = "0.3.34"

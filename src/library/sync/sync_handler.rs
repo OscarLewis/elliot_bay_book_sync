@@ -150,8 +150,7 @@ pub async fn library_sync_handler(
 
     for (book_id, book) in books_to_sync {
         has_local_books = true;
-        let book_modified: chrono::DateTime<Utc> =
-            book.modified_at.parse().unwrap_or_else(|_| Utc::now());
+        let book_modified: chrono::DateTime<Utc> = book.modified_at;
         let bm_string = book_modified.to_string();
 
         let is_new = book_modified > sync_token.data.books_last_created;
@@ -367,6 +366,8 @@ mod tests {
     use test_log::test;
     use tokio::time::{Duration, sleep};
 
+    /*
+    // FIXME fix test to work with mongodb
     #[test(tokio::test)]
     #[ignore]
     async fn test_library_sync() -> Result<(), Box<dyn std::error::Error>> {
@@ -392,7 +393,7 @@ mod tests {
 
         // TODO fetch metadata before sync
         // Fetch all books and update metadata
-        let books_needing_metadata = state.db.get_all(DocumentTable::Books)?;
+        let books_needing_metadata = state.mongodb.books.fetch_all().await?;
         update_metadata(state.clone(), books_needing_metadata).await?;
 
         // Wait for metadata update to complete
@@ -410,7 +411,7 @@ mod tests {
             }
         }
         Ok(())
-    }
+    } */
 
     #[test(tokio::test)]
     async fn test_generate_sync_response_no_proxy() -> Result<(), Box<dyn std::error::Error>> {

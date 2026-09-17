@@ -1,3 +1,4 @@
+use crate::database::bson_chrono_datetime::bson_chrono_datetime;
 use crate::{
     database::{
         MongoDatabase,
@@ -5,7 +6,6 @@ use crate::{
     },
     error::AppError,
     library::book::Book,
-    metadata::update_meta::update_metadata,
 };
 use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
@@ -14,29 +14,9 @@ use std::{path::Path, sync::Arc};
 use tokio::fs;
 use tracing::{debug, error, info};
 use uuid::Uuid;
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ScanResponse {
     pub scan_id: String,
-}
-
-mod bson_chrono_datetime {
-    use super::*;
-
-    pub fn serialize<S>(value: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        bson::DateTime::from_chrono(*value).serialize(serializer)
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = bson::DateTime::deserialize(deserializer)?;
-        Ok(value.to_chrono())
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -202,9 +182,9 @@ pub(crate) async fn run_library_scan(
 
                 let batch_res = if !new_books.is_empty() {
                     // Insert books into mongodb
-                    mongodb.books.insert_many(&new_books).await.map(|_| {
+                    mongodb.books.insert_many(&mut new_books).await.map(|ids| {
                         info!(
-                            added_count,
+                            added_count = ids.len(),
                             "Successfully batch-persisted new books to MongoDB"
                         );
                     })?;
@@ -309,8 +289,9 @@ mod tests {
         let mut existing_book = Book::from_path(epub_path.clone());
         existing_book.has_metadata = true;
         existing_book.size_kb = 1;
-        existing_book.modified_at = "2000-01-01T00:00:00+00:00".to_string();
-
+        existing_book.modified_at = DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+            .unwrap()
+            .with_timezone(&Utc);
         let book_id = state.db.create(
             DocumentTable::Books,
             &existing_book,
@@ -346,7 +327,12 @@ mod tests {
             .expect("Book should still exist");
 
         assert_eq!(updated.size_kb, 2);
-        assert_ne!(updated.modified_at, "2000-01-01T00:00:00+00:00");
+        assert_ne!(
+            updated.modified_at,
+            DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+                .unwrap()
+                .with_timezone(&Utc)
+        );
         assert!(!updated.has_metadata);
 
         Ok(())
@@ -507,7 +493,9 @@ mod tests {
 
         let mut book = Book::from_path(epub_path.clone());
         book.has_metadata = true;
-        book.modified_at = "2000-01-01T00:00:00+00:00".to_string();
+        book.modified_at = DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+            .unwrap()
+            .with_timezone(&Utc);
 
         let book_id = state.db.create(
             DocumentTable::Books,
@@ -531,7 +519,12 @@ mod tests {
             .read(DocumentTable::Books, &book_id)?
             .expect("Book should exist");
 
-        assert_ne!(updated.modified_at, "2000-01-01T00:00:00+00:00");
+        assert_ne!(
+            updated.modified_at,
+            DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+                .unwrap()
+                .with_timezone(&Utc)
+        );
         assert!(!updated.has_metadata);
 
         let scan = state

@@ -1027,6 +1027,7 @@ dependencies = [
  "directories",
  "dotenvy",
  "epub",
+ "futures-util",
  "graphql_client",
  "image",
  "log",

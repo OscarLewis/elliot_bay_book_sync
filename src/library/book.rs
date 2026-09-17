@@ -1,10 +1,11 @@
+use crate::database::bson_chrono_datetime::bson_chrono_datetime;
+use crate::error::AppError;
 use chrono::{DateTime, Utc};
 use image::DynamicImage;
+use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::Path;
-
-use crate::error::AppError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Book {
@@ -13,6 +14,8 @@ pub struct Book {
     // TODO FIX this and get ID working for mongo db documents
     // #[serde(rename = "_id", default)]
     // pub id: String,
+    #[serde(rename = "_id", default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<ObjectId>,
     pub name: String,
     pub initial_format: Option<String>,
     pub author: Option<String>,
@@ -23,7 +26,8 @@ pub struct Book {
     pub description: Option<String>,
     pub size_kb: u64,
     // TODO with switch to MongoDB turn this into an actual date tiem
-    pub modified_at: String,
+    #[serde(with = "bson_chrono_datetime")]
+    pub modified_at: DateTime<Utc>,
     #[serde(default)]
     pub hardcover_id: Option<u64>,
     #[serde(default)]
@@ -57,6 +61,7 @@ impl Book {
             name: String::new(),
             // id: String::new(),
             initial_format: None,
+            id: None,
             author: None,
             title: None,
             series_name: None,
@@ -71,7 +76,7 @@ impl Book {
             has_metadata: false,
             has_image: false,
             image_path: None,
-            modified_at: String::new(),
+            modified_at: Utc::now(),
             reading_state: None,
         }
     }
@@ -119,7 +124,7 @@ impl Book {
         let modified_at = std::fs::metadata(&path)
             .ok()
             .and_then(|metadata| metadata.modified().ok())
-            .map(|time| DateTime::<Utc>::from(time).to_rfc3339())
+            .map(|time| DateTime::<Utc>::from(time))
             .unwrap_or_default();
 
         Self {

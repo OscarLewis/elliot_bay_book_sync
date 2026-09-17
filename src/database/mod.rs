@@ -3,7 +3,7 @@ pub mod document;
 mod scan_repository;
 pub use book_repository::BookRepository;
 pub use scan_repository::ScanRepository;
-
+pub mod bson_chrono_datetime;
 use crate::error::AppError;
 use mongodb::{Client, Database};
 
