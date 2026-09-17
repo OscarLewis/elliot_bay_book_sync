@@ -114,6 +114,7 @@ mod tests {
         api::init_resources::Resources,
         config::AppConfig,
         database::document::{DocumentDB, DocumentTable},
+        test_helpers::test_state,
     };
     use std::{path::PathBuf, sync::Arc};
     use test_log::test;
@@ -141,15 +142,9 @@ mod tests {
         )?;
 
         let book_list = db.get_all(DocumentTable::Books)?;
+        let config = AppConfig::default();
 
-        let state = AppState {
-            config: Arc::new(AppConfig::default()),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            hardcover_api_token: None,
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let state = test_state(config, db).await;
 
         extract_imgs_for_books(book_list, state, false).await?;
 

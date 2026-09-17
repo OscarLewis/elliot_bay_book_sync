@@ -497,7 +497,9 @@ pub fn patch_kobo_resources(
 
 #[cfg(test)]
 mod tests {
-    use crate::{AppState, config::AppConfig, database::document::DocumentDB};
+    use crate::{
+        AppState, config::AppConfig, database::document::DocumentDB, test_helpers::test_state,
+    };
     use test_log::test;
 
     #[test(tokio::test)]
@@ -514,7 +516,7 @@ mod tests {
         };
         let db = DocumentDB::open_in_memory()?;
 
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         // Lock both resource instances for comparison
         let original = state.kobo_resources.lock().await;

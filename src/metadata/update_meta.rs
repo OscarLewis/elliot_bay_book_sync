@@ -113,6 +113,7 @@ mod tests {
     use super::*;
     use crate::api::init_resources::Resources;
     use crate::database::document::{DocumentDB, DocumentTable};
+    use crate::test_helpers::test_state;
     use crate::{AppState, config::AppConfig, library::book::Book};
     use dotenvy::dotenv;
     use std::env;
@@ -156,14 +157,9 @@ mod tests {
             None,
         )?;
 
-        let state = AppState {
-            config: Arc::new(AppConfig::default()),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            hardcover_api_token,
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let config = AppConfig::default();
+
+        let state = test_state(config, db).await;
 
         update_metadata(state.clone(), vec![(book_id.clone(), book)]).await?;
 

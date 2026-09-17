@@ -98,8 +98,10 @@ fn make_mock_auth_response(body: Bytes) -> impl IntoResponse {
 mod tests {
     use super::*;
     use crate::{
-        api::init_resources::Resources, config::AppConfig, database::document::DocumentDB,
-        test_helpers::setup_test_app,
+        api::init_resources::Resources,
+        config::AppConfig,
+        database::document::DocumentDB,
+        test_helpers::{setup_test_app, test_state},
     };
     use reqwest::StatusCode;
     use std::sync::Arc;
@@ -112,14 +114,7 @@ mod tests {
         config.proxy_kobo_store = false;
         let db = DocumentDB::open_in_memory()?;
 
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let state = test_state(config, db).await;
 
         let server = setup_test_app(state);
 

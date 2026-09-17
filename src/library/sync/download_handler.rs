@@ -100,7 +100,7 @@ mod tests {
             book::Book,
             sync::entitlement_models::{BookMetadata, KoboFormat},
         },
-        test_helpers::setup_test_app,
+        test_helpers::{setup_test_app, test_state},
     };
     use reqwest::StatusCode;
     use std::path::PathBuf;
@@ -124,7 +124,7 @@ mod tests {
         };
 
         let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
         let server = setup_test_app(state.clone());
 
         let book = Book::from_path(epub_path.clone());

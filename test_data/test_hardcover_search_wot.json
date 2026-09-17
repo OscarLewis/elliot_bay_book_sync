@@ -32,7 +32,7 @@
     "hits": [
       {
         "document": {
-          "activities_count": 2538,
+          "activities_count": 2545,
           "alternative_titles": [
             "The Eye of the World",
             "The Eye of the World - Book One of The Wheel of Time",
@@ -101,8 +101,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -300,7 +304,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1731,
+          "lists_count": 1732,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -315,8 +319,8 @@
           ],
           "pages": 804,
           "prompts_count": 7,
-          "rating": 4.061314791403287,
-          "ratings_count": 2373,
+          "rating": 4.062079124579125,
+          "ratings_count": 2376,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 212,
@@ -341,8 +345,8 @@
             "#digitally-own"
           ],
           "title": "The Eye of the World",
-          "users_count": 5501,
-          "users_read_count": 3325
+          "users_count": 5508,
+          "users_read_count": 3330
         },
         "highlight": {
           "alternative_titles": [
@@ -648,7 +652,7 @@
       },
       {
         "document": {
-          "activities_count": 1643,
+          "activities_count": 1648,
           "alternative_titles": [
             "El Despertar de los Heroes",
             "Great Hunt",
@@ -906,8 +910,8 @@
           ],
           "pages": 720,
           "prompts_count": 0,
-          "rating": 4.19009009009009,
-          "ratings_count": 1665,
+          "rating": 4.190576230492197,
+          "ratings_count": 1666,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 102,
@@ -932,8 +936,8 @@
             "fiction"
           ],
           "title": "The Great Hunt",
-          "users_count": 2962,
-          "users_read_count": 2439
+          "users_count": 2966,
+          "users_read_count": 2442
         },
         "highlight": {
           "alternative_titles": [
@@ -1217,7 +1221,7 @@
       },
       {
         "document": {
-          "activities_count": 1449,
+          "activities_count": 1453,
           "alternative_titles": [
             "The Dragon Reborn - Book Three of The Wheel of Time",
             "The Dragon Reborn",
@@ -1267,12 +1271,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1416,8 +1416,8 @@
           ],
           "pages": 672,
           "prompts_count": 0,
-          "rating": 4.200333333333333,
-          "ratings_count": 1500,
+          "rating": 4.200199866755496,
+          "ratings_count": 1501,
           "release_date": "1991-01-01",
           "release_year": 1991,
           "reviews_count": 83,
@@ -1441,8 +1441,8 @@
             "fiction"
           ],
           "title": "The Dragon Reborn",
-          "users_count": 2722,
-          "users_read_count": 2237
+          "users_count": 2724,
+          "users_read_count": 2238
         },
         "highlight": {
           "alternative_titles": [
@@ -1680,7 +1680,7 @@
       },
       {
         "document": {
-          "activities_count": 1678,
+          "activities_count": 1681,
           "alternative_titles": [
             "[Wheel of Time, Book 4] The Shadow Rising",
             "The Shadow Rising - Book Four of The Wheel of Time",
@@ -1883,8 +1883,8 @@
           ],
           "pages": 1024,
           "prompts_count": 1,
-          "rating": 4.208695652173913,
-          "ratings_count": 1265,
+          "rating": 4.208366219415943,
+          "ratings_count": 1267,
           "release_date": "1992-09-15",
           "release_year": 1992,
           "reviews_count": 66,
@@ -1909,8 +1909,8 @@
             "fiction"
           ],
           "title": "The Shadow Rising",
-          "users_count": 2431,
-          "users_read_count": 1963
+          "users_count": 2433,
+          "users_read_count": 1965
         },
         "highlight": {
           "alternative_titles": [
@@ -2158,7 +2158,7 @@
       },
       {
         "document": {
-          "activities_count": 1321,
+          "activities_count": 1324,
           "alternative_titles": [
             "The Fires of Heaven",
             "Wheel of Time 05 - The Fires of Heaven",
@@ -2216,12 +2216,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2368,8 +2364,8 @@
           ],
           "pages": 928,
           "prompts_count": 1,
-          "rating": 4.092188919164396,
-          "ratings_count": 1101,
+          "rating": 4.092105263157895,
+          "ratings_count": 1102,
           "release_date": "1993-01-01",
           "release_year": 1993,
           "reviews_count": 52,
@@ -2394,8 +2390,8 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2205,
-          "users_read_count": 1737
+          "users_count": 2207,
+          "users_read_count": 1739
         },
         "highlight": {
           "alternative_titles": [
@@ -2676,7 +2672,7 @@
       },
       {
         "document": {
-          "activities_count": 1236,
+          "activities_count": 1242,
           "alternative_titles": [
             "Lord of Chaos: Book Six of The Wheel of Time",
             "Lord of Chaos",
@@ -2727,12 +2723,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2854,7 +2846,7 @@
             "8448034570",
             "9788448034573"
           ],
-          "lists_count": 609,
+          "lists_count": 610,
           "moods": [
             "Adventurous",
             "dark",
@@ -2868,8 +2860,8 @@
           ],
           "pages": 1040,
           "prompts_count": 1,
-          "rating": 4.070877531340405,
-          "ratings_count": 1037,
+          "rating": 4.070809248554913,
+          "ratings_count": 1038,
           "release_date": "1994-01-01",
           "release_year": 1994,
           "reviews_count": 50,
@@ -2893,8 +2885,8 @@
             "fantlab-import"
           ],
           "title": "Lord of Chaos",
-          "users_count": 2088,
-          "users_read_count": 1635
+          "users_count": 2091,
+          "users_read_count": 1636
         },
         "highlight": {
           "alternative_titles": [
@@ -3101,7 +3093,7 @@
       },
       {
         "document": {
-          "activities_count": 1176,
+          "activities_count": 1177,
           "alternative_titles": [
             "Korona mieczy",
             "A Crown of Swords",
@@ -3159,8 +3151,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3306,8 +3302,8 @@
           ],
           "pages": 768,
           "prompts_count": 1,
-          "rating": 3.858660998937301,
-          "ratings_count": 941,
+          "rating": 3.857749469214438,
+          "ratings_count": 942,
           "release_date": "1996-01-01",
           "release_year": 1996,
           "reviews_count": 41,
@@ -3331,8 +3327,8 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 2000,
-          "users_read_count": 1526
+          "users_count": 2002,
+          "users_read_count": 1527
         },
         "highlight": {
           "alternative_titles": [
@@ -3554,7 +3550,7 @@
       },
       {
         "document": {
-          "activities_count": 1004,
+          "activities_count": 1006,
           "alternative_titles": [
             "The Path of Daggers Part 2 of 2",
             "Path of Daggers",
@@ -3727,8 +3723,8 @@
           ],
           "pages": 608,
           "prompts_count": 0,
-          "rating": 3.718066743383199,
-          "ratings_count": 869,
+          "rating": 3.717241379310345,
+          "ratings_count": 870,
           "release_date": "1998-01-01",
           "release_year": 1998,
           "reviews_count": 34,
@@ -3755,8 +3751,8 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1897,
-          "users_read_count": 1427
+          "users_count": 1899,
+          "users_read_count": 1428
         },
         "highlight": {
           "alternative_titles": [
@@ -3932,7 +3928,7 @@
       },
       {
         "document": {
-          "activities_count": 980,
+          "activities_count": 981,
           "alternative_titles": [
             "The Gathering Storm",
             "Sturm der Finsternis",
@@ -4097,7 +4093,7 @@
             "9786060066774",
             "3492959431"
           ],
-          "lists_count": 506,
+          "lists_count": 507,
           "moods": [
             "Adventurous",
             "dark",
@@ -4112,8 +4108,8 @@
           ],
           "pages": 848,
           "prompts_count": 1,
-          "rating": 4.436611374407583,
-          "ratings_count": 844,
+          "rating": 4.436094674556213,
+          "ratings_count": 845,
           "release_date": "2009-11-07",
           "release_year": 2009,
           "reviews_count": 47,
@@ -4138,8 +4134,8 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1830,
-          "users_read_count": 1325
+          "users_count": 1832,
+          "users_read_count": 1326
         },
         "highlight": {
           "alternative_titles": [
@@ -4293,7 +4289,7 @@
       },
       {
         "document": {
-          "activities_count": 1090,
+          "activities_count": 1091,
           "alternative_titles": [
             "[Wheel of Time, Book 10] Crossroads of Twilight",
             "Crossroads Of Twilight: Book 10 of the Wheel of Time",
@@ -4344,8 +4340,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4454,7 +4454,7 @@
             "030794123X",
             "9780307941237"
           ],
-          "lists_count": 531,
+          "lists_count": 532,
           "moods": [
             "Adventurous",
             "dark",
@@ -4469,8 +4469,8 @@
           ],
           "pages": 832,
           "prompts_count": 0,
-          "rating": 3.458125,
-          "ratings_count": 800,
+          "rating": 3.46072319201995,
+          "ratings_count": 802,
           "release_date": "2003-01-01",
           "release_year": 2003,
           "reviews_count": 48,
@@ -4495,8 +4495,8 @@
             "Fantasy - Epic"
           ],
           "title": "Crossroads of Twilight",
-          "users_count": 1784,
-          "users_read_count": 1311
+          "users_count": 1787,
+          "users_read_count": 1313
         },
         "highlight": {
           "alternative_titles": [
@@ -4726,7 +4726,7 @@
       },
       {
         "document": {
-          "activities_count": 1043,
+          "activities_count": 1045,
           "alternative_titles": [
             "Towers of Midnight",
             "Towers of Midnight: Book Thirteen of the Wheel of Time",
@@ -4771,12 +4771,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -4794,12 +4790,8 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4940,8 +4932,8 @@
             "fiction"
           ],
           "title": "Towers of Midnight",
-          "users_count": 1783,
-          "users_read_count": 1271
+          "users_count": 1785,
+          "users_read_count": 1272
         },
         "highlight": {
           "alternative_titles": [
@@ -5113,7 +5105,7 @@
       },
       {
         "document": {
-          "activities_count": 997,
+          "activities_count": 1001,
           "alternative_titles": [
             "Knife of Dreams",
             "Cuchillo de Sueños",
@@ -5263,7 +5255,7 @@
             "0748115447",
             "9780748115440"
           ],
-          "lists_count": 523,
+          "lists_count": 524,
           "moods": [
             "Adventurous",
             "dark",
@@ -5278,8 +5270,8 @@
           ],
           "pages": 832,
           "prompts_count": 1,
-          "rating": 4.074617346938775,
-          "ratings_count": 784,
+          "rating": 4.075796178343949,
+          "ratings_count": 785,
           "release_date": "2005-10-03",
           "release_year": 2005,
           "reviews_count": 38,
@@ -5303,8 +5295,8 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1767,
-          "users_read_count": 1289
+          "users_count": 1769,
+          "users_read_count": 1290
         },
         "highlight": {
           "alternative_titles": [
@@ -5466,7 +5458,7 @@
       },
       {
         "document": {
-          "activities_count": 1097,
+          "activities_count": 1101,
           "alternative_titles": [
             "A Memory of Light",
             "A Memory of Light: Wheel of Time, Book 14",
@@ -5682,8 +5674,8 @@
             "dark"
           ],
           "title": "A Memory of Light",
-          "users_count": 1760,
-          "users_read_count": 1243
+          "users_count": 1762,
+          "users_read_count": 1244
         },
         "highlight": {
           "alternative_titles": [
@@ -7168,8 +7160,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -7187,8 +7183,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -7328,7 +7328,7 @@
       },
       {
         "document": {
-          "activities_count": 217,
+          "activities_count": 218,
           "alternative_titles": [
             "The Complete Wheel of Time",
             "The Wheel of Time Box Set",
@@ -7362,8 +7362,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -7381,8 +7385,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -8548,7 +8556,7 @@
         }
       }
     ],
-    "out_of": 2583269,
+    "out_of": 2584191,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8557,6 +8565,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 81
+    "search_time_ms": 41
   }
 }

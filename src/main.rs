@@ -1,7 +1,10 @@
 use crate::{
     api::init_resources::{Resources, patch_kobo_resources},
     config::AppConfig,
-    database::document::{DocumentDB, DocumentTable},
+    database::{
+        MongoDatabase,
+        document::{DocumentDB, DocumentTable},
+    },
     error::AppError,
     library::book::Book,
     metadata::update_meta::update_metadata,
@@ -16,9 +19,10 @@ use axum::{
 };
 use chrono::Utc;
 use dotenvy::dotenv;
+use mongodb::bson::doc;
 use reqwest::StatusCode;
-use std::env;
 use std::sync::Arc;
+use std::{env, process::ExitCode};
 use tokio::sync::Mutex;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -41,6 +45,8 @@ pub struct AppState {
     pub config: Arc<AppConfig>,
     pub req_client: reqwest::Client,
     pub db: Arc<DocumentDB>,
+    pub mongodb: Arc<MongoDatabase>,
+
     pub hardcover_api_token: Option<String>,
     pub kobo_resources: Arc<Mutex<Resources>>,
     pub patched_resources: Arc<Mutex<Resources>>,
@@ -51,6 +57,7 @@ impl AppState {
     pub fn new(
         config: impl Into<Arc<AppConfig>>,
         db: DocumentDB,
+        mongodb: MongoDatabase,
         hardcover_api_token: Option<String>,
     ) -> Self {
         let config: Arc<AppConfig> = config.into();
@@ -70,6 +77,7 @@ impl AppState {
 
         AppState {
             db: Arc::new(db),
+            mongodb: Arc::new(mongodb),
             config,
             req_client: client,
             hardcover_api_token,
@@ -112,7 +120,8 @@ async fn main() -> Result<(), AppError> {
 
     // Load the .env file into the system environment
     dotenv().ok();
-    // Panic if there is no Hardcover token for metadata
+
+    // Log an error if there is no Hardcover token for metadata
     let hardcover_api_token = match env::var("HARDCOVER_TOKEN") {
         Ok(val) => {
             debug!("Hardcover Token loaded");
@@ -123,6 +132,19 @@ async fn main() -> Result<(), AppError> {
             None
         }
     };
+
+    // Exit if there is no MongoDB connection URI
+    let mongodb_uri = env::var("MONGODB_URI").map_err(|e| {
+        error!("Could not find MONGODB_URI: {e}");
+        AppError::Internal(format!(
+            "Missing required MONGODB_URI environment variable: {e}"
+        ))
+    })?;
+    debug!("MongoDB URI loaded");
+
+    let mongodb = MongoDatabase::connect(&mongodb_uri, "ebbooks").await?;
+    mongodb.db.run_command(doc! { "ping": 1 }).await?;
+    info!("MongoDB connection confirmed (ping ok)");
 
     // Open DB
     // TODO Switch to being backed by MongoDB
@@ -137,7 +159,7 @@ async fn main() -> Result<(), AppError> {
     debug!(?books, count = books.len(), "All stored books in database");
 
     // Construct App state
-    let state = AppState::new(config, db, hardcover_api_token);
+    let state = AppState::new(config, db, mongodb, hardcover_api_token);
 
     // Bind state to app
     let app = app(state.clone());
@@ -305,9 +327,46 @@ pub async fn refresh_single_book_metadata_handler(
 
 #[cfg(test)]
 pub mod test_helpers {
-    use crate::{AppState, app};
+    use crate::api::init_resources::Resources;
+    use crate::database::MongoDatabase; // adjust to actual module path
+    use crate::{AppState, app, config::AppConfig, database::document::DocumentDB};
     use axum::Router;
     use axum_test::TestServer;
+    use dotenvy::dotenv;
+    use std::env;
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
+
+    /// Connects to the MongoDB instance used for integration tests, reading
+    /// `MONGODB_TEST_URI` from the environment. Panics with a clear message
+    /// if the variable is unset or the connection fails, so a missing test
+    /// dependency shows up immediately rather than as a confusing later error.
+    pub async fn test_mongodb() -> MongoDatabase {
+        // Load the .env file into the system environment
+        dotenv().ok();
+
+        let uri = env::var("MONGODB_TEST_URI")
+            .expect("MONGODB_TEST_URI must be set to run tests that require MongoDB");
+        MongoDatabase::connect(&uri, "ebbooks_test")
+            .await
+            .expect("Failed to connect to MongoDB using MONGODB_TEST_URI")
+    }
+
+    /// Builds an `AppState` for tests, given a config and an in-memory
+    /// `DocumentDB`. Centralizing this means callers only need to update one
+    /// place (here) as `AppState`'s fields keep changing during the Mongo
+    /// migration, instead of every test literal.
+    pub async fn test_state(config: AppConfig, db: DocumentDB) -> AppState {
+        AppState {
+            config: Arc::new(config),
+            req_client: reqwest::Client::new(),
+            db: Arc::new(db),
+            mongodb: Arc::new(test_mongodb().await),
+            kobo_resources: Arc::new(Mutex::new(Resources::default())),
+            hardcover_api_token: None,
+            patched_resources: Arc::new(Mutex::new(Resources::default())),
+        }
+    }
 
     /// Helper utility to bootstrap a `TestServer` instance for integration testing.
     pub fn setup_test_app(state: AppState) -> TestServer {
@@ -324,7 +383,7 @@ mod tests {
         database::document::{DocumentDB, DocumentTable},
         library::book::Book,
         scan::scanner::ScanResponse,
-        test_helpers::setup_test_app,
+        test_helpers::{setup_test_app, test_state},
     };
     use axum::http::StatusCode;
     use std::path::PathBuf;
@@ -335,7 +394,7 @@ mod tests {
     async fn test_root_handler() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
         let server = setup_test_app(state);
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
@@ -346,7 +405,7 @@ mod tests {
     async fn test_scan_handler_triggers_scan() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         let server = setup_test_app(state);
 
@@ -361,7 +420,7 @@ mod tests {
     async fn test_refresh_metadata_handler() {
         let config = AppConfig::default();
         let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
         let server = setup_test_app(state);
 
         let response = server.post("/metadata/refresh").await;
@@ -385,7 +444,7 @@ mod tests {
             None,
         )?;
 
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
         let server = setup_test_app(state);
 
         let response = server.post(&format!("/metadata/refresh/{book_id}")).await;

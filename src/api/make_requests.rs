@@ -224,6 +224,7 @@ mod tests {
     use super::*;
     use crate::{
         api::init_resources::Resources, config::AppConfig, database::document::DocumentDB,
+        test_helpers::test_state,
     };
     use axum::http::Uri;
     use std::{str::FromStr, sync::Arc};
@@ -239,14 +240,7 @@ mod tests {
         let mut resources = Resources::default();
         resources.device_auth = "https://storeapi.kobo.com/v1/auth/device".to_string();
 
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(resources)),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let state = test_state(config, db).await;
 
         let token = "test-token-123";
         let uri = Uri::from_str("/kobo/test-token-123/v1/user/profile?param=value")?;

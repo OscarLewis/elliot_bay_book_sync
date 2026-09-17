@@ -70,7 +70,10 @@ pub async fn oidc_well_known_configuration_handler(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState, config::AppConfig, database::document::DocumentDB, test_helpers::setup_test_app,
+        AppState,
+        config::AppConfig,
+        database::document::DocumentDB,
+        test_helpers::{setup_test_app, test_state},
     };
     use reqwest::StatusCode;
     use test_log::test;
@@ -89,7 +92,7 @@ mod tests {
 
         let db = DocumentDB::open_in_memory()?;
 
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         let server = setup_test_app(state);
 

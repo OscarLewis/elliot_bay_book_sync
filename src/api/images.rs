@@ -198,7 +198,7 @@ mod tests {
         database::document::{DocumentDB, DocumentTable},
         library::book::Book,
         metadata::extract_images::extract_imgs_for_books,
-        test_helpers::setup_test_app,
+        test_helpers::{setup_test_app, test_state},
     };
     use reqwest::StatusCode;
     use std::{path::PathBuf, sync::Arc};
@@ -237,14 +237,7 @@ mod tests {
 
         let book_list = db.get_all(DocumentTable::Books)?;
 
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let state = test_state(config, db).await;
 
         let image_paths = extract_imgs_for_books(book_list, state.clone(), true).await?;
 
@@ -290,14 +283,7 @@ mod tests {
 
         let db = DocumentDB::open_in_memory()?;
 
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let state = test_state(config, db).await;
 
         let server = setup_test_app(state);
 
@@ -329,14 +315,7 @@ mod tests {
         let mut config = AppConfig::default();
         config.proxy_kobo_store = false;
         let db = DocumentDB::open_in_memory()?;
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        let state = test_state(config, db).await;
         let server = setup_test_app(state);
         let token = "test-token-123";
         let book_id = "b07219a4-41c4-4a51-8024-d009488df748"; // The Eye of The World

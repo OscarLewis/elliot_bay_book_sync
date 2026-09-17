@@ -211,7 +211,7 @@ mod tests {
         api::init_resources::{ResourcesRoot, patch_kobo_resources},
         config::AppConfig,
         database::document::DocumentDB,
-        test_helpers::setup_test_app,
+        test_helpers::{setup_test_app, test_state},
     };
     use axum::http::StatusCode;
     use test_log::test;
@@ -224,7 +224,7 @@ mod tests {
         let db = DocumentDB::open(&config.database_path).expect("Unable to open database");
         config.proxy_kobo_store = false;
 
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         // Start the test application with the configured state
         let server = setup_test_app(state.clone());

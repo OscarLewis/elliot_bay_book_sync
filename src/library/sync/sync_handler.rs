@@ -361,7 +361,7 @@ mod tests {
             sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
         },
         metadata::update_meta::update_metadata,
-        test_helpers::setup_test_app,
+        test_helpers::{setup_test_app, test_state},
     };
     use reqwest::StatusCode;
     use test_log::test;
@@ -381,7 +381,7 @@ mod tests {
         };
 
         let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
         let server = setup_test_app(state.clone());
 
         // Scan first to populate the library
@@ -422,7 +422,7 @@ mod tests {
         };
 
         let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
@@ -445,7 +445,7 @@ mod tests {
         };
 
         let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
@@ -474,7 +474,7 @@ mod tests {
         };
 
         let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+        let state = test_state(config, db).await;
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
