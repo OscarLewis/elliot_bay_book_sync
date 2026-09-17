@@ -327,7 +327,7 @@ pub async fn refresh_single_book_metadata_handler(
 
 #[cfg(test)]
 pub mod test_helpers {
-    use crate::api::init_resources::Resources;
+    use crate::api::init_resources::{Resources, patch_kobo_resources};
     use crate::database::MongoDatabase; // adjust to actual module path
     use crate::{AppState, app, config::AppConfig, database::document::DocumentDB};
     use axum::Router;
@@ -357,17 +357,24 @@ pub mod test_helpers {
     /// place (here) as `AppState`'s fields keep changing during the Mongo
     /// migration, instead of every test literal.
     pub async fn test_state(config: AppConfig, db: DocumentDB) -> AppState {
+        let kobo_resources = Resources::default();
+        let patched_resources = patch_kobo_resources(
+            kobo_resources.clone(),
+            &config.base_url,
+            &config.ebbooks_auth_key,
+            config.proxy_kobo_store,
+        );
+
         AppState {
             config: Arc::new(config),
             req_client: reqwest::Client::new(),
             db: Arc::new(db),
             mongodb: Arc::new(test_mongodb().await),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
             hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
+            kobo_resources: Arc::new(Mutex::new(kobo_resources)),
+            patched_resources: Arc::new(Mutex::new(patched_resources)),
         }
     }
-
     /// Helper utility to bootstrap a `TestServer` instance for integration testing.
     pub fn setup_test_app(state: AppState) -> TestServer {
         let router = Router::new().merge(app(state));
