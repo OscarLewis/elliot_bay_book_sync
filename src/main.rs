@@ -3,9 +3,8 @@ use crate::{
     config::AppConfig,
     database::MongoDatabase,
     error::AppError,
-    library::book::Book,
     metadata::update_meta::update_metadata,
-    scan::scanner::{ScanDetails, ScanDocument, ScanResponse, ScanStatus, run_library_scan},
+    scan::scanner::{ScanResponse, run_library_scan},
 };
 use axum::{
     Json, Router,
@@ -14,16 +13,13 @@ use axum::{
     middleware,
     routing::{get, post},
 };
-use chrono::Utc;
 use dotenvy::dotenv;
-use mongodb::bson::doc;
+use mongodb::bson::{doc, oid::ObjectId};
 use reqwest::StatusCode;
-use std::sync::Arc;
-use std::{env, process::ExitCode};
+use std::{env, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
 
 pub mod api;
 pub(crate) mod config;
@@ -257,8 +253,7 @@ pub async fn refresh_single_book_metadata_handler(
     axum::extract::Path(book_doc_id): axum::extract::Path<String>,
     State(state): State<AppState>,
 ) -> Result<StatusCode, AppError> {
-    let book_id = mongodb::bson::oid::ObjectId::parse_str(&book_doc_id)
-        .map_err(|_| AppError::InvalidObjectId)?;
+    let book_id = ObjectId::parse_str(&book_doc_id).map_err(|_| AppError::InvalidObjectId)?;
 
     let Some(book) = state.mongodb.books.find_by_id(book_id).await? else {
         return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
