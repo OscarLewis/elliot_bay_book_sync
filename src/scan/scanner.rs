@@ -24,6 +24,24 @@ pub struct ScanDocument {
     pub details: ScanDetails,
 }
 
+impl ScanDocument {
+    /// Builds a new scan document in the initial `Running`/`Started` state,
+    /// with `timestamp` set to the current time.
+    ///
+    /// This is the only place a `Running` scan should be constructed —
+    /// callers that want to record a new scan starting should use this
+    /// (via `ScanRepository::start`) rather than building a `ScanDocument`
+    /// by hand, so the `Running`/`Started` pairing and timestamp format stay
+    /// consistent everywhere a scan begins.
+    pub fn start() -> Self {
+        Self {
+            status: ScanStatus::Running,
+            timestamp: Utc::now().to_rfc3339(),
+            details: ScanDetails::Started,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScanStatus {
@@ -45,6 +63,7 @@ pub enum ScanDetails {
         reason: String,
     },
 }
+
 pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
     let mut book_list: Vec<Book> = vec![];
     if scan_dir.is_dir() {
