@@ -225,34 +225,20 @@ async fn main() -> Result<(), AppError> {
 /// Generates a unique `scan_id`, launches an asynchronous scan task in the
 /// background, and returns the generated UUID to the client immediately
 pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResponse>, AppError> {
-    let initial_record = ScanDocument {
-        status: ScanStatus::Running,
-        timestamp: Utc::now().to_rfc3339(),
-        details: ScanDetails::Started,
-    };
+    let scan_id = state.mongodb.scans.start().await?;
 
-    let record_doc_id = state.db.create(
-        DocumentTable::Scans,
-        &initial_record,
-        None,
-        Some(|s| s.timestamp.as_str()),
-    )?;
-
-    debug!(doc_id = %record_doc_id, "Initialized scan execution record");
-
-    // Clone for the spawned task
-    let doc_id_for_task = record_doc_id.clone();
+    debug!(doc_id = ?scan_id, "Initialized scan execution record");
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(run_library_scan(
         state.db.clone(),
         state.mongodb.clone(),
-        doc_id_for_task,
+        scan_id.clone(),
         state.config.library_path.clone(),
     ));
 
     Ok(Json(ScanResponse {
-        scan_id: Uuid::parse_str(&record_doc_id)
+        scan_id: Uuid::parse_str(&scan_id.to_string().clone())
             .map_err(|e| AppError::Internal(format!("Failed to parse UUID: {}", e)))?,
     }))
 }

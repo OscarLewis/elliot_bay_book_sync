@@ -8,6 +8,7 @@ use crate::{
     metadata::update_meta::update_metadata,
 };
 use chrono::Utc;
+use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::{path::Path, sync::Arc};
 use tokio::fs;
@@ -101,12 +102,14 @@ pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
 pub(crate) async fn run_library_scan(
     db: Arc<DocumentDB>,
     mongodb: Arc<MongoDatabase>,
-    scan_document_id: String,
+    scan_document_id: ObjectId,
     library_path: Arc<std::path::Path>,
 ) -> Result<(), AppError> {
     debug!(doc_id = %scan_document_id, "Initialized scan execution record");
 
     // TODO Handle missing books as deleted books or flag them in mongodb
+
+    // TODO take in an ObjectId for a mongodb.scans instead of a string for scan_document_id
 
     // Execute scan directly
     let scan_result: Result<(usize, usize, usize), AppError> =
@@ -210,42 +213,50 @@ pub(crate) async fn run_library_scan(
     // Persist outcome
     match scan_result {
         Ok((added_count, skipped_count, updated_count)) => {
-            let completed_record = ScanDocument {
-                status: ScanStatus::Finished,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Completed {
-                    added_count,
-                    skipped_count,
-                    updated_count,
-                },
-            };
+            // let completed_record = ScanDocument {
+            //     status: ScanStatus::Finished,
+            //     timestamp: Utc::now().to_rfc3339(),
+            //     details: ScanDetails::Completed {
+            //         added_count,
+            //         skipped_count,
+            //         updated_count,
+            //     },
+            // };
+            mongodb
+                .scans
+                .mark_completed(scan_document_id, added_count, updated_count, skipped_count)
+                .await?;
 
-            db.update(
-                DocumentTable::Scans,
-                &scan_document_id,
-                &completed_record,
-                None,
-                Some(|s| s.timestamp.as_str()),
-            )?;
+            // db.update(
+            //     DocumentTable::Scans,
+            //     &scan_document_id,
+            //     &completed_record,
+            //     None,
+            //     Some(|s| s.timestamp.as_str()),
+            // )?;
 
             Ok(())
         }
         Err(err) => {
-            let failed_record = ScanDocument {
-                status: ScanStatus::Error,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Failed {
-                    reason: err.to_string(),
-                },
-            };
+            // let failed_record = ScanDocument {
+            //     status: ScanStatus::Error,
+            //     timestamp: Utc::now().to_rfc3339(),
+            //     details: ScanDetails::Failed {
+            //         reason: err.to_string(),
+            //     },
+            // };
 
-            let _ = db.update(
-                DocumentTable::Scans,
-                &scan_document_id,
-                &failed_record,
-                None,
-                Some(|s| s.timestamp.as_str()),
-            );
+            mongodb
+                .scans
+                .mark_failed(scan_document_id, err.to_string())
+                .await?;
+            // let _ = db.update(
+            //     DocumentTable::Scans,
+            //     &scan_document_id,
+            //     &failed_record,
+            //     None,
+            //     Some(|s| s.timestamp.as_str()),
+            // );
 
             Err(err)
         }
@@ -254,7 +265,7 @@ pub(crate) async fn run_library_scan(
 
 #[cfg(test)]
 mod tests {
-    use crate::{config::AppConfig, test_helpers::test_state};
+    use crate::{config::AppConfig, database::ScanRepository, test_helpers::test_state};
 
     use super::*;
     use tempfile::tempdir;
@@ -287,16 +298,18 @@ mod tests {
         )?;
 
         // Run the scan. The filesystem version should be detected as changed.
-        let scan_id = state.db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        // let scan_id = state.db.create(
+        //     DocumentTable::Scans,
+        //     &ScanDocument {
+        //         status: ScanStatus::Running,
+        //         timestamp: Utc::now().to_rfc3339(),
+        //         details: ScanDetails::Started,
+        //     },
+        //     None,
+        //     Some(|s| s.timestamp.as_str()),
+        // )?;
+
+        let scan_id = state.mongodb.scans.start().await?;
 
         run_library_scan(
             state.db.clone(),
@@ -327,16 +340,7 @@ mod tests {
 
         let db = DocumentDB::open_in_memory()?;
         let state = test_state(config, db).await;
-        let scan_id = state.db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = state.mongodb.scans.start().await?;
 
         run_library_scan(
             state.db.clone(),
@@ -375,21 +379,12 @@ mod tests {
             None,
         )?;
 
-        let scan_id = state.db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = state.mongodb.scans.start().await?;
 
         run_library_scan(
             state.db.clone(),
             state.mongodb.clone(),
-            scan_id.clone(),
+            scan_id,
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
@@ -399,10 +394,14 @@ mod tests {
         assert_eq!(books.len(), 1);
         assert_eq!(books[0].0, book_id);
 
-        let scan: ScanDocument = state
-            .db
-            .read(DocumentTable::Scans, &scan_id)?
-            .expect("Scan should exist");
+        let scan_id = state.mongodb.scans.start().await?;
+        state.mongodb.scans.mark_completed(scan_id, 0, 0, 1).await?;
+        let scan = state
+            .mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("Document should exist");
 
         assert_eq!(
             scan.details,
@@ -437,16 +436,7 @@ mod tests {
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
-        let scan_id = state.db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = state.mongodb.scans.start().await?;
 
         run_library_scan(
             state.db.clone(),
@@ -464,10 +454,12 @@ mod tests {
         assert_eq!(updated.size_kb, 4);
         assert!(!updated.has_metadata);
 
-        let scan: ScanDocument = state
-            .db
-            .read(DocumentTable::Scans, &scan_id)?
-            .expect("Scan should exist");
+        let scan = state
+            .mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("Document should exist");
 
         assert_eq!(
             scan.details,
@@ -503,16 +495,7 @@ mod tests {
             None,
         )?;
 
-        let scan_id = state.db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = state.mongodb.scans.start().await?;
 
         run_library_scan(
             state.db.clone(),
@@ -530,10 +513,12 @@ mod tests {
         assert_ne!(updated.modified_at, "2000-01-01T00:00:00+00:00");
         assert!(!updated.has_metadata);
 
-        let scan: ScanDocument = state
-            .db
-            .read(DocumentTable::Scans, &scan_id)?
-            .expect("Scan should exist");
+        let scan = state
+            .mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("Document should exist");
 
         assert_eq!(
             scan.details,
@@ -567,16 +552,7 @@ mod tests {
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
-        let scan_id = state.db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = state.mongodb.scans.start().await?;
 
         run_library_scan(
             state.db.clone(),
