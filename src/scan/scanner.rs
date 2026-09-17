@@ -118,7 +118,7 @@ pub(crate) async fn run_library_scan(
 
                 for book in book_list {
                     // Query MongoDB by path (or by name if path matches name)
-                    let path_str = book.path.to_str().unwrap_or_default();
+                    // let path_str = book.path.to_str().unwrap_or_default();
                     // If you have a find_by_path method on BookRepository, use that.
                     // Otherwise, querying by find_one with path
                     // match mongodb.books.find_by_path(path_str).await {

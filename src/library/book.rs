@@ -9,6 +9,10 @@ use crate::error::AppError;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Book {
     pub path: Box<Path>,
+    // MongoDB ID value
+    // TODO FIX this and get ID working for mongo db documents
+    // #[serde(rename = "_id", default)]
+    // pub id: String,
     pub name: String,
     pub initial_format: Option<String>,
     pub author: Option<String>,
@@ -51,6 +55,7 @@ impl Book {
         Self {
             path: Path::new("").into(),
             name: String::new(),
+            // id: String::new(),
             initial_format: None,
             author: None,
             title: None,
