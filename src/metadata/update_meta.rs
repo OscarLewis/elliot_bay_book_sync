@@ -106,38 +106,23 @@ pub async fn update_metadata(
 }
 
 // FIXME fix tests to work with mongodb
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::init_resources::Resources;
-    use crate::database::document::{DocumentDB, DocumentTable};
-    use crate::test_helpers::test_state;
-    use crate::{AppState, config::AppConfig, library::book::Book};
-    use dotenvy::dotenv;
-    use std::env;
+    use crate::{config::AppConfig, library::book::Book, test_helpers::MongoTestContext};
     use std::path::PathBuf;
-    use std::sync::Arc;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
-    use tracing::{debug, error};
+    use tracing::debug;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_update_metadata() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_update_metadata(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
-        dotenv().ok();
-        let hardcover_api_token = match env::var("HARDCOVER_TOKEN") {
-            Ok(val) => {
-                debug!("Hardcover Token loaded");
-                Some(val)
-            }
-            Err(e) => {
-                error!("Could not find HARDCOVER_TOKEN: {e}");
-                None
-            }
-        };
 
         assert!(
             epub_path.exists(),
@@ -145,26 +130,19 @@ mod tests {
             epub_path.display()
         );
 
-        let db = DocumentDB::open_in_memory()?;
+        let mut book = Book::from_path(epub_path);
 
-        let book = Book::from_path(epub_path);
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let state = ctx.state.clone();
 
-        let config = AppConfig::default();
+        update_metadata(state.clone(), vec![book]).await?;
 
-        let state = test_state(config, db).await;
-
-        update_metadata(state.clone(), vec![(book_id.clone(), book)]).await?;
-
-        let updated: Book = state
-            .db
-            .read(DocumentTable::Books, &book_id)?
+        let updated = state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
             .expect("Book should still exist");
 
         debug!(?updated, "Updated book");
@@ -173,4 +151,3 @@ mod tests {
         Ok(())
     }
 }
- */

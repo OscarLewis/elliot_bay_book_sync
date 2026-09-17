@@ -103,51 +103,38 @@ pub(crate) async fn extract_imgs_for_books(
     Ok(image_paths)
 }
 
-// FIXME Fix tests
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        AppState,
-        api::init_resources::Resources,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
-        test_helpers::test_state,
-    };
-    use std::{path::PathBuf, sync::Arc};
+    use crate::{library::book::Book, test_helpers::MongoTestContext};
+    use std::path::PathBuf;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_extract_imgs_for_books() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_extract_imgs_for_books(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
-
-        let db = DocumentDB::open_in_memory()?;
 
         let mut book = Book::from_path(epub_path);
         book.hardcover_id = Some(2168623);
         book.hardcover_slug = Some("absolute-martian-manhunter-vol-1".to_string());
         book.hardcover_img_id = Some(6034774);
-        book.hardcover_img_url = Some("https://assets.hardcover.app/external_data/1633116/8fcc036b0ad1263a22eb5756ad5411a7f219a66a.jpeg".to_string());
+        book.hardcover_img_url = Some(
+            "https://assets.hardcover.app/external_data/1633116/8fcc036b0ad1263a22eb5756ad5411a7f219a66a.jpeg"
+                .to_string(),
+        );
 
-        let _book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let book_list = db.get_all(DocumentTable::Books)?;
-        let config = AppConfig::default();
+        let book_list = ctx.state.mongodb.books.fetch_all().await?;
 
-        let state = test_state(config, db).await;
-
-        extract_imgs_for_books(book_list, state, false).await?;
+        extract_imgs_for_books(book_list, ctx.state.clone(), false).await?;
 
         Ok(())
     }
 }
- */
