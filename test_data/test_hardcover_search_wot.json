@@ -5458,7 +5458,7 @@
       },
       {
         "document": {
-          "activities_count": 1101,
+          "activities_count": 1102,
           "alternative_titles": [
             "A Memory of Light",
             "A Memory of Light: Wheel of Time, Book 14",
@@ -8556,7 +8556,7 @@
         }
       }
     ],
-    "out_of": 2584191,
+    "out_of": 2584185,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8565,6 +8565,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 39
+    "search_time_ms": 168
   }
 }
