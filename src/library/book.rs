@@ -121,7 +121,11 @@ impl Book {
         let modified_at = std::fs::metadata(&path)
             .ok()
             .and_then(|metadata| metadata.modified().ok())
-            .map(|time| DateTime::<Utc>::from(time))
+            .and_then(|time| {
+                DateTime::<Utc>::from_timestamp_millis(
+                    DateTime::<Utc>::from(time).timestamp_millis(),
+                )
+            })
             .unwrap_or_default();
 
         Self {

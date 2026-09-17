@@ -15,6 +15,7 @@ use axum::{
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     response::{IntoResponse, Response},
 };
+use mongodb::bson::oid::ObjectId;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 use tracing::{debug, info, warn};
@@ -29,7 +30,8 @@ pub async fn download_request_handler(
     body: Bytes,
 ) -> Result<Response, AppError> {
     info!(book_id, book_format, "Received Kobo download request");
-    let book_opt: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
+    let book_id = ObjectId::parse_str(&book_id).map_err(|_| AppError::InvalidObjectId)?;
+    let book_opt: Option<Book> = state.mongodb.books.find_by_id(book_id).await?;
     let Some(book) = book_opt else {
         warn!("Book not found in database while attempting to download to device");
         return Err(AppError::NotFound("Book not found in database".into()));
@@ -78,7 +80,7 @@ pub async fn download_request_handler(
         .into_response();
 
     debug!(
-        book_id,
+        ?book_id,
         format = ?format,
         filename = %filename,
         path = %book.path.display(),
@@ -129,12 +131,7 @@ mod tests {
 
         let book = Book::from_path(epub_path.clone());
 
-        let book_id = state.db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = state.mongodb.books.insert(&book).await?;
 
         let expected_body = tokio::fs::read(&epub_path).await?;
 
@@ -148,6 +145,7 @@ mod tests {
 
         let body = download_response.into_bytes();
         assert_eq!(body.as_ref(), expected_body.as_slice());
+        state.mongodb.books.delete(book_id).await?;
 
         Ok(())
     }

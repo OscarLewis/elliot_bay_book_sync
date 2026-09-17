@@ -26,8 +26,14 @@ impl MongoDatabase {
         })
     }
 
-    pub async fn drop_database(&self) -> Result<(), AppError> {
-        self.db.drop().await?;
-        Ok(())
+    // pub async fn drop_database(&self) -> Result<(), AppError> {
+    //     self.db.drop().await?;
+    //     Ok(())
+    // }
+
+    /// Drops the entire underlying database. Test-only — there's no
+    /// legitimate reason to call this in production code.
+    pub async fn drop_database(&self) -> mongodb::error::Result<()> {
+        self.db.drop().await
     }
 }

@@ -41,8 +41,14 @@ impl BookRepository {
         Ok(self.collection.find_one(doc! { "name": name }).await?)
     }
 
-    pub async fn find_by_path(&self, path: &str) -> Result<Option<Book>, AppError> {
-        Ok(self.collection.find_one(doc! { "path": path }).await?)
+    pub async fn find_by_path(&self, path: &str) -> Result<Option<(ObjectId, Book)>, AppError> {
+        let Some(book) = self.collection.find_one(doc! { "path": path }).await? else {
+            return Ok(None);
+        };
+
+        let id = book.id.ok_or(AppError::InvalidObjectId)?;
+
+        Ok(Some((id, book)))
     }
 
     pub async fn fetch_all(&self) -> Result<Vec<Book>, AppError> {

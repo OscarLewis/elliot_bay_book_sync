@@ -269,8 +269,6 @@ pub(crate) fn resolve_base_url(headers: &HeaderMap, config_external_url: Option<
 pub async fn refresh_metadata_handler(
     State(state): State<AppState>,
 ) -> Result<StatusCode, AppError> {
-    let books = state.db.get_all::<Book>(DocumentTable::Books)?;
-
     // Filter through set of all books for those with has_metadata = False
     let books_needing_metadata = state.mongodb.books.find_books_needing_metadata().await?;
 
@@ -289,7 +287,10 @@ pub async fn refresh_single_book_metadata_handler(
     axum::extract::Path(book_doc_id): axum::extract::Path<String>,
     State(state): State<AppState>,
 ) -> Result<StatusCode, AppError> {
-    let Some(book) = state.db.read::<Book>(DocumentTable::Books, &book_doc_id)? else {
+    let book_id = mongodb::bson::oid::ObjectId::parse_str(&book_doc_id)
+        .map_err(|_| AppError::InvalidObjectId)?;
+
+    let Some(book) = state.mongodb.books.find_by_id(book_id).await? else {
         return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
     };
 
@@ -314,19 +315,68 @@ pub mod test_helpers {
     use dotenvy::dotenv;
     use std::env;
     use std::sync::Arc;
+    use test_context::AsyncTestContext;
     use tokio::sync::Mutex;
+
+    pub struct MongoTestContext {
+        pub state: AppState,
+        mongodb: MongoDatabase,
+    }
+
+    impl AsyncTestContext for MongoTestContext {
+        async fn setup() -> Self {
+            dotenv().ok();
+            let uri = env::var("MONGODB_TEST_URI")
+                .expect("MONGODB_TEST_URI must be set to run tests that require MongoDB");
+            let database = format!("ebbooks_test_{}", uuid::Uuid::new_v4());
+
+            let mongodb = MongoDatabase::connect(&uri, &database)
+                .await
+                .expect("Failed to connect to MongoDB using MONGODB_TEST_URI");
+
+            let config = AppConfig::default(); // however you build a default test AppConfig
+            let db = DocumentDB::open_in_memory().expect("Unable to open database"); // your in-memory DocumentDB
+            let kobo_resources = Resources::default();
+            let patched_resources = patch_kobo_resources(
+                kobo_resources.clone(),
+                &config.base_url,
+                &config.ebbooks_auth_key,
+                config.proxy_kobo_store,
+            );
+
+            let state = AppState {
+                config: Arc::new(config),
+                req_client: reqwest::Client::new(),
+                db: Arc::new(db),
+                mongodb: Arc::new(mongodb.clone()), // needs Clone, see note below
+                hardcover_api_token: None,
+                kobo_resources: Arc::new(Mutex::new(kobo_resources)),
+                patched_resources: Arc::new(Mutex::new(patched_resources)),
+            };
+
+            Self { state, mongodb }
+        }
+
+        async fn teardown(self) {
+            if let Err(e) = self.mongodb.drop_database().await {
+                eprintln!("warning: failed to drop test database: {e}");
+            }
+        }
+    }
 
     /// Connects to the MongoDB instance used for integration tests, reading
     /// `MONGODB_TEST_URI` from the environment. Panics with a clear message
     /// if the variable is unset or the connection fails, so a missing test
     /// dependency shows up immediately rather than as a confusing later error.
     pub async fn test_mongodb() -> MongoDatabase {
-        // Load the .env file into the system environment
         dotenv().ok();
 
         let uri = env::var("MONGODB_TEST_URI")
             .expect("MONGODB_TEST_URI must be set to run tests that require MongoDB");
-        MongoDatabase::connect(&uri, "ebbooks_test")
+
+        let database = format!("ebbooks_test_{}", uuid::Uuid::new_v4());
+
+        MongoDatabase::connect(&uri, &database)
             .await
             .expect("Failed to connect to MongoDB using MONGODB_TEST_URI")
     }
@@ -434,16 +484,10 @@ mod tests {
         let book = Book::from_path(PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         ));
-
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
-
         let state = test_state(config, db).await;
-        let server = setup_test_app(state);
+        let server = setup_test_app(state.clone());
+
+        let book_id = state.mongodb.books.insert(&book).await?;
 
         let response = server.post(&format!("/metadata/refresh/{book_id}")).await;
 
