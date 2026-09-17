@@ -307,13 +307,7 @@ impl Entitlement {
         archieved: bool,
     ) -> Self {
         let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-        let last_modified = DateTime::parse_from_rfc3339(&book.modified_at)
-            .map(|dt| {
-                dt.with_timezone(&Utc)
-                    .format("%Y-%m-%dT%H:%M:%SZ")
-                    .to_string()
-            })
-            .unwrap_or_else(|_| book.modified_at.clone());
+        let last_modified = book.modified_at.format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
         let book_entitlement = BookEntitlement {
             id: book_id.to_string(),
@@ -383,13 +377,7 @@ pub fn get_download_url_for_book_id(
 impl BookMetadata {
     pub fn from_book_tuple((book_id, book): (&str, &Book), app_config: Arc<AppConfig>) -> Self {
         // Parse UTC timestamp or fallback to `now`
-        let pub_date = DateTime::parse_from_rfc3339(&book.modified_at)
-            .map(|dt| {
-                dt.with_timezone(&Utc)
-                    .format("%Y-%m-%dT%H:%M:%SZ")
-                    .to_string()
-            })
-            .unwrap_or_else(|_| Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string());
+        let pub_date = book.modified_at.format("%Y-%m-%dT%H:%M:%SZ").to_string();
         // Derive format & download details
         let format = match book.initial_format.as_deref() {
             Some("kepub") => KoboFormat::Kepub,

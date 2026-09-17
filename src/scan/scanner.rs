@@ -1,27 +1,43 @@
-use crate::{
-    database::document::{DocumentDB, DocumentTable},
-    error::AppError,
-    library::book::Book,
-    metadata::update_meta::update_metadata,
-};
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use crate::database::bson_chrono_datetime::bson_chrono_datetime;
+use crate::{database::MongoDatabase, error::AppError, library::book::Book};
+use chrono::{DateTime, Utc};
+use mongodb::bson::oid::ObjectId;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{path::Path, sync::Arc};
 use tokio::fs;
 use tracing::{debug, error, info};
 use uuid::Uuid;
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ScanResponse {
-    pub scan_id: Uuid,
+    pub scan_id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanDocument {
     pub status: ScanStatus,
-    /// ISO-8601 formatted timestamp string (e.g., "2026-09-11T00:38:00Z")
-    pub timestamp: String,
+
+    #[serde(with = "bson_chrono_datetime")]
+    pub timestamp: DateTime<Utc>,
+
     pub details: ScanDetails,
+}
+
+impl ScanDocument {
+    /// Builds a new scan document in the initial `Running`/`Started` state,
+    /// with `timestamp` set to the current time.
+    ///
+    /// This is the only place a `Running` scan should be constructed —
+    /// callers that want to record a new scan starting should use this
+    /// (via `ScanRepository::start`) rather than building a `ScanDocument`
+    /// by hand, so the `Running`/`Started` pairing and timestamp format stay
+    /// consistent everywhere a scan begins.
+    pub fn start() -> Self {
+        Self {
+            status: ScanStatus::Running,
+            timestamp: Utc::now(),
+            details: ScanDetails::Started,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -45,6 +61,7 @@ pub enum ScanDetails {
         reason: String,
     },
 }
+
 pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
     let mut book_list: Vec<Book> = vec![];
     if scan_dir.is_dir() {
@@ -77,28 +94,36 @@ pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
 }
 
 pub(crate) async fn run_library_scan(
-    db: Arc<DocumentDB>,
-    scan_document_id: String,
+    mongodb: Arc<MongoDatabase>,
+    scan_document_id: ObjectId,
     library_path: Arc<std::path::Path>,
 ) -> Result<(), AppError> {
     debug!(doc_id = %scan_document_id, "Initialized scan execution record");
+
+    // TODO Handle missing books as deleted books or flag them in mongodb
+
+    // TODO take in an ObjectId for a mongodb.scans instead of a string for scan_document_id
 
     // Execute scan directly
     let scan_result: Result<(usize, usize, usize), AppError> =
         match scan_library(&library_path).await {
             Ok(book_list) => {
                 let mut new_books = Vec::new();
-                let mut updated_books: Vec<(String, Book)> = Vec::new();
-                let mut skipped_books: Vec<(String, Book)> = Vec::new();
+                let mut updated_books: Vec<(ObjectId, Book)> = Vec::new();
+                let mut skipped_books: Vec<(ObjectId, Book)> = Vec::new();
 
                 for book in book_list {
-                    match db.get_book_by_path::<_, Book>(&book.path) {
+                    let book_path_str = book
+                        .path
+                        .to_str()
+                        .ok_or_else(|| AppError::InvalidPath("Invalid book path".into()))?;
+
+                    match mongodb.books.find_by_path(book_path_str).await {
                         Ok(Some((existing_id, existing_book))) => {
                             if existing_book.size_kb != book.size_kb
                                 || existing_book.modified_at != book.modified_at
                             {
                                 let mut book = book;
-
                                 book.has_metadata = false;
 
                                 updated_books.push((existing_id, book));
@@ -107,7 +132,9 @@ pub(crate) async fn run_library_scan(
                             }
                         }
                         Ok(None) => new_books.push(book),
-                        Err(err) => error!(?err, path = ?book.path, "Failed to check path index"),
+                        Err(err) => {
+                            error!(?err, path = ?book.path, "Failed to check path index");
+                        }
                     }
                 }
 
@@ -115,33 +142,28 @@ pub(crate) async fn run_library_scan(
                 let skipped_count = skipped_books.len();
                 let updated_count = updated_books.len();
 
-                // Process `updated_books` via `db.update(...)` once modification detection is implemented
                 for (id, book) in updated_books {
-                    db.update(
-                        DocumentTable::Books,
-                        &id,
-                        &book,
-                        Some(|book: &Book| book.path.to_str().unwrap()),
-                        None,
-                    )?;
+                    mongodb.books.update_diff(id, &book).await?;
                 }
 
                 let batch_res = if !new_books.is_empty() {
-                    db.create_many(
-                        DocumentTable::Books,
-                        &new_books,
-                        Some(|b: &Book| b.path.to_str().unwrap_or_default()),
-                        None,
-                    )
-                    .map(|_| {
-                        info!(added_count, "Successfully batch-persisted new books");
+                    mongodb.books.insert_many(&mut new_books).await.map(|ids| {
+                        info!(
+                            added_count = ids.len(),
+                            "Successfully batch-persisted new books to MongoDB"
+                        );
+
+                        ids.into_iter()
+                            .map(|id| id.to_hex())
+                            .collect::<Vec<String>>()
                     })
                 } else {
                     info!(
                         skipped_count,
                         updated_count, "No new books to insert; library is up to date"
                     );
-                    Ok(())
+
+                    Ok(Vec::new())
                 };
 
                 batch_res.map(|_| (added_count, skipped_count, updated_count))
@@ -152,42 +174,18 @@ pub(crate) async fn run_library_scan(
     // Persist outcome
     match scan_result {
         Ok((added_count, skipped_count, updated_count)) => {
-            let completed_record = ScanDocument {
-                status: ScanStatus::Finished,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Completed {
-                    added_count,
-                    skipped_count,
-                    updated_count,
-                },
-            };
-
-            db.update(
-                DocumentTable::Scans,
-                &scan_document_id,
-                &completed_record,
-                None,
-                Some(|s| s.timestamp.as_str()),
-            )?;
+            mongodb
+                .scans
+                .mark_completed(scan_document_id, added_count, updated_count, skipped_count)
+                .await?;
 
             Ok(())
         }
         Err(err) => {
-            let failed_record = ScanDocument {
-                status: ScanStatus::Error,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Failed {
-                    reason: err.to_string(),
-                },
-            };
-
-            let _ = db.update(
-                DocumentTable::Scans,
-                &scan_document_id,
-                &failed_record,
-                None,
-                Some(|s| s.timestamp.as_str()),
-            );
+            mongodb
+                .scans
+                .mark_failed(scan_document_id, err.to_string())
+                .await?;
 
             Err(err)
         }
@@ -197,133 +195,137 @@ pub(crate) async fn run_library_scan(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{database::ScanRepository, test_helpers::AppTextContext};
     use tempfile::tempdir;
+    use test_context::test_context;
 
+    #[test_context(AppTextContext)]
     #[tokio::test]
-    async fn test_scan_updates_existing_book() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_scan_updates_existing_book(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("test.epub");
 
         // Create a file large enough for size_kb to be meaningful.
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
         // Seed the database with the current book, but make its stored
         // metadata different from what is currently on disk.
         let mut existing_book = Book::from_path(epub_path.clone());
         existing_book.has_metadata = true;
         existing_book.size_kb = 1;
-        existing_book.modified_at = "2000-01-01T00:00:00+00:00".to_string();
+        existing_book.modified_at = DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+            .unwrap()
+            .with_timezone(&Utc);
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &existing_book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = ctx.state.mongodb.books.insert(&mut existing_book).await?;
 
-        // Run the scan. The filesystem version should be detected as changed.
-        let scan_id = db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = ctx.state.mongodb.scans.start().await?;
 
-        run_library_scan(db.clone(), scan_id, temp_dir.path().to_path_buf().into()).await?;
+        run_library_scan(
+            ctx.state.mongodb.clone(),
+            scan_id,
+            temp_dir.path().to_path_buf().into(),
+        )
+        .await?;
 
-        let updated: Book = db
-            .read(DocumentTable::Books, &book_id)?
-            .expect("Book should still exist");
+        let updated = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
         assert_eq!(updated.size_kb, 2);
-        assert_ne!(updated.modified_at, "2000-01-01T00:00:00+00:00");
+        assert_ne!(
+            updated.modified_at,
+            DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+                .unwrap()
+                .with_timezone(&Utc)
+        );
         assert!(!updated.has_metadata);
 
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[tokio::test]
-    async fn test_scan_adds_new_book() -> Result<(), Box<dyn std::error::Error>> {
-        let temp_dir = tempfile::tempdir()?;
+    async fn test_scan_adds_new_book(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("new.epub");
 
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
+        let scan_id = ctx.state.mongodb.scans.start().await?;
 
-        let scan_id = db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        run_library_scan(
+            ctx.state.mongodb.clone(),
+            scan_id,
+            temp_dir.path().to_path_buf().into(),
+        )
+        .await?;
 
-        run_library_scan(db.clone(), scan_id, temp_dir.path().to_path_buf().into()).await?;
+        let (_, book) = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_path(epub_path.to_str().unwrap())
+            .await?
+            .expect("Book should exist in database");
 
-        let books = db.get_all::<Book>(DocumentTable::Books)?;
-
-        assert_eq!(books.len(), 1);
-
-        let (_, book) = &books[0];
         assert_eq!(book.path, epub_path.into());
         assert_eq!(book.size_kb, 2);
 
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[tokio::test]
-    async fn test_scan_skips_unchanged_book() -> Result<(), Box<dyn std::error::Error>> {
-        let temp_dir = tempfile::tempdir()?;
+    async fn test_scan_skips_unchanged_book(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("existing.epub");
 
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
+        let mut book = Book::from_path(epub_path.clone());
+        book.size_kb = 2;
+        book.modified_at = std::fs::metadata(&epub_path)?.modified()?.into();
 
-        let book = Book::from_path(epub_path.clone());
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
-
-        let scan_id = db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            db.clone(),
+            ctx.state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
 
-        let books = db.get_all::<Book>(DocumentTable::Books)?;
+        let books = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
-        assert_eq!(books.len(), 1);
-        assert_eq!(books[0].0, book_id);
+        assert_eq!(books.path, epub_path.into());
+        assert_eq!(books.size_kb, 2);
+        assert_eq!(books.has_metadata, book.has_metadata);
 
-        let scan: ScanDocument = db
-            .read(DocumentTable::Scans, &scan_id)?
+        let scan = ctx
+            .state
+            .mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
             .expect("Scan should exist");
 
         assert_eq!(
@@ -338,54 +340,49 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[tokio::test]
-    async fn test_scan_updates_book_when_size_changes() -> Result<(), Box<dyn std::error::Error>> {
-        let temp_dir = tempfile::tempdir()?;
+    async fn test_scan_updates_book_when_size_changes(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("changed.epub");
 
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
         let mut book = Book::from_path(epub_path.clone());
         book.has_metadata = true;
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
-        let scan_id = db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            db.clone(),
+            ctx.state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
 
-        let updated: Book = db
-            .read(DocumentTable::Books, &book_id)?
-            .expect("Book should exist");
+        let updated = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
         assert_eq!(updated.size_kb, 4);
         assert!(!updated.has_metadata);
 
-        let scan: ScanDocument = db
-            .read(DocumentTable::Scans, &scan_id)?
+        let scan = ctx
+            .state
+            .mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
             .expect("Scan should exist");
 
         assert_eq!(
@@ -400,54 +397,55 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[tokio::test]
-    async fn test_scan_updates_book_when_modified_at_changes()
-    -> Result<(), Box<dyn std::error::Error>> {
-        let temp_dir = tempfile::tempdir()?;
+    async fn test_scan_updates_book_when_modified_at_changes(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("modified.epub");
 
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
         let mut book = Book::from_path(epub_path.clone());
         book.has_metadata = true;
-        book.modified_at = "2000-01-01T00:00:00+00:00".to_string();
+        book.modified_at = DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+            .unwrap()
+            .with_timezone(&Utc);
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let scan_id = db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            db.clone(),
+            ctx.state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
 
-        let updated: Book = db
-            .read(DocumentTable::Books, &book_id)?
-            .expect("Book should exist");
+        let updated = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
-        assert_ne!(updated.modified_at, "2000-01-01T00:00:00+00:00");
+        assert_ne!(
+            updated.modified_at,
+            DateTime::parse_from_rfc3339("2000-01-01T00:00:00+00:00")
+                .unwrap()
+                .with_timezone(&Utc)
+        );
         assert!(!updated.has_metadata);
 
-        let scan: ScanDocument = db
-            .read(DocumentTable::Scans, &scan_id)?
+        let scan = ctx
+            .state
+            .mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
             .expect("Scan should exist");
 
         assert_eq!(
@@ -462,43 +460,41 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[tokio::test]
-    async fn test_scan_preserves_book_id_when_updated() -> Result<(), Box<dyn std::error::Error>> {
-        let temp_dir = tempfile::tempdir()?;
+    async fn test_scan_preserves_book_id_when_updated(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("preserve-id.epub");
 
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
+        let mut book = Book::from_path(epub_path.clone());
 
-        let book = Book::from_path(epub_path.clone());
-
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
-        let scan_id = db.create(
-            DocumentTable::Scans,
-            &ScanDocument {
-                status: ScanStatus::Running,
-                timestamp: Utc::now().to_rfc3339(),
-                details: ScanDetails::Started,
-            },
-            None,
-            Some(|s| s.timestamp.as_str()),
-        )?;
+        let scan_id = ctx.state.mongodb.scans.start().await?;
 
-        run_library_scan(db.clone(), scan_id, temp_dir.path().to_path_buf().into()).await?;
+        run_library_scan(
+            ctx.state.mongodb.clone(),
+            scan_id,
+            temp_dir.path().to_path_buf().into(),
+        )
+        .await?;
 
-        let books = db.get_all::<Book>(DocumentTable::Books)?;
+        let updated = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
-        assert_eq!(books.len(), 1);
-        assert_eq!(books[0].0, book_id);
+        assert_eq!(updated.path, epub_path.into());
+        assert_eq!(updated.size_kb, 4);
 
         Ok(())
     }

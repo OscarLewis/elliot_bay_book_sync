@@ -1,5 +1,5 @@
 # Todos
-
+[ ] - Move all tests that touch database to use context 
 ## Routes 
 [x] - Initialization - "/kobo/{token}/v1/initialization"
 

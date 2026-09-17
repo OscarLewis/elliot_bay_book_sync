@@ -8,7 +8,7 @@
     "hits": [
       {
         "document": {
-          "activities_count": 65,
+          "activities_count": 66,
           "alternative_titles": [
             "Absolute Martian Manhunter - Bd. 1: Wahrheit gegen Wahn",
             "Absolute Martian Manhunter, Vol. 1: Martian Vision",
@@ -44,12 +44,8 @@
                 "slug": "deniz-camp"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -60,12 +56,6 @@
                 "slug": "javier-rodriguez"
               },
               "contribution": "Illustrator",
-              "contributor_role_blurb": null,
-              "contributor_role_id": null,
-              "contributor_role_name": null,
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": false
             }
           ],
@@ -120,25 +110,25 @@
           "moods": [],
           "pages": 160,
           "prompts_count": 0,
-          "rating": 4.080645161290323,
-          "ratings_count": 31,
+          "rating": 4.078125,
+          "ratings_count": 32,
           "release_date": "2025-11-18",
           "release_year": 2025,
           "reviews_count": 6,
           "series_ids": [
-            297632,
-            258587
+            258587,
+            297632
           ],
           "series_names": [
-            "Absolute Martian Manhunter",
-            "Absolute Martian Manhunter (2025)"
+            "Absolute Martian Manhunter (2025)",
+            "Absolute Martian Manhunter"
           ],
           "slug": "absolute-martian-manhunter-vol-1",
           "subtitle": "Martian Vision",
           "tags": [],
           "title": "Absolute Martian Manhunter, Vol. 1: Martian Vision",
-          "users_count": 56,
-          "users_read_count": 41
+          "users_count": 57,
+          "users_read_count": 42
         },
         "highlight": {
           "alternative_titles": [
@@ -211,7 +201,7 @@
                 "Martian",
                 "Manhunter"
               ],
-              "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>"
+              "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> (2025)"
             },
             {
               "matched_tokens": [
@@ -219,7 +209,7 @@
                 "Martian",
                 "Manhunter"
               ],
-              "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark> (2025)"
+              "snippet": "<mark>Absolute</mark> <mark>Martian</mark> <mark>Manhunter</mark>"
             }
           ],
           "title": {
@@ -304,8 +294,8 @@
           {
             "field": "series_names",
             "indices": [
-              0,
-              1
+              1,
+              0
             ],
             "matched_tokens": [
               [
@@ -352,7 +342,7 @@
         }
       }
     ],
-    "out_of": 2583269,
+    "out_of": 2585762,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -361,6 +351,6 @@
       "q": "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp"
     },
     "search_cutoff": false,
-    "search_time_ms": 14
+    "search_time_ms": 10
   }
 }

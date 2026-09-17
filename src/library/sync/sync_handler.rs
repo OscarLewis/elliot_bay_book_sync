@@ -1,7 +1,6 @@
 use crate::{
     AppState,
     api::make_requests::{get_download_url_format_for_book, make_request_to_kobo_store},
-    database::document::DocumentTable,
     error::AppError,
     library::{
         book::Book,
@@ -45,23 +44,16 @@ pub async fn library_sync_handler(
     debug!(url_format, "Download link format");
 
     // Fetch all synced book records and library books
-    let synced_books: Vec<(String, SyncedBookDocument)> =
-        state.db.get_all(DocumentTable::SyncedBooks)?;
+    let synced_books = state.mongodb.syncs.fetch_all().await?;
+    let books = state.mongodb.books.fetch_all().await?;
 
-    // let books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
-
-    // Collect database results directly into a HashMap
-    let books: HashMap<String, Book> = state
-        .db
-        .get_all(DocumentTable::Books)?
-        .into_iter()
-        .collect();
+    // TODO WIP FLAG FOR Mongodb re-write - PICK UP FROM HERE
 
     // If we have no synced books, we disrespect the SyncToken
     // His shoes wack
     if synced_books.is_empty() {
         debug!("No previously synced ebooks found, disregarding SyncToken");
-        // Reset sync token dates for first sync
+
         sync_token.data.books_last_modified = Utc.timestamp_opt(0, 0).unwrap();
         sync_token.data.books_last_created = Utc.timestamp_opt(0, 0).unwrap();
         sync_token.data.reading_state_last_modified = Utc.timestamp_opt(0, 0).unwrap();
@@ -80,15 +72,14 @@ pub async fn library_sync_handler(
     let mut has_local_books = false;
 
     // Handle sync logic by comparing synced books ids versus the ids in our database
-    let synced_book_ids: HashSet<String> = synced_books
+    let synced_book_ids: HashSet<String> =
+        synced_books.iter().map(|sb| sb.book_id.clone()).collect();
+
+    let allowed_book_ids: HashSet<String> = books
         .iter()
-        .map(|(_, sb)| sb.book_id.clone())
+        .filter_map(|book| book.id.map(|id| id.to_string()))
         .collect();
 
-    let allowed_book_ids: HashSet<String> =
-        books.iter().map(|(book_id, _)| book_id.clone()).collect();
-
-    // TODO deletion logic
     let books_to_delete_ids: HashSet<String> = synced_book_ids
         .difference(&allowed_book_ids)
         .cloned()
@@ -102,70 +93,41 @@ pub async fn library_sync_handler(
         has_local_books = true;
 
         for book_id in &books_to_delete_ids {
-            // TODO maybe loop this similar to how `for (book_id, book) in books_to_sync` instead of HashMap
-            if let Some(book) = books.get(book_id) {
-                // Deletion logic using `book_id` and `book`
-                let entitlement = Entitlement::from_book_tuple(
-                    (book_id, book),
-                    state.config.clone(),
-                    None,
-                    None,
-                    None,
-                    true,
-                );
-                sync_results.push(SyncResult {
-                    changed_entitlement: Some(entitlement),
-                    new_entitlement: None,
-                    changed_reading_state: None,
-                    deleted_tag: None,
-                    new_tag: None,
-                    changed_tag: None,
-                });
-            }
-
-            if let Some((doc_key, _)) = synced_books
-                .iter()
-                .find(|(_, doc)| doc.book_id == book_id.as_ref())
-            {
-                state.db.delete::<SyncedBookDocument>(
-                    DocumentTable::SyncedBooks,
-                    doc_key,
-                    None,
-                    None,
-                )?;
-            }
+            state.mongodb.syncs.delete_by_book_id(book_id).await?;
         }
     }
 
-    // TODO sync logic
-    let books_to_sync: Vec<(&String, &Book)> = books
+    let books_to_sync: Vec<&Book> = books
         .iter()
-        .filter(|(book_id, _)| !synced_book_ids.contains(*book_id))
+        .filter(|book| {
+            book.id
+                .map(|id| !synced_book_ids.contains(&id.to_string()))
+                .unwrap_or(false)
+        })
         .take(SYNC_ITEM_LIMIT)
         .collect();
+
     debug!(
         num_books_to_sync = books_to_sync.len(),
         "Found books to sync"
     );
 
-    for (book_id, book) in books_to_sync {
-        has_local_books = true;
-        let book_modified: chrono::DateTime<Utc> =
-            book.modified_at.parse().unwrap_or_else(|_| Utc::now());
-        let bm_string = book_modified.to_string();
+    for book in books_to_sync {
+        let book_id = book.id.ok_or(AppError::InvalidObjectId)?.to_string();
 
+        has_local_books = true;
+
+        let book_modified: chrono::DateTime<Utc> = book.modified_at;
         let is_new = book_modified > sync_token.data.books_last_created;
 
         let entitlement = Entitlement::from_book_tuple(
-            (book_id, book),
+            (&book_id, book),
             state.config.clone(),
             None,
             None,
             None,
             false,
         );
-
-        // TODO Add support for changed_reading_state
 
         if is_new {
             sync_results.push(SyncResult {
@@ -185,11 +147,10 @@ pub async fn library_sync_handler(
                 new_tag: None,
                 changed_tag: None,
             });
-            // sync_results.push(serde_json::json!({"ChangedEntitlement": entitlement}));
         }
 
         debug!(
-            book_id = book_id,
+            book_id = %book_id,
             title = book.title,
             is_new,
             "Attempting to sync book"
@@ -198,18 +159,15 @@ pub async fn library_sync_handler(
         new_books_last_modified = std::cmp::max(new_books_last_modified, book_modified);
         new_books_last_created = std::cmp::max(new_books_last_created, book_modified);
 
-        // Mark book as synced
-        let synced = SyncedBookDocument {
-            book_id: book_id.clone(),
+        let mut synced = SyncedBookDocument {
+            book_id,
             user_id: "default".to_string(),
+            id: None,
             synced_at: Utc::now(),
         };
-        state
-            .db
-            .create(DocumentTable::SyncedBooks, &synced, None, None)?;
-    }
 
-    // TODO Finish implementing sync handler
+        state.mongodb.syncs.insert(&mut synced).await?;
+    }
 
     // Update sync token
     sync_token.data.books_last_modified = new_books_last_modified;
@@ -353,35 +311,30 @@ pub async fn generate_sync_response(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
-        library::{
-            book::Book,
-            sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
-        },
+        library::book::Book,
+        library::sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
         metadata::update_meta::update_metadata,
-        test_helpers::setup_test_app,
+        test_helpers::{AppTextContext, setup_test_app},
     };
     use reqwest::StatusCode;
+    use test_context::test_context;
     use test_log::test;
     use tokio::time::{Duration, sleep};
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    #[ignore]
-    async fn test_library_sync() -> Result<(), Box<dyn std::error::Error>> {
+    #[ignore = "requires mongodb test server setup"]
+    async fn test_library_sync(ctx: &mut AppTextContext) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
         let server = setup_test_app(state.clone());
 
         // Scan first to populate the library
@@ -390,39 +343,39 @@ mod tests {
 
         sleep(Duration::from_millis(500)).await;
 
-        // TODO fetch metadata before sync
         // Fetch all books and update metadata
-        let books_needing_metadata = state.db.get_all(DocumentTable::Books)?;
+        let books_needing_metadata = state.mongodb.books.fetch_all().await?;
         update_metadata(state.clone(), books_needing_metadata).await?;
 
-        // Wait for metadata update to complete
-        tokio::time::sleep(tokio::time::Duration::from_millis(2500)).await;
+        // Wait for metadata update and image extraction to complete
+        sleep(Duration::from_millis(2500)).await;
 
         // Now sync
         let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
         response.assert_status(StatusCode::OK);
 
         // Cleanup: remove all downloaded images
-        let all_books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
-        for (_, book) in all_books {
+        let all_books = state.mongodb.books.fetch_all().await?;
+        for book in all_books {
             if let Some(image_path) = book.image_path {
                 let _ = tokio::fs::remove_file(&image_path).await;
             }
         }
+
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_generate_sync_response_no_proxy() -> Result<(), Box<dyn std::error::Error>> {
-        let config = AppConfig {
-            base_url: "http://books.example.com/".to_string(),
-            ebbooks_auth_key: "test-token".to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+    async fn test_generate_sync_response_no_proxy(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
@@ -434,18 +387,17 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_generate_sync_response_with_continuation()
-    -> Result<(), Box<dyn std::error::Error>> {
-        let config = AppConfig {
-            base_url: "http://books.example.com/".to_string(),
-            ebbooks_auth_key: "test-token".to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+    async fn test_generate_sync_response_with_continuation(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
@@ -463,18 +415,17 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_generate_sync_response_includes_token() -> Result<(), Box<dyn std::error::Error>>
-    {
-        let config = AppConfig {
-            base_url: "http://books.example.com/".to_string(),
-            ebbooks_auth_key: "test-token".to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+    async fn test_generate_sync_response_includes_token(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];

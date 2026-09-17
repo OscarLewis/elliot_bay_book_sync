@@ -5,24 +5,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("Database error: {0}")]
-    Database(#[from] redb::DatabaseError),
-
-    #[error("Redb error: {0}")]
-    Redb(#[from] redb::Error),
-
-    #[error("Database table error: {0}")]
-    Table(#[from] redb::TableError),
-
-    #[error("Transaction error: {0}")]
-    Transaction(#[from] redb::TransactionError),
-
-    #[error("Commit error: {0}")]
-    Commit(#[from] redb::CommitError),
-
-    #[error("Storage initialization error: {0}")]
-    Storage(#[from] redb::StorageError),
-
     #[error("JSON serialization error: {0}")]
     Json(#[from] serde_json::Error),
 
@@ -73,18 +55,24 @@ pub enum AppError {
 
     #[error("HTTP error: {0}")]
     Http(#[from] axum::http::Error),
+
+    #[error("MongoDB error: {0}")]
+    MongoDB(#[from] mongodb::error::Error),
+
+    #[error("BSON serialization error: {0}")]
+    BsonSer(#[from] mongodb::bson::ser::Error),
+
+    #[error("MongoDB did not return an ObjectId for the inserted document")]
+    InvalidObjectId,
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = match self {
-            AppError::Database(_)
-            | AppError::Redb(_)
-            | AppError::Table(_)
-            | AppError::Transaction(_)
-            | AppError::Commit(_)
-            | AppError::Storage(_)
+            AppError::BsonSer(_)
             | AppError::Config(_)
+            | AppError::MongoDB(_)
+            | AppError::InvalidObjectId
             | AppError::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Json(_) => StatusCode::BAD_REQUEST,
             AppError::Uuid(_) => StatusCode::BAD_REQUEST,

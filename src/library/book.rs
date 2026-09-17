@@ -1,16 +1,18 @@
+use crate::database::bson_chrono_datetime::{bson_chrono_datetime, bson_chrono_datetime_option};
+use crate::error::AppError;
 use chrono::{DateTime, Utc};
 use image::DynamicImage;
+use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::Path;
-use std::time::SystemTime;
-use uuid::Uuid;
-
-use crate::error::AppError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Book {
     pub path: Box<Path>,
+    // MongoDB ID value
+    #[serde(rename = "_id", default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<ObjectId>,
     pub name: String,
     pub initial_format: Option<String>,
     pub author: Option<String>,
@@ -20,7 +22,9 @@ pub struct Book {
     #[serde(default)]
     pub description: Option<String>,
     pub size_kb: u64,
-    pub modified_at: String,
+    /// Stored as a BSON DateTime in MongoDB.
+    #[serde(with = "bson_chrono_datetime")]
+    pub modified_at: DateTime<Utc>,
     #[serde(default)]
     pub hardcover_id: Option<u64>,
     #[serde(default)]
@@ -52,7 +56,9 @@ impl Book {
         Self {
             path: Path::new("").into(),
             name: String::new(),
+            // id: String::new(),
             initial_format: None,
+            id: None,
             author: None,
             title: None,
             series_name: None,
@@ -67,7 +73,7 @@ impl Book {
             has_metadata: false,
             has_image: false,
             image_path: None,
-            modified_at: String::new(),
+            modified_at: Utc::now(),
             reading_state: None,
         }
     }
@@ -115,7 +121,11 @@ impl Book {
         let modified_at = std::fs::metadata(&path)
             .ok()
             .and_then(|metadata| metadata.modified().ok())
-            .map(|time| DateTime::<Utc>::from(time).to_rfc3339())
+            .and_then(|time| {
+                DateTime::<Utc>::from_timestamp_millis(
+                    DateTime::<Utc>::from(time).timestamp_millis(),
+                )
+            })
             .unwrap_or_default();
 
         Self {
@@ -144,10 +154,13 @@ impl Book {
 */
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReadingStateDocument {
-    pub book_id: String,
+    pub book_id: ObjectId,
     pub entitlement_id: String,
+    #[serde(with = "bson_chrono_datetime")]
     pub created: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime")]
     pub priority_timestamp: DateTime<Utc>,
     pub status_info: StatusInfoDocument,
     pub statistics: Option<StatisticsDocument>,
@@ -195,13 +208,16 @@ impl fmt::Display for ReadStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatusInfoDocument {
     pub status: ReadStatus,
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime_option")]
     pub last_time_started_reading: Option<DateTime<Utc>>,
     pub times_started_reading: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatisticsDocument {
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
     pub remaining_time_minutes: Option<i32>,
     pub spent_reading_minutes: Option<i32>,
@@ -209,6 +225,7 @@ pub struct StatisticsDocument {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CurrentBookmarkDocument {
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
     pub location_source: Option<String>,
     pub location_type: Option<String>,

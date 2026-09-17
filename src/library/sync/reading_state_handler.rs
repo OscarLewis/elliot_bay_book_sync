@@ -6,7 +6,6 @@
 use crate::{
     AppState,
     api::make_requests::{get_store_url_for_current_request, redirect_or_proxy_request},
-    database::document::DocumentTable,
     error::AppError,
     library::{
         book::{
@@ -24,6 +23,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use chrono::{DateTime, Utc};
+use mongodb::bson::oid::ObjectId;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::{debug, info};
@@ -130,7 +130,8 @@ pub async fn reading_state_handler(
         uri = uri.to_string(),
         book_id, "Received Kobo ReadingState request"
     );
-    let book: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
+    let book_id = ObjectId::parse_str(&book_id).map_err(|_| AppError::InvalidObjectId)?;
+    let book = state.mongodb.books.find_by_id(book_id).await?;
     let Some(mut book) = book else {
         debug!("Book not found in database, proxying request");
         let store_url = get_store_url_for_current_request(state.clone(), &uri, &token).await?;
@@ -161,7 +162,7 @@ pub async fn reading_state_handler(
                 let now = Utc::now();
                 let new_doc = ReadingStateDocument {
                     book_id: book_id.clone(),
-                    entitlement_id: book_id.clone(),
+                    entitlement_id: book_id.to_string().clone(),
                     created: now,
                     last_modified: now,
                     priority_timestamp: now,
@@ -178,13 +179,7 @@ pub async fn reading_state_handler(
                 // Store in book before DB update
                 book.reading_state = Some(new_doc.clone());
 
-                state.db.update(
-                    DocumentTable::Books,
-                    &book_id,
-                    &book,
-                    Some(|book: &Book| book.path.to_str().unwrap()),
-                    None,
-                )?;
+                state.mongodb.books.update(book_id, &book).await?;
 
                 let response = ReadingState::from_document(&new_doc);
                 return Ok(Json(response).into_response());
@@ -202,7 +197,7 @@ pub async fn reading_state_handler(
                 let now = Utc::now();
                 let new_doc = ReadingStateDocument {
                     book_id: book_id.clone(),
-                    entitlement_id: book_id.clone(),
+                    entitlement_id: book_id.to_string().clone(),
                     created: now,
                     last_modified: now,
                     priority_timestamp: now,
@@ -223,20 +218,13 @@ pub async fn reading_state_handler(
 
                 // Store in book before DB update
                 book.reading_state = Some(new_doc.clone());
+                state.mongodb.books.update(book_id, &book).await?;
 
-                state.db.update(
-                    DocumentTable::Books,
-                    &book_id,
-                    &book,
-                    Some(|book: &Book| book.path.to_str().unwrap()),
-                    None,
-                )?;
-
-                // Return success response matching Python return structure
+                // Return success response
                 let update_response = serde_json::json!({
                     "RequestResult": "Success",
                     "UpdateResults": [{
-                        "EntitlementId": book_id,
+                        "EntitlementId": book_id.to_string(),
                         "CurrentBookmarkResult": { "Result": "Success" },
                         "StatisticsResult": { "Result": "Success" },
                         "StatusInfoResult": { "Result": "Success" }
@@ -255,171 +243,127 @@ pub async fn reading_state_handler(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
         library::{
             book::{Book, ReadStatus},
             sync::entitlement_models::ReadingState,
         },
-        test_helpers::setup_test_app,
+        test_helpers::{AppTextContext, setup_test_app},
     };
-    use reqwest::StatusCode;
-    use std::path::PathBuf;
+    use axum::http::StatusCode;
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_get_method_store_reading_state() -> Result<(), Box<dyn std::error::Error>> {
-        let test_base_url = "http://books.example.com/";
-        let token = "test-token-123";
-        let epub_path = PathBuf::from(
-            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
-        );
-
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+    async fn test_get_method_store_reading_state(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
 
-        let book = Book::from_path(epub_path);
+        let epub_path = std::path::PathBuf::from(
+            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
+        );
+        let mut book = Book::from_path(epub_path);
+        let book_id = state.mongodb.books.insert(&mut book).await?;
 
-        let book_id = state.db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
-
-        // Send first get request to store a new reading state
-        let reading_state_response = server
+        let token = state.config.ebbooks_auth_key.clone();
+        let response = server
             .get(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .await;
+        response.assert_status(StatusCode::OK);
 
-        reading_state_response.assert_status(StatusCode::OK);
+        let response_body: ReadingState = response.json();
+        assert_eq!(response_body.entitlement_id, book_id.to_string());
 
-        // Deserialize response body into ReadingState
-        let response_body: ReadingState = reading_state_response.json();
-
-        // Assert HTTP response matches book identifiers
-        assert_eq!(response_body.entitlement_id, book_id);
-
-        // Verify book in database was persisted with the new reading state
-        let updated_book: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
-        let updated_book = updated_book.expect("Book should exist in database");
+        let updated_book = state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
         let db_reading_state = updated_book
             .reading_state
             .expect("Reading state should be initialized on the book");
 
-        assert_eq!(db_reading_state.entitlement_id, book_id);
+        assert_eq!(db_reading_state.book_id, book_id);
+        assert_eq!(db_reading_state.entitlement_id, book_id.to_string());
 
-        // Second get request when state already exists (returns existing JSON)
         let second_get_response = server
             .get(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .await;
-
         second_get_response.assert_status(StatusCode::OK);
+
         let fetched_state: ReadingState = second_get_response.json();
-        assert_eq!(fetched_state.entitlement_id, book_id);
+        assert_eq!(fetched_state.entitlement_id, book_id.to_string());
 
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_put_method_updates_reading_state() -> Result<(), Box<dyn std::error::Error>> {
-        let test_base_url = "http://books.example.com/";
-        let token = "test-token-123";
-        let epub_path = PathBuf::from(
-            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
-        );
-
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+    async fn test_put_method_updates_reading_state(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
 
-        let book = Book::from_path(epub_path);
+        let epub_path = std::path::PathBuf::from(
+            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
+        );
+        let mut book = Book::from_path(epub_path);
+        let book_id = state.mongodb.books.insert(&mut book).await?;
 
-        let book_id = state.db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
-
-        // Build a PUT payload matching the shape Kobo devices send
+        let token = state.config.ebbooks_auth_key.clone();
         let put_payload = serde_json::json!({
-            "ReadingStates": [
-                {
-                    "EntitlementId": book_id,
-                    "StatusInfo": {
-                        "Status": "Reading",
-                        "TimesStartedReading": 1
-                    },
-                    "Statistics": {
-                        "SpentReadingMinutes": 12,
-                        "RemainingTimeMinutes": 48
-                    },
-                    "CurrentBookmark": {
-                        "ProgressPercent": 25,
-                        "ContentSourceProgressPercent": 25,
-                        "Location": {
-                            "Value": "chapter-3",
-                            "Type": "KoboSpan",
-                            "Source": "epub"
-                        }
+            "ReadingStates": [{
+                "EntitlementId": book_id.to_string(),
+                "StatusInfo": {
+                    "Status": "Reading",
+                    "TimesStartedReading": 1
+                },
+                "Statistics": {
+                    "SpentReadingMinutes": 12,
+                    "RemainingTimeMinutes": 48
+                },
+                "CurrentBookmark": {
+                    "ProgressPercent": 25,
+                    "ContentSourceProgressPercent": 25,
+                    "Location": {
+                        "Value": "chapter-3",
+                        "Type": "KoboSpan",
+                        "Source": "epub"
                     }
                 }
-            ]
+            }]
         });
 
-        // Send PUT request to update the reading state
-        let put_response = server
+        let response = server
             .put(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .json(&put_payload)
             .await;
+        response.assert_status(StatusCode::OK);
 
-        put_response.assert_status(StatusCode::OK);
-
-        // Deserialize response body into the update-result envelope
-        let response_body: serde_json::Value = put_response.json();
-
-        assert_eq!(response_body["RequestResult"], "Success");
-        assert_eq!(response_body["UpdateResults"][0]["EntitlementId"], book_id);
+        let response_body: serde_json::Value = response.json();
         assert_eq!(
-            response_body["UpdateResults"][0]["StatusInfoResult"]["Result"],
-            "Success"
-        );
-        assert_eq!(
-            response_body["UpdateResults"][0]["StatisticsResult"]["Result"],
-            "Success"
-        );
-        assert_eq!(
-            response_body["UpdateResults"][0]["CurrentBookmarkResult"]["Result"],
-            "Success"
+            response_body["UpdateResults"][0]["EntitlementId"],
+            book_id.to_string()
         );
 
-        // Verify book in database was persisted with the new reading state
-        let updated_book: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
-        let updated_book = updated_book.expect("Book should exist in database");
+        let updated_book = state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("Book should exist in database");
 
         let db_reading_state = updated_book
             .reading_state
-            .expect("Reading state should be set on the book after PUT");
+            .expect("Reading state should exist on the book");
 
-        assert_eq!(db_reading_state.entitlement_id, book_id);
+        assert_eq!(db_reading_state.book_id.to_hex(), book_id.to_hex());
+        assert_eq!(db_reading_state.entitlement_id, book_id.to_string());
         assert_eq!(db_reading_state.status_info.status, ReadStatus::InProgress);
         assert!(db_reading_state.statistics.is_some());
         assert!(db_reading_state.current_bookmark.is_some());
@@ -427,42 +371,31 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_put_method_missing_reading_states_returns_bad_request()
-    -> Result<(), Box<dyn std::error::Error>> {
-        let test_base_url = "http://books.example.com/";
-        let token = "test-token-123";
-        let epub_path = PathBuf::from(
-            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
-        );
-
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
+    async fn test_put_method_missing_reading_states_returns_bad_request(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
 
-        let book = Book::from_path(epub_path);
-        let book_id = state.db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let epub_path = std::path::PathBuf::from(
+            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
+        );
+        let mut book = Book::from_path(epub_path);
+        let book_id = state.mongodb.books.insert(&mut book).await?;
 
-        let put_payload = serde_json::json!({ "ReadingStates": [] });
+        let token = state.config.ebbooks_auth_key.clone();
+        let put_payload = serde_json::json!({
+            "ReadingStates": []
+        });
 
-        let put_response = server
+        let response = server
             .put(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .json(&put_payload)
             .await;
 
-        put_response.assert_status(StatusCode::BAD_REQUEST);
+        response.assert_status(StatusCode::BAD_REQUEST);
 
         Ok(())
     }

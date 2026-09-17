@@ -9,8 +9,8 @@
     429121,
     205,
     183698,
-    429113,
     433227,
+    429113,
     433103,
     81913,
     460393,
@@ -32,7 +32,7 @@
     "hits": [
       {
         "document": {
-          "activities_count": 2538,
+          "activities_count": 2552,
           "alternative_titles": [
             "The Eye of the World",
             "The Eye of the World - Book One of The Wheel of Time",
@@ -101,8 +101,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -300,7 +304,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1731,
+          "lists_count": 1734,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -315,8 +319,8 @@
           ],
           "pages": 804,
           "prompts_count": 7,
-          "rating": 4.061314791403287,
-          "ratings_count": 2373,
+          "rating": 4.062526227444398,
+          "ratings_count": 2383,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 212,
@@ -341,8 +345,8 @@
             "#digitally-own"
           ],
           "title": "The Eye of the World",
-          "users_count": 5501,
-          "users_read_count": 3325
+          "users_count": 5521,
+          "users_read_count": 3337
         },
         "highlight": {
           "alternative_titles": [
@@ -648,7 +652,7 @@
       },
       {
         "document": {
-          "activities_count": 1643,
+          "activities_count": 1649,
           "alternative_titles": [
             "El Despertar de los Heroes",
             "Great Hunt",
@@ -718,12 +722,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -906,8 +906,8 @@
           ],
           "pages": 720,
           "prompts_count": 0,
-          "rating": 4.19009009009009,
-          "ratings_count": 1665,
+          "rating": 4.190718562874252,
+          "ratings_count": 1670,
           "release_date": "1990-01-01",
           "release_year": 1990,
           "reviews_count": 102,
@@ -932,8 +932,8 @@
             "fiction"
           ],
           "title": "The Great Hunt",
-          "users_count": 2962,
-          "users_read_count": 2439
+          "users_count": 2972,
+          "users_read_count": 2447
         },
         "highlight": {
           "alternative_titles": [
@@ -1217,7 +1217,7 @@
       },
       {
         "document": {
-          "activities_count": 1449,
+          "activities_count": 1454,
           "alternative_titles": [
             "The Dragon Reborn - Book Three of The Wheel of Time",
             "The Dragon Reborn",
@@ -1267,12 +1267,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1416,8 +1412,8 @@
           ],
           "pages": 672,
           "prompts_count": 0,
-          "rating": 4.200333333333333,
-          "ratings_count": 1500,
+          "rating": 4.199003322259136,
+          "ratings_count": 1505,
           "release_date": "1991-01-01",
           "release_year": 1991,
           "reviews_count": 83,
@@ -1441,8 +1437,8 @@
             "fiction"
           ],
           "title": "The Dragon Reborn",
-          "users_count": 2722,
-          "users_read_count": 2237
+          "users_count": 2730,
+          "users_read_count": 2243
         },
         "highlight": {
           "alternative_titles": [
@@ -1680,7 +1676,7 @@
       },
       {
         "document": {
-          "activities_count": 1678,
+          "activities_count": 1681,
           "alternative_titles": [
             "[Wheel of Time, Book 4] The Shadow Rising",
             "The Shadow Rising - Book Four of The Wheel of Time",
@@ -1737,12 +1733,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1868,7 +1860,7 @@
             "1250390338",
             "9781250390332"
           ],
-          "lists_count": 751,
+          "lists_count": 750,
           "moods": [
             "Adventurous",
             "dark",
@@ -1883,8 +1875,8 @@
           ],
           "pages": 1024,
           "prompts_count": 1,
-          "rating": 4.208695652173913,
-          "ratings_count": 1265,
+          "rating": 4.20882584712372,
+          "ratings_count": 1269,
           "release_date": "1992-09-15",
           "release_year": 1992,
           "reviews_count": 66,
@@ -1909,8 +1901,8 @@
             "fiction"
           ],
           "title": "The Shadow Rising",
-          "users_count": 2431,
-          "users_read_count": 1963
+          "users_count": 2439,
+          "users_read_count": 1969
         },
         "highlight": {
           "alternative_titles": [
@@ -2158,7 +2150,7 @@
       },
       {
         "document": {
-          "activities_count": 1321,
+          "activities_count": 1326,
           "alternative_titles": [
             "The Fires of Heaven",
             "Wheel of Time 05 - The Fires of Heaven",
@@ -2216,12 +2208,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2353,7 +2341,7 @@
             "8580579864",
             "9788580579864"
           ],
-          "lists_count": 678,
+          "lists_count": 677,
           "moods": [
             "Adventurous",
             "tense",
@@ -2368,8 +2356,8 @@
           ],
           "pages": 928,
           "prompts_count": 1,
-          "rating": 4.092188919164396,
-          "ratings_count": 1101,
+          "rating": 4.092021758839529,
+          "ratings_count": 1103,
           "release_date": "1993-01-01",
           "release_year": 1993,
           "reviews_count": 52,
@@ -2394,8 +2382,8 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2205,
-          "users_read_count": 1737
+          "users_count": 2213,
+          "users_read_count": 1743
         },
         "highlight": {
           "alternative_titles": [
@@ -2676,7 +2664,7 @@
       },
       {
         "document": {
-          "activities_count": 1236,
+          "activities_count": 1245,
           "alternative_titles": [
             "Lord of Chaos: Book Six of The Wheel of Time",
             "Lord of Chaos",
@@ -2727,12 +2715,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2868,11 +2852,11 @@
           ],
           "pages": 1040,
           "prompts_count": 1,
-          "rating": 4.070877531340405,
-          "ratings_count": 1037,
+          "rating": 4.069711538461538,
+          "ratings_count": 1040,
           "release_date": "1994-01-01",
           "release_year": 1994,
-          "reviews_count": 50,
+          "reviews_count": 51,
           "series_ids": [
             1097
           ],
@@ -2893,8 +2877,8 @@
             "fantlab-import"
           ],
           "title": "Lord of Chaos",
-          "users_count": 2088,
-          "users_read_count": 1635
+          "users_count": 2096,
+          "users_read_count": 1640
         },
         "highlight": {
           "alternative_titles": [
@@ -3101,7 +3085,7 @@
       },
       {
         "document": {
-          "activities_count": 1176,
+          "activities_count": 1177,
           "alternative_titles": [
             "Korona mieczy",
             "A Crown of Swords",
@@ -3159,8 +3143,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3291,7 +3279,7 @@
             "8377851903",
             "9788377851906"
           ],
-          "lists_count": 554,
+          "lists_count": 553,
           "moods": [
             "Adventurous",
             "dark",
@@ -3306,8 +3294,8 @@
           ],
           "pages": 768,
           "prompts_count": 1,
-          "rating": 3.858660998937301,
-          "ratings_count": 941,
+          "rating": 3.857749469214438,
+          "ratings_count": 942,
           "release_date": "1996-01-01",
           "release_year": 1996,
           "reviews_count": 41,
@@ -3331,8 +3319,8 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 2000,
-          "users_read_count": 1526
+          "users_count": 2006,
+          "users_read_count": 1530
         },
         "highlight": {
           "alternative_titles": [
@@ -3554,7 +3542,7 @@
       },
       {
         "document": {
-          "activities_count": 1004,
+          "activities_count": 1006,
           "alternative_titles": [
             "The Path of Daggers Part 2 of 2",
             "Path of Daggers",
@@ -3714,7 +3702,7 @@
             "9024564530",
             "9789024564538"
           ],
-          "lists_count": 533,
+          "lists_count": 532,
           "moods": [
             "Adventurous",
             "dark",
@@ -3727,8 +3715,8 @@
           ],
           "pages": 608,
           "prompts_count": 0,
-          "rating": 3.718066743383199,
-          "ratings_count": 869,
+          "rating": 3.716743119266055,
+          "ratings_count": 872,
           "release_date": "1998-01-01",
           "release_year": 1998,
           "reviews_count": 34,
@@ -3755,8 +3743,8 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1897,
-          "users_read_count": 1427
+          "users_count": 1904,
+          "users_read_count": 1432
         },
         "highlight": {
           "alternative_titles": [
@@ -3932,7 +3920,7 @@
       },
       {
         "document": {
-          "activities_count": 980,
+          "activities_count": 983,
           "alternative_titles": [
             "The Gathering Storm",
             "Sturm der Finsternis",
@@ -3975,8 +3963,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -3994,8 +3986,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4112,8 +4108,8 @@
           ],
           "pages": 848,
           "prompts_count": 1,
-          "rating": 4.436611374407583,
-          "ratings_count": 844,
+          "rating": 4.437426210153482,
+          "ratings_count": 847,
           "release_date": "2009-11-07",
           "release_year": 2009,
           "reviews_count": 47,
@@ -4138,8 +4134,8 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1830,
-          "users_read_count": 1325
+          "users_count": 1837,
+          "users_read_count": 1330
         },
         "highlight": {
           "alternative_titles": [
@@ -4293,7 +4289,386 @@
       },
       {
         "document": {
-          "activities_count": 1090,
+          "activities_count": 1046,
+          "alternative_titles": [
+            "Towers of Midnight",
+            "Towers of Midnight: Book Thirteen of the Wheel of Time",
+            "Mitternachtstürme",
+            "Turnurile de la miezul noptii",
+            "Les tours de minuit",
+            "Bastiony Mroku",
+            "Towers Of Midnight: Book 13 of the Wheel of Time",
+            "Die Türme der Mitternacht",
+            "De Torens van Middernacht",
+            "Torres de medianoche",
+            "Le torri di mezzanotte",
+            "Geceyarısı Kuleleri",
+            "Башни Полуночи",
+            "Les Tours de Minuit",
+            "Среднощни кули"
+          ],
+          "author_names": [
+            "Robert Jordan",
+            "Brandon Sanderson"
+          ],
+          "book_category_id": 1,
+          "compilation": false,
+          "content_warnings": [],
+          "contribution_specializations": [],
+          "contribution_types": [
+            "Author"
+          ],
+          "contributions": [
+            {
+              "author": {
+                "id": 151072,
+                "image": {
+                  "color": "#671a08",
+                  "color_name": "Brown",
+                  "height": 330,
+                  "id": 5495291,
+                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
+                  "width": 330
+                },
+                "name": "Robert Jordan",
+                "slug": "robert-jordan"
+              },
+              "contribution": "Author",
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "primary": true
+            },
+            {
+              "author": {
+                "id": 204214,
+                "image": {
+                  "color": "#6f1c0f",
+                  "color_name": "Brown",
+                  "height": 1000,
+                  "id": 6948605,
+                  "url": "https://assets.hardcover.app/author/204214/aa7250c9-0529-4c95-882f-6c9975634b21.jpg",
+                  "width": 1000
+                },
+                "name": "Brandon Sanderson",
+                "slug": "brandon-sanderson"
+              },
+              "contribution": "Author",
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "primary": true
+            }
+          ],
+          "cover_color": "Purple",
+          "description": "Now a major TV series on Prime Video The thirteenth novel in the Wheel of Time series - one of the most influential and popular fantasy epics ever published. The Last Battle has started. The seals on the Dark One's prison are crumbling. The Pattern itself is unravelling, and the armies of the Shadow have begun to spill out of the Blight. Perrin Aybara is haunted by spectres from his past. To prevail, he must find a way to master the wolf within him or lose himself to it for ever. Meanwhile, Matrim Cauthon prepares for the most difficult challenge of his life. The Tower of Ghenjei awaits, and its secrets will reveal the fate of a friend long lost. The end draws near. It's time to roll the dice. 'Epic in every sense' Sunday Times 'With the Wheel of Time, Jordan has come to dominate the world that Tolkien began to reveal' New York Times '[The] huge ambitious Wheel of Time series helped redefine the genre' George R. R. Martin 'A fantasy phenomenon' SFX The Wheel of Time series: Book 1: The Eye of the World Book 2: The Great Hunt Book 3: The Dragon Reborn Book 4: The Shadow Rising Book 5: The Fires of Heaven Book 6: Lord of Chaos Book 7: A Crown of Swords Book 8: The Path of Daggers Book 9: Winter's Heart Book 10: Crossroads of Twilight Book 11: Knife of Dreams Book 12: The Gathering Storm Book 13: Towers of Midnight Book 14: A Memory of Light Prequel: New Spring Look out for the companion book: The World of Robert Jordan's The Wheel of Time",
+          "featured_series": {
+            "collection": false,
+            "details": "13",
+            "featured": true,
+            "id": 4702,
+            "position": 13.0,
+            "series": {
+              "books_count": 87,
+              "id": 1097,
+              "name": "The Wheel of Time",
+              "primary_books_count": 14,
+              "slug": "the-wheel-of-time"
+            },
+            "unreleased": false
+          },
+          "featured_series_position": 13.0,
+          "genres": [
+            "Fantasy",
+            "Adventure",
+            "Science Fiction",
+            "Fantasy fiction",
+            "Magic",
+            "Science Fiction & Fantasy",
+            "High Fantasy",
+            "The Wheel Of Time",
+            "Epic Fantasy",
+            "Wheel Of Time"
+          ],
+          "has_audiobook": true,
+          "has_ebook": true,
+          "id": "433227",
+          "image": {
+            "color": "#2a303c",
+            "color_name": "Purple",
+            "height": 2339,
+            "id": 6990636,
+            "url": "https://assets.hardcover.app/edition/30931095/1a24de9a-59be-4a88-932f-39df04a0af95.png",
+            "width": 1488
+          },
+          "isbns": [
+            "0765325942",
+            "9780765325945",
+            "1841498696",
+            "9781841498690",
+            "9791028120269",
+            "8375069442",
+            "9788375069440",
+            "3492268382",
+            "9783492268387",
+            "1427210225",
+            "9781427210227",
+            "0792774175",
+            "9780792774174",
+            "0765364875",
+            "9780765364876",
+            "184149867X",
+            "9781841498676",
+            "0748117210",
+            "1427227853",
+            "9781427227850",
+            "0356517128",
+            "9780356517124",
+            "0765337843",
+            "9780765337849",
+            "902453691X",
+            "9789024536917",
+            "844803869X",
+            "9788448038694",
+            "3492707238",
+            "9783492707237",
+            "1841498688",
+            "9781841498683",
+            "9780748117215",
+            "8834718348",
+            "9788834718346",
+            "0356503941",
+            "9780356503943",
+            "8448060342",
+            "9788448060343",
+            "8445007122",
+            "9788445007129",
+            "125025261X",
+            "9781250252616",
+            "6258475345",
+            "9786258475340",
+            "5389258509",
+            "9785389258501",
+            "6053751308",
+            "9786053751304",
+            "9791028121327",
+            "1429960639",
+            "9781429960632",
+            "1427210233",
+            "9781427210234"
+          ],
+          "lists_count": 461,
+          "moods": [
+            "Adventurous",
+            "tense",
+            "emotional",
+            "dark",
+            "mysterious",
+            "hopeful",
+            "inspiring",
+            "funny",
+            "sad",
+            "1735854674443"
+          ],
+          "pages": 976,
+          "prompts_count": 1,
+          "rating": 4.440993788819876,
+          "ratings_count": 805,
+          "release_date": "2010-11-02",
+          "release_year": 2010,
+          "reviews_count": 43,
+          "series_ids": [
+            1097
+          ],
+          "series_names": [
+            "The Wheel of Time"
+          ],
+          "slug": "towers-of-midnight",
+          "tags": [
+            "Strong Character Development",
+            "Diverse Characters",
+            "A mix driven",
+            "Loveable Characters",
+            "epic",
+            "Rand al'Thor (Fictitious character)",
+            "Kindle",
+            "Calibre Import",
+            "fantlab-import",
+            "fiction"
+          ],
+          "title": "Towers of Midnight",
+          "users_count": 1791,
+          "users_read_count": 1276
+        },
+        "highlight": {
+          "alternative_titles": [
+            {
+              "matched_tokens": [
+                "of"
+              ],
+              "snippet": "Towers <mark>of</mark> Midnight"
+            },
+            {
+              "matched_tokens": [
+                "of",
+                "of",
+                "the",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "Towers <mark>of</mark> Midnight: Book Thirteen <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Mitternachtstürme"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Turnurile de la miezul noptii"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Les tours de minuit"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Bastiony Mroku"
+            },
+            {
+              "matched_tokens": [
+                "Of",
+                "of",
+                "the",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "Towers <mark>Of</mark> Midnight: Book 13 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Die Türme der Mitternacht"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "De Torens van Middernacht"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Torres de medianoche"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Le torri di mezzanotte"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Geceyarısı Kuleleri"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Башни Полуночи"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Les Tours de Minuit"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Среднощни кули"
+            }
+          ],
+          "series_names": [
+            {
+              "matched_tokens": [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            }
+          ],
+          "title": {
+            "matched_tokens": [
+              "of"
+            ],
+            "snippet": "Towers <mark>of</mark> Midnight"
+          }
+        },
+        "highlights": [
+          {
+            "field": "series_names",
+            "indices": [
+              0
+            ],
+            "matched_tokens": [
+              [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ]
+            ],
+            "snippets": [
+              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            ]
+          },
+          {
+            "field": "alternative_titles",
+            "indices": [
+              1,
+              6,
+              0
+            ],
+            "matched_tokens": [
+              [
+                "of",
+                "of",
+                "the",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              [
+                "Of",
+                "of",
+                "the",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              [
+                "of"
+              ]
+            ],
+            "snippets": [
+              "Towers <mark>of</mark> Midnight: Book Thirteen <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
+              "Towers <mark>Of</mark> Midnight: Book 13 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
+              "Towers <mark>of</mark> Midnight"
+            ]
+          },
+          {
+            "field": "title",
+            "matched_tokens": [
+              "of"
+            ],
+            "snippet": "Towers <mark>of</mark> Midnight"
+          }
+        ],
+        "text_match": 2314894167593451547,
+        "text_match_info": {
+          "best_field_score": "4419510927616",
+          "best_field_weight": 3,
+          "fields_matched": 3,
+          "num_tokens_dropped": 0,
+          "score": "2314894167593451547",
+          "tokens_matched": 4,
+          "typo_prefix_score": 0
+        }
+      },
+      {
+        "document": {
+          "activities_count": 1092,
           "alternative_titles": [
             "[Wheel of Time, Book 10] Crossroads of Twilight",
             "Crossroads Of Twilight: Book 10 of the Wheel of Time",
@@ -4344,8 +4719,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4469,8 +4848,8 @@
           ],
           "pages": 832,
           "prompts_count": 0,
-          "rating": 3.458125,
-          "ratings_count": 800,
+          "rating": 3.458904109589041,
+          "ratings_count": 803,
           "release_date": "2003-01-01",
           "release_year": 2003,
           "reviews_count": 48,
@@ -4495,8 +4874,8 @@
             "Fantasy - Epic"
           ],
           "title": "Crossroads of Twilight",
-          "users_count": 1784,
-          "users_read_count": 1311
+          "users_count": 1791,
+          "users_read_count": 1316
         },
         "highlight": {
           "alternative_titles": [
@@ -4726,394 +5105,7 @@
       },
       {
         "document": {
-          "activities_count": 1043,
-          "alternative_titles": [
-            "Towers of Midnight",
-            "Towers of Midnight: Book Thirteen of the Wheel of Time",
-            "Mitternachtstürme",
-            "Turnurile de la miezul noptii",
-            "Les tours de minuit",
-            "Bastiony Mroku",
-            "Towers Of Midnight: Book 13 of the Wheel of Time",
-            "Die Türme der Mitternacht",
-            "De Torens van Middernacht",
-            "Torres de medianoche",
-            "Le torri di mezzanotte",
-            "Geceyarısı Kuleleri",
-            "Башни Полуночи",
-            "Les Tours de Minuit",
-            "Среднощни кули"
-          ],
-          "author_names": [
-            "Robert Jordan",
-            "Brandon Sanderson"
-          ],
-          "book_category_id": 1,
-          "compilation": false,
-          "content_warnings": [],
-          "contribution_specializations": [],
-          "contribution_types": [
-            "Author"
-          ],
-          "contributions": [
-            {
-              "author": {
-                "id": 151072,
-                "image": {
-                  "color": "#671a08",
-                  "color_name": "Brown",
-                  "height": 330,
-                  "id": 5495291,
-                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
-                  "width": 330
-                },
-                "name": "Robert Jordan",
-                "slug": "robert-jordan"
-              },
-              "contribution": "Author",
-              "contributor_role_blurb": null,
-              "contributor_role_id": 1,
-              "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
-              "primary": true
-            },
-            {
-              "author": {
-                "id": 204214,
-                "image": {
-                  "color": "#6f1c0f",
-                  "color_name": "Brown",
-                  "height": 1000,
-                  "id": 6948605,
-                  "url": "https://assets.hardcover.app/author/204214/aa7250c9-0529-4c95-882f-6c9975634b21.jpg",
-                  "width": 1000
-                },
-                "name": "Brandon Sanderson",
-                "slug": "brandon-sanderson"
-              },
-              "contribution": "Author",
-              "contributor_role_blurb": null,
-              "contributor_role_id": 1,
-              "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
-              "primary": true
-            }
-          ],
-          "cover_color": "Purple",
-          "description": "Now a major TV series on Prime Video The thirteenth novel in the Wheel of Time series - one of the most influential and popular fantasy epics ever published. The Last Battle has started. The seals on the Dark One's prison are crumbling. The Pattern itself is unravelling, and the armies of the Shadow have begun to spill out of the Blight. Perrin Aybara is haunted by spectres from his past. To prevail, he must find a way to master the wolf within him or lose himself to it for ever. Meanwhile, Matrim Cauthon prepares for the most difficult challenge of his life. The Tower of Ghenjei awaits, and its secrets will reveal the fate of a friend long lost. The end draws near. It's time to roll the dice. 'Epic in every sense' Sunday Times 'With the Wheel of Time, Jordan has come to dominate the world that Tolkien began to reveal' New York Times '[The] huge ambitious Wheel of Time series helped redefine the genre' George R. R. Martin 'A fantasy phenomenon' SFX The Wheel of Time series: Book 1: The Eye of the World Book 2: The Great Hunt Book 3: The Dragon Reborn Book 4: The Shadow Rising Book 5: The Fires of Heaven Book 6: Lord of Chaos Book 7: A Crown of Swords Book 8: The Path of Daggers Book 9: Winter's Heart Book 10: Crossroads of Twilight Book 11: Knife of Dreams Book 12: The Gathering Storm Book 13: Towers of Midnight Book 14: A Memory of Light Prequel: New Spring Look out for the companion book: The World of Robert Jordan's The Wheel of Time",
-          "featured_series": {
-            "collection": false,
-            "details": "13",
-            "featured": true,
-            "id": 4702,
-            "position": 13.0,
-            "series": {
-              "books_count": 87,
-              "id": 1097,
-              "name": "The Wheel of Time",
-              "primary_books_count": 14,
-              "slug": "the-wheel-of-time"
-            },
-            "unreleased": false
-          },
-          "featured_series_position": 13.0,
-          "genres": [
-            "Fantasy",
-            "Adventure",
-            "Science Fiction",
-            "Fantasy fiction",
-            "Magic",
-            "Science Fiction & Fantasy",
-            "High Fantasy",
-            "The Wheel Of Time",
-            "Epic Fantasy",
-            "Wheel Of Time"
-          ],
-          "has_audiobook": true,
-          "has_ebook": true,
-          "id": "433227",
-          "image": {
-            "color": "#2a303c",
-            "color_name": "Purple",
-            "height": 2339,
-            "id": 6990636,
-            "url": "https://assets.hardcover.app/edition/30931095/1a24de9a-59be-4a88-932f-39df04a0af95.png",
-            "width": 1488
-          },
-          "isbns": [
-            "0765325942",
-            "9780765325945",
-            "1841498696",
-            "9781841498690",
-            "9791028120269",
-            "8375069442",
-            "9788375069440",
-            "3492268382",
-            "9783492268387",
-            "1427210225",
-            "9781427210227",
-            "0792774175",
-            "9780792774174",
-            "0765364875",
-            "9780765364876",
-            "184149867X",
-            "9781841498676",
-            "0748117210",
-            "1427227853",
-            "9781427227850",
-            "0356517128",
-            "9780356517124",
-            "0765337843",
-            "9780765337849",
-            "902453691X",
-            "9789024536917",
-            "844803869X",
-            "9788448038694",
-            "3492707238",
-            "9783492707237",
-            "1841498688",
-            "9781841498683",
-            "9780748117215",
-            "8834718348",
-            "9788834718346",
-            "0356503941",
-            "9780356503943",
-            "8448060342",
-            "9788448060343",
-            "8445007122",
-            "9788445007129",
-            "125025261X",
-            "9781250252616",
-            "6258475345",
-            "9786258475340",
-            "5389258509",
-            "9785389258501",
-            "6053751308",
-            "9786053751304",
-            "9791028121327",
-            "1429960639",
-            "9781429960632",
-            "1427210233",
-            "9781427210234"
-          ],
-          "lists_count": 461,
-          "moods": [
-            "Adventurous",
-            "tense",
-            "emotional",
-            "dark",
-            "mysterious",
-            "hopeful",
-            "inspiring",
-            "funny",
-            "sad",
-            "1735854674443"
-          ],
-          "pages": 976,
-          "prompts_count": 1,
-          "rating": 4.44139650872818,
-          "ratings_count": 802,
-          "release_date": "2010-11-02",
-          "release_year": 2010,
-          "reviews_count": 43,
-          "series_ids": [
-            1097
-          ],
-          "series_names": [
-            "The Wheel of Time"
-          ],
-          "slug": "towers-of-midnight",
-          "tags": [
-            "Strong Character Development",
-            "Diverse Characters",
-            "A mix driven",
-            "Loveable Characters",
-            "epic",
-            "Rand al'Thor (Fictitious character)",
-            "Kindle",
-            "Calibre Import",
-            "fantlab-import",
-            "fiction"
-          ],
-          "title": "Towers of Midnight",
-          "users_count": 1783,
-          "users_read_count": 1271
-        },
-        "highlight": {
-          "alternative_titles": [
-            {
-              "matched_tokens": [
-                "of"
-              ],
-              "snippet": "Towers <mark>of</mark> Midnight"
-            },
-            {
-              "matched_tokens": [
-                "of",
-                "of",
-                "the",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "Towers <mark>of</mark> Midnight: Book Thirteen <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Mitternachtstürme"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Turnurile de la miezul noptii"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Les tours de minuit"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Bastiony Mroku"
-            },
-            {
-              "matched_tokens": [
-                "Of",
-                "of",
-                "the",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "Towers <mark>Of</mark> Midnight: Book 13 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Die Türme der Mitternacht"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "De Torens van Middernacht"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Torres de medianoche"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Le torri di mezzanotte"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Geceyarısı Kuleleri"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Башни Полуночи"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Les Tours de Minuit"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Среднощни кули"
-            }
-          ],
-          "series_names": [
-            {
-              "matched_tokens": [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            }
-          ],
-          "title": {
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "Towers <mark>of</mark> Midnight"
-          }
-        },
-        "highlights": [
-          {
-            "field": "series_names",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ]
-            ],
-            "snippets": [
-              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            ]
-          },
-          {
-            "field": "alternative_titles",
-            "indices": [
-              1,
-              6,
-              0
-            ],
-            "matched_tokens": [
-              [
-                "of",
-                "of",
-                "the",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              [
-                "Of",
-                "of",
-                "the",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              [
-                "of"
-              ]
-            ],
-            "snippets": [
-              "Towers <mark>of</mark> Midnight: Book Thirteen <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
-              "Towers <mark>Of</mark> Midnight: Book 13 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
-              "Towers <mark>of</mark> Midnight"
-            ]
-          },
-          {
-            "field": "title",
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "Towers <mark>of</mark> Midnight"
-          }
-        ],
-        "text_match": 2314894167593451547,
-        "text_match_info": {
-          "best_field_score": "4419510927616",
-          "best_field_weight": 3,
-          "fields_matched": 3,
-          "num_tokens_dropped": 0,
-          "score": "2314894167593451547",
-          "tokens_matched": 4,
-          "typo_prefix_score": 0
-        }
-      },
-      {
-        "document": {
-          "activities_count": 997,
+          "activities_count": 1002,
           "alternative_titles": [
             "Knife of Dreams",
             "Cuchillo de Sueños",
@@ -5278,8 +5270,8 @@
           ],
           "pages": 832,
           "prompts_count": 1,
-          "rating": 4.074617346938775,
-          "ratings_count": 784,
+          "rating": 4.076972010178117,
+          "ratings_count": 786,
           "release_date": "2005-10-03",
           "release_year": 2005,
           "reviews_count": 38,
@@ -5303,8 +5295,8 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1767,
-          "users_read_count": 1289
+          "users_count": 1773,
+          "users_read_count": 1293
         },
         "highlight": {
           "alternative_titles": [
@@ -5466,7 +5458,7 @@
       },
       {
         "document": {
-          "activities_count": 1097,
+          "activities_count": 1105,
           "alternative_titles": [
             "A Memory of Light",
             "A Memory of Light: Wheel of Time, Book 14",
@@ -5641,7 +5633,7 @@
             "9791028112561",
             "9780748117222"
           ],
-          "lists_count": 487,
+          "lists_count": 486,
           "moods": [
             "Adventurous",
             "emotional",
@@ -5656,8 +5648,8 @@
           ],
           "pages": 1056,
           "prompts_count": 3,
-          "rating": 4.598136645962733,
-          "ratings_count": 805,
+          "rating": 4.599628712871287,
+          "ratings_count": 808,
           "release_date": "2013-01-01",
           "release_year": 2013,
           "reviews_count": 80,
@@ -5682,8 +5674,8 @@
             "dark"
           ],
           "title": "A Memory of Light",
-          "users_count": 1760,
-          "users_read_count": 1243
+          "users_count": 1768,
+          "users_read_count": 1249
         },
         "highlight": {
           "alternative_titles": [
@@ -6956,8 +6948,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -6975,8 +6971,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -7026,8 +7026,8 @@
           "moods": [],
           "pages": 74,
           "prompts_count": 0,
-          "rating": 4.5,
-          "ratings_count": 28,
+          "rating": 4.433333333333334,
+          "ratings_count": 30,
           "release_date": "2012-01-01",
           "release_year": 2012,
           "reviews_count": 1,
@@ -7041,8 +7041,8 @@
           "subtitle": "Prologue to A Memory of Light",
           "tags": [],
           "title": "By Grace and Banners Fallen: Prologue to A Memory of Light",
-          "users_count": 95,
-          "users_read_count": 44
+          "users_count": 97,
+          "users_read_count": 46
         },
         "highlight": {
           "alternative_titles": [
@@ -7328,7 +7328,7 @@
       },
       {
         "document": {
-          "activities_count": 217,
+          "activities_count": 218,
           "alternative_titles": [
             "The Complete Wheel of Time",
             "The Wheel of Time Box Set",
@@ -7362,8 +7362,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -7381,8 +7385,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -8548,7 +8556,7 @@
         }
       }
     ],
-    "out_of": 2583269,
+    "out_of": 2585762,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8557,6 +8565,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 81
+    "search_time_ms": 44
   }
 }

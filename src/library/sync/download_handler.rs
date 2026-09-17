@@ -1,7 +1,6 @@
 use crate::{
     AppState,
     api::make_requests::{get_store_url_for_current_request, redirect_or_proxy_request},
-    database::document::DocumentTable,
     error::AppError,
     library::{
         book::Book,
@@ -15,6 +14,7 @@ use axum::{
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     response::{IntoResponse, Response},
 };
+use mongodb::bson::oid::ObjectId;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 use tracing::{debug, info, warn};
@@ -29,7 +29,8 @@ pub async fn download_request_handler(
     body: Bytes,
 ) -> Result<Response, AppError> {
     info!(book_id, book_format, "Received Kobo download request");
-    let book_opt: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
+    let book_id = ObjectId::parse_str(&book_id).map_err(|_| AppError::InvalidObjectId)?;
+    let book_opt: Option<Book> = state.mongodb.books.find_by_id(book_id).await?;
     let Some(book) = book_opt else {
         warn!("Book not found in database while attempting to download to device");
         return Err(AppError::NotFound("Book not found in database".into()));
@@ -78,7 +79,7 @@ pub async fn download_request_handler(
         .into_response();
 
     debug!(
-        book_id,
+        ?book_id,
         format = ?format,
         filename = %filename,
         path = %book.path.display(),
@@ -93,21 +94,22 @@ pub async fn download_request_handler(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
         library::{
             book::Book,
             sync::entitlement_models::{BookMetadata, KoboFormat},
         },
-        test_helpers::setup_test_app,
+        test_helpers::{AppTextContext, setup_test_app},
     };
     use reqwest::StatusCode;
     use std::path::PathBuf;
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_download_handler() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_download_handler(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
         let epub_path = PathBuf::from(
@@ -116,25 +118,18 @@ mod tests {
         let book_format = KoboFormat::Epub;
         let book_format_str = book_format.download_format();
 
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState::new(config, db, None);
         let server = setup_test_app(state.clone());
 
-        let book = Book::from_path(epub_path.clone());
+        let mut book = Book::from_path(epub_path.clone());
 
-        let book_id = state.db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = state.mongodb.books.insert(&mut book).await?;
 
         let expected_body = tokio::fs::read(&epub_path).await?;
 
@@ -148,6 +143,8 @@ mod tests {
 
         let body = download_response.into_bytes();
         assert_eq!(body.as_ref(), expected_body.as_slice());
+
+        state.mongodb.books.delete(book_id).await?;
 
         Ok(())
     }

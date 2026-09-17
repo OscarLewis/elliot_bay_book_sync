@@ -1,6 +1,5 @@
 use crate::{
     AppState,
-    database::document::DocumentTable,
     error::AppError,
     library::book::Book,
     metadata::{
@@ -13,14 +12,21 @@ use tracing::debug;
 
 pub async fn update_metadata(
     state: AppState,
-    books_needing_metadata: Vec<(String, Book)>,
+    books_needing_metadata: Vec<Book>,
 ) -> Result<(), AppError> {
-    for (id, mut book) in books_needing_metadata {
+    for mut book in books_needing_metadata {
         let metadata = parse_metadata_ebook(book.path.clone().into()).await?;
+        debug!(
+            book_name = %book.name,
+            book_id = ?book.id,
+            "Book loaded for metadata update"
+        );
+
+        let book_id = book.id.ok_or(AppError::InvalidObjectId)?;
 
         if let Some(token) = state.hardcover_api_token.as_deref() {
             debug!(
-                book_doc_id = id,
+                book_id = ?book_id,
                 hardcover_api_enabled = true,
                 "Updating metadata for book using Hardcover"
             );
@@ -58,7 +64,6 @@ pub async fn update_metadata(
 
             book.hardcover_img_url = result.image.as_ref().and_then(|image| image.url.clone());
 
-            // Check this author name against the one in the epub
             book.author = metadata
                 .author
                 .as_deref()
@@ -74,33 +79,24 @@ pub async fn update_metadata(
                         .cloned()
                 })
                 .or_else(|| result.author_names.first().cloned());
+
             book.has_metadata = true;
         } else {
             debug!(
-                book_doc_id = id,
+                book_id = ?book_id,
                 hardcover_api_enabled = false,
                 "Updating metadata for book using epub metadata"
             );
+
             book.title = metadata.title;
             book.author = metadata.author;
             book.has_metadata = true;
         }
 
-        state.db.update(
-            DocumentTable::Books,
-            &id,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        state.mongodb.books.update(book_id, &book).await?;
     }
 
-    let books_needing_images = state
-        .db
-        .get_all(DocumentTable::Books)?
-        .into_iter()
-        .filter(|(_, book): &(String, Book)| !book.has_image)
-        .collect();
+    let books_needing_images = state.mongodb.books.find_books_needing_images().await?;
 
     extract_imgs_for_books(books_needing_images, state, true).await?;
 
@@ -111,33 +107,20 @@ pub async fn update_metadata(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::init_resources::Resources;
-    use crate::database::document::{DocumentDB, DocumentTable};
-    use crate::{AppState, config::AppConfig, library::book::Book};
-    use dotenvy::dotenv;
-    use std::env;
+    use crate::{config::AppConfig, library::book::Book, test_helpers::AppTextContext};
     use std::path::PathBuf;
-    use std::sync::Arc;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
-    use tracing::{debug, error};
+    use tracing::debug;
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_update_metadata() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_update_metadata(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
-        dotenv().ok();
-        let hardcover_api_token = match env::var("HARDCOVER_TOKEN") {
-            Ok(val) => {
-                debug!("Hardcover Token loaded");
-                Some(val)
-            }
-            Err(e) => {
-                error!("Could not find HARDCOVER_TOKEN: {e}");
-                None
-            }
-        };
 
         assert!(
             epub_path.exists(),
@@ -145,31 +128,19 @@ mod tests {
             epub_path.display()
         );
 
-        let db = DocumentDB::open_in_memory()?;
+        let mut book = Book::from_path(epub_path);
 
-        let book = Book::from_path(epub_path);
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let state = ctx.state.clone();
 
-        let state = AppState {
-            config: Arc::new(AppConfig::default()),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            hardcover_api_token,
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
+        update_metadata(state.clone(), vec![book]).await?;
 
-        update_metadata(state.clone(), vec![(book_id.clone(), book)]).await?;
-
-        let updated: Book = state
-            .db
-            .read(DocumentTable::Books, &book_id)?
+        let updated = state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
             .expect("Book should still exist");
 
         debug!(?updated, "Updated book");

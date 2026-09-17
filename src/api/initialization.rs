@@ -207,24 +207,22 @@ async fn process_store_response(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
         api::init_resources::{ResourcesRoot, patch_kobo_resources},
-        config::AppConfig,
-        database::document::DocumentDB,
-        test_helpers::setup_test_app,
+        test_helpers::{AppTextContext, setup_test_app},
     };
     use axum::http::StatusCode;
+    use test_context::test_context;
     use test_log::test;
 
     /// Verifies that the initialization handler matches the known Kobo test data
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_initialization_handler_matches_kobo_test_data() {
+    async fn test_initialization_handler_matches_kobo_test_data(ctx: &mut AppTextContext) {
         // Disable store proxying so the test exercises the local fallback resources
-        let mut config = AppConfig::default();
-        let db = DocumentDB::open(&config.database_path).expect("Unable to open database");
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
         config.proxy_kobo_store = false;
-
-        let state = AppState::new(config, db, None);
+        state.config = std::sync::Arc::new(config);
 
         // Start the test application with the configured state
         let server = setup_test_app(state.clone());

@@ -1,6 +1,5 @@
 use crate::{
-    AppState, api::make_requests::make_request_to_kobo_store, database::document::DocumentTable,
-    error::AppError, library::book::Book,
+    AppState, api::make_requests::make_request_to_kobo_store, error::AppError, library::book::Book,
 };
 use axum::{
     extract,
@@ -8,6 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use image::ImageFormat;
+use mongodb::bson::oid::ObjectId;
 use reqwest::header;
 use std::io::Cursor;
 use tracing::{debug, error, info, warn};
@@ -79,7 +79,7 @@ pub(crate) async fn image_handler(
 async fn image_handler_inner(
     state: AppState,
     token: String,
-    book_uuid: String,
+    book_object_id: String,
     width: u32,
     height: u32,
     quality: Option<String>,
@@ -91,27 +91,31 @@ async fn image_handler_inner(
 ) -> Result<Response, AppError> {
     info!(
         uri = uri.to_string(),
-        book_id = book_uuid,
+        book_id = ?book_object_id,
         "Received Kobo image request"
     );
 
     // TODO Proxy images of unknown books to Kobo store
-    let book_res = match state
-        .db
-        .clone()
-        .read::<Book>(DocumentTable::Books, &book_uuid)
-    {
-        Ok(book) => book,
-        Err(app_error) => {
-            error!(%app_error, %book_uuid, "Failed to read book for image request");
-            None
-        }
+    let book_res = match ObjectId::parse_str(&book_object_id) {
+        Ok(book_id) => state.mongodb.books.find_by_id(book_id).await?,
+        Err(_) => None,
     };
+    // let book_res = match state
+    //     .db
+    //     .clone()
+    //     .read::<Book>(DocumentTable::Books, &book_uuid)
+    // {
+    //     Ok(book) => book,
+    //     Err(app_error) => {
+    //         error!(%app_error, %book_uuid, "Failed to read book for image request");
+    //         None
+    //     }
+    // };
 
     match book_res {
         Some(book) if book.has_image && book.image_path.is_some() => {
             debug!(
-                book_uuid,
+                ?book_object_id,
                 width,
                 height,
                 title = book.title,
@@ -140,25 +144,25 @@ async fn image_handler_inner(
             };
         }
         Some(_) => {
-            warn!(%book_uuid, "Image requested for a book we have that's missing an image");
+            warn!(%book_object_id, "Image requested for a book we have that's missing an image");
             return Err(AppError::NotFound("Image not found on server".into()));
         }
         None => {
-            info!(%book_uuid, "Image requested for a book we don't have");
+            info!(%book_object_id, "Image requested for a book we don't have");
             let resources = state.kobo_resources.lock().await;
             let image_url_template = &resources.image_url_template;
             let image_quality_url_template = &resources.image_url_quality_template;
 
             let image_url_template = if let Some(quality_val) = quality {
                 image_quality_url_template
-                    .replace("{ImageId}", &book_uuid.to_string())
+                    .replace("{ImageId}", &book_object_id)
                     .replace("{Width}", &width.to_string())
                     .replace("{Height}", &height.to_string())
                     .replace("{Quality}", &quality_val)
                     .replace("{IsGreyscale}", &is_greyscale.to_string())
             } else {
                 image_url_template
-                    .replace("{ImageId}", &book_uuid.to_string())
+                    .replace("{ImageId}", &book_object_id)
                     .replace("{Width}", &width.to_string())
                     .replace("{Height}", &height.to_string())
                     .replace("{IsGreyscale}", &is_greyscale.to_string())
@@ -189,24 +193,25 @@ async fn image_handler_inner(
     Ok(Response::new(axum::body::Body::empty()))
 }
 
+// TODO update tests for mongodb
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        api::init_resources::Resources,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
         library::book::Book,
         metadata::extract_images::extract_imgs_for_books,
-        test_helpers::setup_test_app,
+        test_helpers::{AppTextContext, setup_test_app},
     };
-    use reqwest::StatusCode;
-    use std::{path::PathBuf, sync::Arc};
+    use axum::http::StatusCode;
+    use std::path::PathBuf;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_image_handler() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_image_handler(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from("test ebooks/The Lions of Al-Rassan - Guy Gavriel Kay.epub");
 
         assert!(
@@ -214,11 +219,6 @@ mod tests {
             "Test EPUB fixture not found: {}",
             epub_path.display()
         );
-
-        let mut config = AppConfig::default();
-        config.proxy_kobo_store = false;
-
-        let db = DocumentDB::open_in_memory()?;
 
         let mut book = Book::from_path(epub_path);
         book.title = Some("The Lions of Al-Rassan - Guy Gavriel Kay".into());
@@ -228,35 +228,23 @@ mod tests {
         book.hardcover_img_url =
             Some("https://assets.hardcover.app/edition/16437269/33339-L.jpg".to_string());
 
-        let book_id = db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let book_list = db.get_all(DocumentTable::Books)?;
+        let image_paths =
+            extract_imgs_for_books(vec![(book.clone())], ctx.state.clone(), true).await?;
 
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
-
-        let image_paths = extract_imgs_for_books(book_list, state.clone(), true).await?;
-
-        let updated: Book = state
-            .db
-            .read(DocumentTable::Books, &book_id)?
+        let updated = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
             .expect("Book should still exist");
 
         assert!(updated.has_image);
         assert!(updated.image_path.is_some());
 
-        let server = setup_test_app(state);
+        let server = setup_test_app(ctx.state.clone());
 
         let token = "test-token-123";
 
@@ -269,40 +257,30 @@ mod tests {
         let image =
             image::load_from_memory_with_format(response.as_bytes(), image::ImageFormat::Jpeg)
                 .expect("response should contain a valid JPEG");
+
         debug!(
             width = image.width(),
             height = image.height(),
             "Image received from server"
         );
+
         assert_eq!(image.width(), 300);
 
-        // Delete old files
         for image_path in image_paths {
             std::fs::remove_file(image_path)?;
         }
+
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_image_handler_proxy() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
-        config.proxy_kobo_store = false;
-
-        let db = DocumentDB::open_in_memory()?;
-
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
-
-        let server = setup_test_app(state);
+    async fn test_image_handler_proxy(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let server = setup_test_app(ctx.state.clone());
 
         let token = "test-token-123";
-
         let book_id = "b07219a4-41c4-4a51-8024-d009488df748"; // The Eye of The World
 
         let response = server
@@ -314,47 +292,48 @@ mod tests {
         let image =
             image::load_from_memory_with_format(response.as_bytes(), image::ImageFormat::Jpeg)
                 .expect("response should contain a valid JPEG");
+
         debug!(
             width = image.width(),
             height = image.height(),
             "Image received from server"
         );
+
         assert_eq!(image.width(), 300);
 
         Ok(())
     }
 
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_image_handler_proxy_quality() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
-        config.proxy_kobo_store = false;
-        let db = DocumentDB::open_in_memory()?;
-        let state = AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            kobo_resources: Arc::new(Mutex::new(Resources::default())),
-            hardcover_api_token: None,
-            patched_resources: Arc::new(Mutex::new(Resources::default())),
-        };
-        let server = setup_test_app(state);
+    async fn test_image_handler_proxy_quality(
+        ctx: &mut AppTextContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let server = setup_test_app(ctx.state.clone());
+
         let token = "test-token-123";
         let book_id = "b07219a4-41c4-4a51-8024-d009488df748"; // The Eye of The World
+
         let response = server
             .get(&format!(
                 "/kobo/{token}/{book_id}/300/450/90/false/image.jpg"
             ))
             .await;
+
         response.assert_status(StatusCode::OK);
+
         let image =
             image::load_from_memory_with_format(response.as_bytes(), image::ImageFormat::Jpeg)
                 .expect("response should contain a valid JPEG");
+
         debug!(
             width = image.width(),
             height = image.height(),
             "Image received from server"
         );
+
         assert_eq!(image.width(), 300);
+
         Ok(())
     }
 }
