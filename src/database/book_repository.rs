@@ -1,7 +1,7 @@
 use crate::{error::AppError, library::book::Book};
 use mongodb::{
     Collection, Database, IndexModel,
-    bson::{doc, oid::ObjectId},
+    bson::{self, Document, doc, oid::ObjectId},
     options::IndexOptions,
 };
 
@@ -40,6 +40,10 @@ impl BookRepository {
         Ok(self.collection.find_one(doc! { "name": name }).await?)
     }
 
+    pub async fn find_by_path(&self, path: &str) -> Result<Option<Book>, AppError> {
+        Ok(self.collection.find_one(doc! { "path": path }).await?)
+    }
+
     pub async fn delete(&self, id: ObjectId) -> Result<bool, AppError> {
         let result = self.collection.delete_one(doc! { "_id": id }).await?;
         Ok(result.deleted_count == 1)
@@ -68,6 +72,52 @@ impl BookRepository {
         }
 
         Ok(ids)
+    }
+
+    /// Updates only the fields of `book` that differ from the existing document in MongoDB.
+    /// Returns `Ok(true)` if the document existed and was updated, `Ok(false)` otherwise.
+    pub async fn update_diff(&self, id: ObjectId, book: &Book) -> Result<bool, AppError> {
+        // Fetch the raw document from MongoDB
+        let raw_collection = self.collection.clone_with_type::<Document>();
+        let existing = match raw_collection.find_one(doc! { "_id": id }).await? {
+            Some(doc) => doc,
+            None => return Ok(false),
+        };
+
+        //  Convert the incoming Book into a BSON Document
+        let new_doc = bson::to_document(book)?;
+
+        // Diff fields between current DB state and new struct
+        let mut set_fields = Document::new();
+
+        for (key, new_val) in new_doc {
+            if key == "_id" {
+                continue;
+            }
+
+            match existing.get(&key) {
+                Some(old_val) if old_val == &new_val => {
+                    // Unchanged, skip
+                }
+                _ => {
+                    // New or modified field
+                    set_fields.insert(key, new_val);
+                }
+            }
+        }
+
+        // If nothing changed, skip DB roundtrip
+        if set_fields.is_empty() {
+            return Ok(true);
+        }
+
+        // Apply only the diff via $set
+        let result = self
+            .collection
+            .update_one(doc! { "_id": id }, doc! { "$set": set_fields })
+            .await?;
+
+        Ok(result.matched_count == 1)
     }
 
     /// Replaces the entire document for `id` with `book`.
