@@ -8556,7 +8556,7 @@
         }
       }
     ],
-    "out_of": 2585369,
+    "out_of": 2585370,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8565,6 +8565,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 45
+    "search_time_ms": 57
   }
 }
