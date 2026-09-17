@@ -29,11 +29,10 @@ pub(crate) async fn image_handler_with_quality(
     headers: HeaderMap,
     body: bytes::Bytes,
 ) -> Result<Response, AppError> {
-    let book_id = ObjectId::parse_str(&book_uuid).map_err(|_| AppError::InvalidObjectId)?;
     image_handler_inner(
         state,
         token,
-        book_id,
+        book_uuid,
         width,
         height,
         Some(quality),
@@ -61,12 +60,10 @@ pub(crate) async fn image_handler(
     headers: HeaderMap,
     body: bytes::Bytes,
 ) -> Result<Response, AppError> {
-    let book_id = ObjectId::parse_str(&book_uuid).map_err(|_| AppError::InvalidObjectId)?;
-
     image_handler_inner(
         state,
         token,
-        book_id,
+        book_uuid,
         width,
         height,
         None,
@@ -83,7 +80,7 @@ pub(crate) async fn image_handler(
 async fn image_handler_inner(
     state: AppState,
     token: String,
-    book_object_id: ObjectId,
+    book_object_id: String,
     width: u32,
     height: u32,
     quality: Option<String>,
@@ -100,7 +97,10 @@ async fn image_handler_inner(
     );
 
     // TODO Proxy images of unknown books to Kobo store
-    let book_res = state.mongodb.books.find_by_id(book_object_id).await?;
+    let book_res = match ObjectId::parse_str(&book_object_id) {
+        Ok(book_id) => state.mongodb.books.find_by_id(book_id).await?,
+        Err(_) => None,
+    };
     // let book_res = match state
     //     .db
     //     .clone()
@@ -156,14 +156,14 @@ async fn image_handler_inner(
 
             let image_url_template = if let Some(quality_val) = quality {
                 image_quality_url_template
-                    .replace("{ImageId}", &book_object_id.to_string())
+                    .replace("{ImageId}", &book_object_id)
                     .replace("{Width}", &width.to_string())
                     .replace("{Height}", &height.to_string())
                     .replace("{Quality}", &quality_val)
                     .replace("{IsGreyscale}", &is_greyscale.to_string())
             } else {
                 image_url_template
-                    .replace("{ImageId}", &book_object_id.to_string())
+                    .replace("{ImageId}", &book_object_id)
                     .replace("{Width}", &width.to_string())
                     .replace("{Height}", &height.to_string())
                     .replace("{IsGreyscale}", &is_greyscale.to_string())
