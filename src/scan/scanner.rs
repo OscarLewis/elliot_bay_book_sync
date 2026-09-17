@@ -106,6 +106,8 @@ pub(crate) async fn run_library_scan(
 ) -> Result<(), AppError> {
     debug!(doc_id = %scan_document_id, "Initialized scan execution record");
 
+    // TODO Handle missing books as deleted books or flag them in mongodb
+
     // Execute scan directly
     let scan_result: Result<(usize, usize, usize), AppError> =
         match scan_library(&library_path).await {
@@ -139,6 +141,8 @@ pub(crate) async fn run_library_scan(
                 let updated_count = updated_books.len();
 
                 for (id, book) in updated_books {
+                    // TODO Diff this with what's in mongodb and update changed fields
+
                     db.update(
                         DocumentTable::Books,
                         &id,
