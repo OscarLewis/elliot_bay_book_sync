@@ -134,11 +134,6 @@ pub(crate) async fn run_library_scan(
                     }
                 }
 
-                for book in new_books.clone() {
-                    // TODO insert into MongoDB
-                    mongodb.books.insert(&book).await?;
-                }
-
                 let added_count = new_books.len();
                 let skipped_count = skipped_books.len();
                 let updated_count = updated_books.len();
@@ -154,6 +149,14 @@ pub(crate) async fn run_library_scan(
                 }
 
                 let batch_res = if !new_books.is_empty() {
+                    // Insert books into mongodb
+                    mongodb.books.insert_many(&new_books).await.map(|_| {
+                        info!(
+                            added_count,
+                            "Successfully batch-persisted new books to MongoDB"
+                        );
+                    })?;
+
                     db.create_many(
                         DocumentTable::Books,
                         &new_books,
