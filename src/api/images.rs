@@ -1,6 +1,5 @@
 use crate::{
-    AppState, api::make_requests::make_request_to_kobo_store, database::document::DocumentTable,
-    error::AppError, library::book::Book,
+    AppState, api::make_requests::make_request_to_kobo_store, error::AppError, library::book::Book,
 };
 use axum::{
     extract,

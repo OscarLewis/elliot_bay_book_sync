@@ -6,7 +6,6 @@
 use crate::{
     AppState,
     api::make_requests::{get_store_url_for_current_request, redirect_or_proxy_request},
-    database::document::DocumentTable,
     error::AppError,
     library::{
         book::{
@@ -132,7 +131,6 @@ pub async fn reading_state_handler(
         book_id, "Received Kobo ReadingState request"
     );
     let book_id = ObjectId::parse_str(&book_id).map_err(|_| AppError::InvalidObjectId)?;
-    // let book: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
     let book = state.mongodb.books.find_by_id(book_id).await?;
     let Some(mut book) = book else {
         debug!("Book not found in database, proxying request");
@@ -183,14 +181,6 @@ pub async fn reading_state_handler(
 
                 state.mongodb.books.update(book_id, &book).await?;
 
-                // state.db.update(
-                //     DocumentTable::Books,
-                //     &book_id,
-                //     &book,
-                //     Some(|book: &Book| book.path.to_str().unwrap()),
-                //     None,
-                // )?;
-
                 let response = ReadingState::from_document(&new_doc);
                 return Ok(Json(response).into_response());
             }
@@ -229,14 +219,6 @@ pub async fn reading_state_handler(
                 // Store in book before DB update
                 book.reading_state = Some(new_doc.clone());
                 state.mongodb.books.update(book_id, &book).await?;
-
-                // state.db.update(
-                //     DocumentTable::Books,
-                //     &book_id,
-                //     &book,
-                //     Some(|book: &Book| book.path.to_str().unwrap()),
-                //     None,
-                // )?;
 
                 // Return success response
                 let update_response = serde_json::json!({

@@ -1,10 +1,7 @@
 use crate::{
     api::init_resources::{Resources, patch_kobo_resources},
     config::AppConfig,
-    database::{
-        MongoDatabase,
-        document::{DocumentDB, DocumentTable},
-    },
+    database::MongoDatabase,
     error::AppError,
     library::book::Book,
     metadata::update_meta::update_metadata,
@@ -44,7 +41,6 @@ pub struct AppState {
     /// Shared application configuration settings.
     pub config: Arc<AppConfig>,
     pub req_client: reqwest::Client,
-    pub db: Arc<DocumentDB>,
     pub mongodb: Arc<MongoDatabase>,
 
     pub hardcover_api_token: Option<String>,
@@ -56,7 +52,6 @@ impl AppState {
     /// Creates a new `AppState` instance with the given configuration.
     pub fn new(
         config: impl Into<Arc<AppConfig>>,
-        db: DocumentDB,
         mongodb: MongoDatabase,
         hardcover_api_token: Option<String>,
     ) -> Self {
@@ -76,7 +71,6 @@ impl AppState {
         );
 
         AppState {
-            db: Arc::new(db),
             mongodb: Arc::new(mongodb),
             config,
             req_client: client,
@@ -148,7 +142,6 @@ async fn main() -> Result<(), AppError> {
 
     // Open DB
     // TODO Switch to being backed by MongoDB
-    let db = DocumentDB::open(&config.database_path)?;
 
     // TODO let scans = mongodb.scans.fetch_all()
     // // Debug all the scans stored in the database
@@ -160,7 +153,7 @@ async fn main() -> Result<(), AppError> {
     // debug!(?books, count = books.len(), "All stored books in database");
 
     // Construct App state
-    let state = AppState::new(config, db, mongodb, hardcover_api_token);
+    let state = AppState::new(config, mongodb, hardcover_api_token);
 
     // Bind state to app
     let app = app(state.clone());
@@ -173,29 +166,7 @@ async fn main() -> Result<(), AppError> {
         "Files needing metadata"
     );
 
-    // TODO Move this initial scan into helper function
-    /*
-    let initial_record = ScanDocument {
-        status: ScanStatus::Running,
-        timestamp: Utc::now().to_rfc3339(),
-        details: ScanDetails::Started,
-    };
-
-    let record_doc_id = state.db.create(
-        DocumentTable::Scans,
-        &initial_record,
-        None,
-        Some(|s| s.timestamp.as_str()),
-    )?;
-
-    debug!(doc_id = %record_doc_id, "Initialized scan execution record");
-
-    tokio::spawn(run_library_scan(
-        state.db.clone(),
-        record_doc_id.clone(),
-        state.config.library_path.clone(),
-    ));
-    */
+    // TODO Move a initial scan into helper function
 
     if !books_needing_metadata.is_empty() {
         let metadata_state = state.clone();
@@ -308,7 +279,7 @@ pub async fn refresh_single_book_metadata_handler(
 pub mod test_helpers {
     use crate::api::init_resources::{Resources, patch_kobo_resources};
     use crate::database::MongoDatabase; // adjust to actual module path
-    use crate::{AppState, app, config::AppConfig, database::document::DocumentDB};
+    use crate::{AppState, app, config::AppConfig};
     use axum::Router;
     use axum_test::TestServer;
     use dotenvy::dotenv;
@@ -348,8 +319,6 @@ pub mod test_helpers {
                 .await
                 .expect("Failed to connect to MongoDB using MONGODB_TEST_URI");
 
-            let db = DocumentDB::open_in_memory().expect("Unable to open database");
-
             let kobo_resources = Resources::default();
             let patched_resources = patch_kobo_resources(
                 kobo_resources.clone(),
@@ -361,7 +330,6 @@ pub mod test_helpers {
             let state = AppState {
                 config: Arc::new(config),
                 req_client: reqwest::Client::new(),
-                db: Arc::new(db),
                 mongodb: Arc::new(mongodb.clone()),
                 hardcover_api_token: None,
                 kobo_resources: Arc::new(Mutex::new(kobo_resources)),

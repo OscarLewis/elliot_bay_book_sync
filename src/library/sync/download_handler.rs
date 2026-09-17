@@ -1,7 +1,6 @@
 use crate::{
     AppState,
     api::make_requests::{get_store_url_for_current_request, redirect_or_proxy_request},
-    database::document::DocumentTable,
     error::AppError,
     library::{
         book::Book,

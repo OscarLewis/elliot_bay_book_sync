@@ -1,6 +1,5 @@
 use crate::{
     AppState,
-    database::document::DocumentTable,
     error::AppError,
     library::book::Book,
     metadata::{

@@ -1,12 +1,5 @@
 use crate::database::bson_chrono_datetime::bson_chrono_datetime;
-use crate::{
-    database::{
-        MongoDatabase,
-        document::{DocumentDB, DocumentTable},
-    },
-    error::AppError,
-    library::book::Book,
-};
+use crate::{database::MongoDatabase, error::AppError, library::book::Book};
 use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

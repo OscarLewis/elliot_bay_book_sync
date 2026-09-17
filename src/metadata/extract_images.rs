@@ -3,8 +3,7 @@ use std::path::{Path, PathBuf};
 use tracing::debug;
 
 use crate::{
-    AppState, database::document::DocumentTable, error::AppError, library::book::Book,
-    metadata::epub::parse::extract_epub_cover,
+    AppState, error::AppError, library::book::Book, metadata::epub::parse::extract_epub_cover,
 };
 
 pub(crate) async fn extract_imgs_for_books(

@@ -1,5 +1,4 @@
 mod book_repository;
-pub mod document;
 mod scan_repository;
 mod sync_repository;
 pub use book_repository::BookRepository;

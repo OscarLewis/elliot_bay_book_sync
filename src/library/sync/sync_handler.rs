@@ -1,7 +1,6 @@
 use crate::{
     AppState,
     api::make_requests::{get_download_url_format_for_book, make_request_to_kobo_store},
-    database::document::DocumentTable,
     error::AppError,
     library::{
         book::Book,
