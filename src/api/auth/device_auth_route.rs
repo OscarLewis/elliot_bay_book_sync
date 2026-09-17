@@ -99,15 +99,15 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::test_helpers::{MongoTestContext, setup_test_app};
+    use crate::test_helpers::{AppTextContext, setup_test_app};
     use reqwest::StatusCode;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_auth_handler(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
 

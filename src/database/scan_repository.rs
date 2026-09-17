@@ -124,7 +124,7 @@ mod tests {
     use crate::{
         error::AppError,
         scan::scanner::{ScanDetails, ScanDocument, ScanStatus},
-        test_helpers::MongoTestContext,
+        test_helpers::AppTextContext,
     };
     use chrono::{DateTime, DurationRound, Utc};
     use test_context::test_context;
@@ -132,10 +132,10 @@ mod tests {
 
     /// Verifies that inserting a `ScanDocument` persists it to MongoDB and
     /// that it can be retrieved by the `ObjectId` returned from the insert.
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_insert(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+    async fn test_mongodb_scan_insert(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let mongodb = &ctx.state.mongodb;
 
         let scan = ScanDocument {
@@ -158,10 +158,10 @@ mod tests {
 
     /// Verifies that `ScanRepository::latest` returns the most recently
     /// timestamped scan, using the descending index on `timestamp`.
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_latest(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+    async fn test_mongodb_scan_latest(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let mongodb = &ctx.state.mongodb;
 
         // Use timestamps far in the future so Utc::now() records don't out-sort them
@@ -196,10 +196,10 @@ mod tests {
 
     /// Verifies that `mark_completed` transitions a `Running` scan to
     /// `Finished` and attaches the given counts as `ScanDetails::Completed`.
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_mark_completed(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+    async fn test_mongodb_scan_mark_completed(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let mongodb = &ctx.state.mongodb;
 
         let scan = ScanDocument {
@@ -240,10 +240,10 @@ mod tests {
 
     /// Verifies that `mark_failed` transitions a `Running` scan to `Error`
     /// and attaches the given reason as `ScanDetails::Failed`.
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_mark_failed(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+    async fn test_mongodb_scan_mark_failed(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let mongodb = &ctx.state.mongodb;
 
         let scan = ScanDocument {
@@ -282,10 +282,10 @@ mod tests {
     /// Verifies that `start` inserts a new scan in the `Running`/`Started`
     /// state with a fresh timestamp, and that it can be retrieved by the
     /// returned `ObjectId`.
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_start(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+    async fn test_mongodb_scan_start(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let mongodb = &ctx.state.mongodb;
 
         let scan_id = mongodb.scans.start().await?;

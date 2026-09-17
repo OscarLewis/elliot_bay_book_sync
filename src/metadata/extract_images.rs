@@ -106,15 +106,15 @@ pub(crate) async fn extract_imgs_for_books(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{library::book::Book, test_helpers::MongoTestContext};
+    use crate::{library::book::Book, test_helpers::AppTextContext};
     use std::path::PathBuf;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_extract_imgs_for_books(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",

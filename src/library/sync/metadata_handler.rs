@@ -63,17 +63,17 @@ mod tests {
     use crate::{
         config::AppConfig,
         library::{book::Book, sync::entitlement_models::BookMetadata},
-        test_helpers::{MongoTestContext, setup_test_app},
+        test_helpers::{AppTextContext, setup_test_app},
     };
     use reqwest::StatusCode;
     use std::path::PathBuf;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_metadata_handler(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";

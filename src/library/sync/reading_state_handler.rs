@@ -265,16 +265,16 @@ mod tests {
             book::{Book, ReadStatus},
             sync::entitlement_models::ReadingState,
         },
-        test_helpers::{MongoTestContext, setup_test_app},
+        test_helpers::{AppTextContext, setup_test_app},
     };
     use axum::http::StatusCode;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_get_method_store_reading_state(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
@@ -319,10 +319,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_put_method_updates_reading_state(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
@@ -389,10 +389,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_put_method_missing_reading_states_returns_bad_request(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let state = ctx.state.clone();
         let server = setup_test_app(state.clone());

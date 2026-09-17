@@ -356,19 +356,17 @@ mod tests {
         library::book::Book,
         library::sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
         metadata::update_meta::update_metadata,
-        test_helpers::{MongoTestContext, setup_test_app},
+        test_helpers::{AppTextContext, setup_test_app},
     };
     use reqwest::StatusCode;
     use test_context::test_context;
     use test_log::test;
     use tokio::time::{Duration, sleep};
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_library_sync(
-        ctx: &mut MongoTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_library_sync(ctx: &mut AppTextContext) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
@@ -409,10 +407,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_generate_sync_response_no_proxy(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
@@ -431,10 +429,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_generate_sync_response_with_continuation(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
@@ -459,10 +457,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(MongoTestContext)]
+    #[test_context(AppTextContext)]
     #[test(tokio::test)]
     async fn test_generate_sync_response_includes_token(
-        ctx: &mut MongoTestContext,
+        ctx: &mut AppTextContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
