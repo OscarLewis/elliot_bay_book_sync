@@ -150,6 +150,7 @@ async fn main() -> Result<(), AppError> {
     // TODO Switch to being backed by MongoDB
     let db = DocumentDB::open(&config.database_path)?;
 
+    // TODO let scans = mongodb.scans.fetch_all()
     // // Debug all the scans stored in the database
     // let scans: Vec<(String, ScanDocument)> = db.get_all(DocumentTable::Scans)?;
     // debug!(?scans, count = scans.len(), "All stored scans in database");
