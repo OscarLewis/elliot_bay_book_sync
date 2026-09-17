@@ -3,8 +3,6 @@ use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::Path;
-use std::time::SystemTime;
-use uuid::Uuid;
 
 use crate::error::AppError;
 
@@ -20,6 +18,7 @@ pub struct Book {
     #[serde(default)]
     pub description: Option<String>,
     pub size_kb: u64,
+    // TODO with switch to MongoDB turn this into an actual date tiem
     pub modified_at: String,
     #[serde(default)]
     pub hardcover_id: Option<u64>,

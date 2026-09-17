@@ -142,7 +142,7 @@ async fn main() -> Result<(), AppError> {
     })?;
     debug!("MongoDB URI loaded");
 
-    let mongodb = MongoDatabase::connect(&mongodb_uri, "ebbooks").await?;
+    let mongodb = MongoDatabase::connect(&mongodb_uri, &config.mongodb_name.clone()).await?;
     mongodb.db.run_command(doc! { "ping": 1 }).await?;
     info!("MongoDB connection confirmed (ping ok)");
 
