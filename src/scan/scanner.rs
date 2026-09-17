@@ -101,7 +101,6 @@ pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
 }
 
 pub(crate) async fn run_library_scan(
-    db: Arc<DocumentDB>,
     mongodb: Arc<MongoDatabase>,
     scan_document_id: ObjectId,
     library_path: Arc<std::path::Path>,
@@ -155,29 +154,23 @@ pub(crate) async fn run_library_scan(
                 }
 
                 let batch_res = if !new_books.is_empty() {
-                    // Insert books into mongodb
                     mongodb.books.insert_many(&mut new_books).await.map(|ids| {
                         info!(
                             added_count = ids.len(),
                             "Successfully batch-persisted new books to MongoDB"
                         );
-                    })?;
 
-                    db.create_many(
-                        DocumentTable::Books,
-                        &new_books,
-                        Some(|b: &Book| b.path.to_str().unwrap_or_default()),
-                        None,
-                    )
-                    .map(|_| {
-                        info!(added_count, "Successfully batch-persisted new books");
+                        ids.into_iter()
+                            .map(|id| id.to_hex())
+                            .collect::<Vec<String>>()
                     })
                 } else {
                     info!(
                         skipped_count,
                         updated_count, "No new books to insert; library is up to date"
                     );
-                    Ok(())
+
+                    Ok(Vec::new())
                 };
 
                 batch_res.map(|_| (added_count, skipped_count, updated_count))
@@ -238,7 +231,6 @@ mod tests {
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            ctx.state.db.clone(),
             ctx.state.mongodb.clone(),
             scan_id,
             temp_dir.path().to_path_buf().into(),
@@ -278,7 +270,6 @@ mod tests {
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            ctx.state.db.clone(),
             ctx.state.mongodb.clone(),
             scan_id,
             temp_dir.path().to_path_buf().into(),
@@ -318,7 +309,6 @@ mod tests {
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            ctx.state.db.clone(),
             ctx.state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
@@ -377,7 +367,6 @@ mod tests {
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            ctx.state.db.clone(),
             ctx.state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
@@ -436,7 +425,6 @@ mod tests {
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            ctx.state.db.clone(),
             ctx.state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
@@ -498,7 +486,6 @@ mod tests {
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
         run_library_scan(
-            ctx.state.db.clone(),
             ctx.state.mongodb.clone(),
             scan_id,
             temp_dir.path().to_path_buf().into(),
