@@ -264,6 +264,9 @@ pub async fn refresh_single_book_metadata_handler(
         return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
     };
 
+    // Reset field "has_metadata" to false before we fetch new metadata
+    state.mongodb.books.reset_metadata(book_id).await?;
+
     let metadata_state = state.clone();
 
     tokio::spawn(async move {

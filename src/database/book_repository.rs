@@ -233,6 +233,18 @@ impl BookRepository {
         self.collection.delete_many(doc! {}).await?;
         Ok(())
     }
+
+    pub async fn reset_metadata(&self, id: ObjectId) -> Result<bool, AppError> {
+        let result = self
+            .collection
+            .update_one(
+                doc! { "_id": id },
+                doc! { "$set": { "has_metadata": false } },
+            )
+            .await?;
+
+        Ok(result.matched_count > 0)
+    }
 }
 
 #[cfg(test)]
@@ -274,9 +286,7 @@ mod tests {
     /// of a book with the same path.
     #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_path_unique_index(
-        ctx: &mut AppTextContext,
-    ) -> Result<(), AppError> {
+    async fn test_mongodb_book_path_unique_index(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -351,9 +361,7 @@ mod tests {
     /// field without disturbing other fields on the document.
     #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_update_title_some(
-        ctx: &mut AppTextContext,
-    ) -> Result<(), AppError> {
+    async fn test_mongodb_book_update_title_some(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -390,9 +398,7 @@ mod tests {
     /// from the document entirely.
     #[test_context(AppTextContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_update_title_none(
-        ctx: &mut AppTextContext,
-    ) -> Result<(), AppError> {
+    async fn test_mongodb_book_update_title_none(ctx: &mut AppTextContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
