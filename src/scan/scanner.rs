@@ -1,5 +1,8 @@
 use crate::{
-    database::document::{DocumentDB, DocumentTable},
+    database::{
+        MongoDatabase,
+        document::{DocumentDB, DocumentTable},
+    },
     error::AppError,
     library::book::Book,
     metadata::update_meta::update_metadata,
@@ -97,6 +100,7 @@ pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
 
 pub(crate) async fn run_library_scan(
     db: Arc<DocumentDB>,
+    mongodb: Arc<MongoDatabase>,
     scan_document_id: String,
     library_path: Arc<std::path::Path>,
 ) -> Result<(), AppError> {
@@ -130,11 +134,15 @@ pub(crate) async fn run_library_scan(
                     }
                 }
 
+                for book in new_books.clone() {
+                    // TODO insert into MongoDB
+                    mongodb.books.insert(&book).await?;
+                }
+
                 let added_count = new_books.len();
                 let skipped_count = skipped_books.len();
                 let updated_count = updated_books.len();
 
-                // Process `updated_books` via `db.update(...)` once modification detection is implemented
                 for (id, book) in updated_books {
                     db.update(
                         DocumentTable::Books,
@@ -215,6 +223,8 @@ pub(crate) async fn run_library_scan(
 
 #[cfg(test)]
 mod tests {
+    use crate::{config::AppConfig, test_helpers::test_state};
+
     use super::*;
     use tempfile::tempdir;
 
@@ -222,11 +232,14 @@ mod tests {
     async fn test_scan_updates_existing_book() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("test.epub");
+        let config = AppConfig::default();
 
         // Create a file large enough for size_kb to be meaningful.
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
+        let db = DocumentDB::open_in_memory()?;
+
+        let state = test_state(config, db).await;
 
         // Seed the database with the current book, but make its stored
         // metadata different from what is currently on disk.
@@ -235,7 +248,7 @@ mod tests {
         existing_book.size_kb = 1;
         existing_book.modified_at = "2000-01-01T00:00:00+00:00".to_string();
 
-        let book_id = db.create(
+        let book_id = state.db.create(
             DocumentTable::Books,
             &existing_book,
             Some(|book: &Book| book.path.to_str().unwrap()),
@@ -243,7 +256,7 @@ mod tests {
         )?;
 
         // Run the scan. The filesystem version should be detected as changed.
-        let scan_id = db.create(
+        let scan_id = state.db.create(
             DocumentTable::Scans,
             &ScanDocument {
                 status: ScanStatus::Running,
@@ -254,9 +267,16 @@ mod tests {
             Some(|s| s.timestamp.as_str()),
         )?;
 
-        run_library_scan(db.clone(), scan_id, temp_dir.path().to_path_buf().into()).await?;
+        run_library_scan(
+            state.db.clone(),
+            state.mongodb.clone(),
+            scan_id,
+            temp_dir.path().to_path_buf().into(),
+        )
+        .await?;
 
-        let updated: Book = db
+        let updated: Book = state
+            .db
             .read(DocumentTable::Books, &book_id)?
             .expect("Book should still exist");
 
@@ -271,12 +291,12 @@ mod tests {
     async fn test_scan_adds_new_book() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("new.epub");
-
+        let config = AppConfig::default();
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
-        let scan_id = db.create(
+        let db = DocumentDB::open_in_memory()?;
+        let state = test_state(config, db).await;
+        let scan_id = state.db.create(
             DocumentTable::Scans,
             &ScanDocument {
                 status: ScanStatus::Running,
@@ -287,9 +307,15 @@ mod tests {
             Some(|s| s.timestamp.as_str()),
         )?;
 
-        run_library_scan(db.clone(), scan_id, temp_dir.path().to_path_buf().into()).await?;
+        run_library_scan(
+            state.db.clone(),
+            state.mongodb,
+            scan_id,
+            temp_dir.path().to_path_buf().into(),
+        )
+        .await?;
 
-        let books = db.get_all::<Book>(DocumentTable::Books)?;
+        let books = state.db.get_all::<Book>(DocumentTable::Books)?;
 
         assert_eq!(books.len(), 1);
 
@@ -304,21 +330,21 @@ mod tests {
     async fn test_scan_skips_unchanged_book() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("existing.epub");
-
+        let config = AppConfig::default();
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
+        let db = DocumentDB::open_in_memory()?;
+        let state = test_state(config, db).await;
         let book = Book::from_path(epub_path.clone());
 
-        let book_id = db.create(
+        let book_id = state.db.create(
             DocumentTable::Books,
             &book,
             Some(|book: &Book| book.path.to_str().unwrap()),
             None,
         )?;
 
-        let scan_id = db.create(
+        let scan_id = state.db.create(
             DocumentTable::Scans,
             &ScanDocument {
                 status: ScanStatus::Running,
@@ -330,18 +356,20 @@ mod tests {
         )?;
 
         run_library_scan(
-            db.clone(),
+            state.db.clone(),
+            state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
 
-        let books = db.get_all::<Book>(DocumentTable::Books)?;
+        let books = state.db.get_all::<Book>(DocumentTable::Books)?;
 
         assert_eq!(books.len(), 1);
         assert_eq!(books[0].0, book_id);
 
-        let scan: ScanDocument = db
+        let scan: ScanDocument = state
+            .db
             .read(DocumentTable::Scans, &scan_id)?
             .expect("Scan should exist");
 
@@ -361,15 +389,15 @@ mod tests {
     async fn test_scan_updates_book_when_size_changes() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("changed.epub");
-
+        let config = AppConfig::default();
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
+        let db = DocumentDB::open_in_memory()?;
+        let state = test_state(config, db).await;
         let mut book = Book::from_path(epub_path.clone());
         book.has_metadata = true;
 
-        let book_id = db.create(
+        let book_id = state.db.create(
             DocumentTable::Books,
             &book,
             Some(|book: &Book| book.path.to_str().unwrap()),
@@ -378,7 +406,7 @@ mod tests {
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
-        let scan_id = db.create(
+        let scan_id = state.db.create(
             DocumentTable::Scans,
             &ScanDocument {
                 status: ScanStatus::Running,
@@ -390,20 +418,23 @@ mod tests {
         )?;
 
         run_library_scan(
-            db.clone(),
+            state.db.clone(),
+            state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
 
-        let updated: Book = db
+        let updated: Book = state
+            .db
             .read(DocumentTable::Books, &book_id)?
             .expect("Book should exist");
 
         assert_eq!(updated.size_kb, 4);
         assert!(!updated.has_metadata);
 
-        let scan: ScanDocument = db
+        let scan: ScanDocument = state
+            .db
             .read(DocumentTable::Scans, &scan_id)?
             .expect("Scan should exist");
 
@@ -424,23 +455,24 @@ mod tests {
     -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("modified.epub");
-
+        let config = AppConfig::default();
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
+        let db = DocumentDB::open_in_memory()?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
+        let state = test_state(config, db).await;
 
         let mut book = Book::from_path(epub_path.clone());
         book.has_metadata = true;
         book.modified_at = "2000-01-01T00:00:00+00:00".to_string();
 
-        let book_id = db.create(
+        let book_id = state.db.create(
             DocumentTable::Books,
             &book,
             Some(|book: &Book| book.path.to_str().unwrap()),
             None,
         )?;
 
-        let scan_id = db.create(
+        let scan_id = state.db.create(
             DocumentTable::Scans,
             &ScanDocument {
                 status: ScanStatus::Running,
@@ -452,20 +484,23 @@ mod tests {
         )?;
 
         run_library_scan(
-            db.clone(),
+            state.db.clone(),
+            state.mongodb.clone(),
             scan_id.clone(),
             temp_dir.path().to_path_buf().into(),
         )
         .await?;
 
-        let updated: Book = db
+        let updated: Book = state
+            .db
             .read(DocumentTable::Books, &book_id)?
             .expect("Book should exist");
 
         assert_ne!(updated.modified_at, "2000-01-01T00:00:00+00:00");
         assert!(!updated.has_metadata);
 
-        let scan: ScanDocument = db
+        let scan: ScanDocument = state
+            .db
             .read(DocumentTable::Scans, &scan_id)?
             .expect("Scan should exist");
 
@@ -485,14 +520,14 @@ mod tests {
     async fn test_scan_preserves_book_id_when_updated() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("preserve-id.epub");
-
+        let config = AppConfig::default();
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let db = Arc::new(DocumentDB::open_in_memory()?);
-
+        let db = DocumentDB::open_in_memory()?;
+        let state = test_state(config, db).await;
         let book = Book::from_path(epub_path.clone());
 
-        let book_id = db.create(
+        let book_id = state.db.create(
             DocumentTable::Books,
             &book,
             Some(|book: &Book| book.path.to_str().unwrap()),
@@ -501,7 +536,7 @@ mod tests {
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
-        let scan_id = db.create(
+        let scan_id = state.db.create(
             DocumentTable::Scans,
             &ScanDocument {
                 status: ScanStatus::Running,
@@ -512,9 +547,15 @@ mod tests {
             Some(|s| s.timestamp.as_str()),
         )?;
 
-        run_library_scan(db.clone(), scan_id, temp_dir.path().to_path_buf().into()).await?;
+        run_library_scan(
+            state.db.clone(),
+            state.mongodb.clone(),
+            scan_id,
+            temp_dir.path().to_path_buf().into(),
+        )
+        .await?;
 
-        let books = db.get_all::<Book>(DocumentTable::Books)?;
+        let books = state.db.get_all::<Book>(DocumentTable::Books)?;
 
         assert_eq!(books.len(), 1);
         assert_eq!(books[0].0, book_id);

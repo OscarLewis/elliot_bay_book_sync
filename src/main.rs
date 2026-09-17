@@ -246,6 +246,7 @@ pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResp
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(run_library_scan(
         state.db.clone(),
+        state.mongodb.clone(),
         doc_id_for_task,
         state.config.library_path.clone(),
     ));
