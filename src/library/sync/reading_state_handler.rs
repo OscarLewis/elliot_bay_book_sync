@@ -238,11 +238,11 @@ pub async fn reading_state_handler(
                 //     None,
                 // )?;
 
-                // Return success response matching Python return structure
+                // Return success response
                 let update_response = serde_json::json!({
                     "RequestResult": "Success",
                     "UpdateResults": [{
-                        "EntitlementId": book_id,
+                        "EntitlementId": book_id.to_string(),
                         "CurrentBookmarkResult": { "Result": "Success" },
                         "StatisticsResult": { "Result": "Success" },
                         "StatusInfoResult": { "Result": "Success" }
@@ -359,7 +359,7 @@ mod tests {
         let db_reading_state = updated_book
             .reading_state
             .expect("Reading state should exist on the book");
-        assert_eq!(db_reading_state.book_id, book_id);
+        assert_eq!(db_reading_state.book_id.to_hex(), book_id.to_hex());
         assert_eq!(db_reading_state.entitlement_id, book_id.to_string());
         assert_eq!(db_reading_state.status_info.status, ReadStatus::InProgress);
         assert!(db_reading_state.statistics.is_some());
