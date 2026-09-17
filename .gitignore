@@ -13,3 +13,4 @@ sync_python.md
 sync_db.redb
 config.toml
 mongodb_documentdb_migration.md
+delete_test_dbs.txt

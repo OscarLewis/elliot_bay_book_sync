@@ -414,80 +414,49 @@ pub mod test_helpers {
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
-        error::AppError,
         library::book::Book,
         scan::scanner::ScanResponse,
-        test_helpers::{setup_test_app, test_state},
+        test_helpers::{MongoTestContext, setup_test_app},
     };
     use axum::http::StatusCode;
-    use dotenvy::dotenv;
     use std::path::PathBuf;
+    use test_context::test_context;
     use test_log::test;
 
     /// Tests the root endpoint response.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_root_handler() {
-        let config = AppConfig::default();
-        let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = test_state(config, db).await;
-        let server = setup_test_app(state);
+    async fn test_root_handler(ctx: &mut MongoTestContext) {
+        let server = setup_test_app(ctx.state.clone());
+
         let response = server.get("/").await;
         response.assert_status(StatusCode::OK);
     }
 
     /// Verifies that calling POST `/scan` triggers a background scan and returns a valid UUID.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
-    async fn test_scan_handler_triggers_scan() {
-        let config = AppConfig::default();
-        let db = DocumentDB::open_in_memory().expect("Unable to open database");
-        let state = test_state(config, db).await;
-
-        let server = setup_test_app(state);
+    async fn test_scan_handler_triggers_scan(ctx: &mut MongoTestContext) {
+        let server = setup_test_app(ctx.state.clone());
 
         let response = server.post("/scan").await;
         response.assert_status(StatusCode::OK);
 
-        let body: ScanResponse = response.json();
+        let _body: ScanResponse = response.json();
     }
 
-    /*
-    // FIXME fix this test to work with mongodb
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_refresh_metadata_handler() -> Result<(), AppError> {
-        dotenv().ok();
-
-        let config = AppConfig::default();
-
-        let uri = std::env::var("MONGODB_TEST_URI").expect("MONGODB_TEST_URI must be set");
-
-        let db = DocumentDB::open_in_memory()?;
-
-        let state = test_state(config, db).await;
-        let server = setup_test_app(state);
-
-        let response = server.post("/metadata/refresh").await;
-
-        response.assert_status(StatusCode::NO_CONTENT);
-
-        Ok(())
-    }
-    */
-
-    #[test(tokio::test)]
-    async fn test_refresh_single_book_metadata_handler() -> Result<(), Box<dyn std::error::Error>> {
-        let config = AppConfig::default();
-        let db = DocumentDB::open_in_memory()?;
-
-        let book = Book::from_path(PathBuf::from(
+    async fn test_refresh_single_book_metadata_handler(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut book = Book::from_path(PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         ));
-        let state = test_state(config, db).await;
-        let server = setup_test_app(state.clone());
 
-        let book_id = state.mongodb.books.insert(&book).await?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
+
+        let server = setup_test_app(ctx.state.clone());
 
         let response = server.post(&format!("/metadata/refresh/{book_id}")).await;
 

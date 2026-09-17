@@ -294,8 +294,8 @@ mod tests {
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
         let mut book = Book::from_path(epub_path);
-        let book_id = state.mongodb.books.insert(&book).await?;
-        book.id = Some(book_id);
+        let book_id = state.mongodb.books.insert(&mut book).await?;
+
         let token = state.config.ebbooks_auth_key.clone();
         let response = server
             .get(&format!("/kobo/{token}/v1/library/{book_id}/state"))
@@ -336,8 +336,8 @@ mod tests {
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
         let mut book = Book::from_path(epub_path);
-        let book_id = state.mongodb.books.insert(&book).await?;
-        book.id = Some(book_id);
+        let book_id = state.mongodb.books.insert(&mut book).await?;
+
         let token = state.config.ebbooks_auth_key.clone();
         let put_payload = serde_json::json!({ "ReadingStates": [{ "EntitlementId": book_id.to_string(), "StatusInfo": { "Status": "Reading", "TimesStartedReading": 1 }, "Statistics": { "SpentReadingMinutes": 12, "RemainingTimeMinutes": 48 }, "CurrentBookmark": { "ProgressPercent": 25, "ContentSourceProgressPercent": 25, "Location": { "Value": "chapter-3", "Type": "KoboSpan", "Source": "epub" } } }] });
         let response = server
@@ -381,8 +381,8 @@ mod tests {
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
         let mut book = Book::from_path(epub_path);
-        let book_id = state.mongodb.books.insert(&book).await?;
-        book.id = Some(book_id);
+        let book_id = state.mongodb.books.insert(&mut book).await?;
+
         let token = state.config.ebbooks_auth_key.clone();
         let put_payload = serde_json::json!({ "ReadingStates": [] });
         let response = server

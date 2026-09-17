@@ -25,12 +25,17 @@ impl BookRepository {
         Ok(Self { collection })
     }
 
-    pub async fn insert(&self, book: &Book) -> Result<ObjectId, AppError> {
-        let result = self.collection.insert_one(book).await?;
-        result
+    pub async fn insert(&self, book: &mut Book) -> Result<ObjectId, AppError> {
+        let result = self.collection.insert_one(&*book).await?;
+
+        let id = result
             .inserted_id
             .as_object_id()
-            .ok_or(AppError::InvalidObjectId)
+            .ok_or(AppError::InvalidObjectId)?;
+
+        book.id = Some(id);
+
+        Ok(id)
     }
 
     pub async fn find_by_id(&self, id: ObjectId) -> Result<Option<Book>, AppError> {
@@ -246,12 +251,12 @@ mod tests {
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
         let mongodb = test_mongodb().await;
-        let book = Book::from_path(epub_path);
+        let mut book = Book::from_path(epub_path);
 
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
-            let book_id = mongodb.books.insert(&book).await?;
+            let book_id = mongodb.books.insert(&mut book).await?;
             inserted_ids.push(book_id);
 
             let found = mongodb
@@ -284,15 +289,15 @@ mod tests {
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
         let mongodb = test_mongodb().await;
-        let book = Book::from_path(epub_path);
+        let mut book = Book::from_path(epub_path);
 
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
-            let book_id = mongodb.books.insert(&book).await?;
+            let book_id = mongodb.books.insert(&mut book).await?;
             inserted_ids.push(book_id);
 
-            let second_insert = mongodb.books.insert(&book).await;
+            let second_insert = mongodb.books.insert(&mut book).await;
             assert!(second_insert.is_err(), "duplicate path should be rejected");
 
             Ok(())
@@ -317,12 +322,12 @@ mod tests {
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
         let mongodb = test_mongodb().await;
-        let original = Book::from_path(epub_path.clone());
+        let mut original = Book::from_path(epub_path.clone());
 
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
-            let book_id = mongodb.books.insert(&original).await?;
+            let book_id = mongodb.books.insert(&mut original).await?;
             inserted_ids.push(book_id);
 
             let mut updated = Book::from_path(epub_path.clone());
@@ -380,13 +385,13 @@ mod tests {
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
         let mongodb = test_mongodb().await;
-        let book = Book::from_path(epub_path);
+        let mut book = Book::from_path(epub_path);
         let original_name = book.name.clone();
 
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
-            let book_id = mongodb.books.insert(&book).await?;
+            let book_id = mongodb.books.insert(&mut book).await?;
             inserted_ids.push(book_id);
 
             let was_updated = mongodb
@@ -431,7 +436,7 @@ mod tests {
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
-            let book_id = mongodb.books.insert(&book).await?;
+            let book_id = mongodb.books.insert(&mut book).await?;
             inserted_ids.push(book_id);
 
             let was_updated = mongodb.books.update_title(book_id, None).await?;

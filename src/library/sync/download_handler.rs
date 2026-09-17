@@ -129,9 +129,9 @@ mod tests {
         let state = test_state(config, db).await;
         let server = setup_test_app(state.clone());
 
-        let book = Book::from_path(epub_path.clone());
+        let mut book = Book::from_path(epub_path.clone());
 
-        let book_id = state.mongodb.books.insert(&book).await?;
+        let book_id = state.mongodb.books.insert(&mut book).await?;
 
         let expected_body = tokio::fs::read(&epub_path).await?;
 

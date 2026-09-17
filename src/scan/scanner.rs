@@ -233,7 +233,7 @@ mod tests {
             .unwrap()
             .with_timezone(&Utc);
 
-        let book_id = ctx.state.mongodb.books.insert(&existing_book).await?;
+        let book_id = ctx.state.mongodb.books.insert(&mut existing_book).await?;
 
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
@@ -313,7 +313,7 @@ mod tests {
         book.size_kb = 2;
         book.modified_at = std::fs::metadata(&epub_path)?.modified()?.into();
 
-        let book_id = ctx.state.mongodb.books.insert(&book).await?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
@@ -370,7 +370,7 @@ mod tests {
         let mut book = Book::from_path(epub_path.clone());
         book.has_metadata = true;
 
-        let book_id = ctx.state.mongodb.books.insert(&book).await?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
@@ -431,7 +431,7 @@ mod tests {
             .unwrap()
             .with_timezone(&Utc);
 
-        let book_id = ctx.state.mongodb.books.insert(&book).await?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         let scan_id = ctx.state.mongodb.scans.start().await?;
 
@@ -489,9 +489,9 @@ mod tests {
 
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let book = Book::from_path(epub_path.clone());
+        let mut book = Book::from_path(epub_path.clone());
 
-        let book_id = ctx.state.mongodb.books.insert(&book).await?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         tokio::fs::write(&epub_path, vec![1u8; 4 * 1024]).await?;
 
