@@ -9,8 +9,8 @@
     429121,
     205,
     183698,
-    433227,
     429113,
+    433227,
     433103,
     81913,
     460393,
@@ -101,8 +101,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -300,7 +304,7 @@
             "3492700810",
             "9783492700818"
           ],
-          "lists_count": 1732,
+          "lists_count": 1734,
           "moods": [
             "Adventurous",
             "mysterious",
@@ -718,12 +722,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1267,12 +1267,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -1737,12 +1733,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2216,12 +2208,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -2394,7 +2382,7 @@
             "adventurous"
           ],
           "title": "The Fires of Heaven",
-          "users_count": 2212,
+          "users_count": 2213,
           "users_read_count": 1743
         },
         "highlight": {
@@ -2727,12 +2715,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3159,8 +3143,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3331,7 +3319,7 @@
             "slow-paced"
           ],
           "title": "A Crown of Swords",
-          "users_count": 2005,
+          "users_count": 2006,
           "users_read_count": 1530
         },
         "highlight": {
@@ -3601,12 +3589,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -3759,7 +3743,7 @@
             "#digitally-own"
           ],
           "title": "The Path of Daggers",
-          "users_count": 1903,
+          "users_count": 1904,
           "users_read_count": 1432
         },
         "highlight": {
@@ -3979,8 +3963,12 @@
                 "slug": "brandon-sanderson"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -3998,8 +3986,12 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -4142,7 +4134,7 @@
             "Calibre Import"
           ],
           "title": "The Gathering Storm",
-          "users_count": 1836,
+          "users_count": 1837,
           "users_read_count": 1330
         },
         "highlight": {
@@ -4282,6 +4274,443 @@
               "The"
             ],
             "snippet": "<mark>The</mark> Gathering Storm"
+          }
+        ],
+        "text_match": 2314894167593451547,
+        "text_match_info": {
+          "best_field_score": "4419510927616",
+          "best_field_weight": 3,
+          "fields_matched": 3,
+          "num_tokens_dropped": 0,
+          "score": "2314894167593451547",
+          "tokens_matched": 4,
+          "typo_prefix_score": 0
+        }
+      },
+      {
+        "document": {
+          "activities_count": 1092,
+          "alternative_titles": [
+            "[Wheel of Time, Book 10] Crossroads of Twilight",
+            "Crossroads Of Twilight: Book 10 of the Wheel of Time",
+            "Crossroads of Twilight",
+            "Crossroads of Twilight: Book Ten of The Wheel of Time",
+            "Wheel of Time 10 - Crossroads of Twilight",
+            "Crossroads Of Twilight",
+            "Răscruce de drumuri în amurg",
+            "Encrucijada en el Crepúsculo",
+            "Zwielichtige Pfade",
+            "Crocevia del crepuscolo",
+            "Encrucijada en el Crepusculo",
+            "Перекрестки сумерек",
+            "Raskršće sumraka",
+            "Alacakaranlık Kavşağı",
+            "Crossroads of Twlight.",
+            "Le carrefour du crépuscule",
+            "Viersprong van de Schemer",
+            "De dödas stad",
+            "Encrucijada en el crepúsculo",
+            "Le Carrefour du Crépuscule",
+            "Кръстопътища по здрач",
+            "Rozstaje Zmierzchu"
+          ],
+          "author_names": [
+            "Robert Jordan"
+          ],
+          "book_category_id": 1,
+          "compilation": false,
+          "content_warnings": [],
+          "contribution_specializations": [],
+          "contribution_types": [
+            "Author"
+          ],
+          "contributions": [
+            {
+              "author": {
+                "id": 151072,
+                "image": {
+                  "color": "#671a08",
+                  "color_name": "Brown",
+                  "height": 330,
+                  "id": 5495291,
+                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
+                  "width": 330
+                },
+                "name": "Robert Jordan",
+                "slug": "robert-jordan"
+              },
+              "contribution": "Author",
+              "contributor_role_blurb": null,
+              "contributor_role_id": 1,
+              "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
+              "primary": true
+            }
+          ],
+          "cover_color": "Blue",
+          "description": "In the tenth book of The Wheel of Time from the New York Times #1 bestselling author Robert Jordan, the world and the characters stand at a crossroads, and the world approaches twilight, when the power of the Shadow grows stronger.\n\nFleeing from Ebou Dar with the kidnapped Daughter of the Nine Moons, whom he is fated to marry, Mat Cauthon learns that he can neither keep her nor let her go, not in safety for either of them, for both the Shadow and the might of the Seanchan Empire are in deadly pursuit.\n\nPerrin Aybara seeks to free his wife, Faile, a captive of the Shaido, but his only hope may be an alliance with the enemy. Can he remain true to his friend Rand and to himself? For his love of Faile, Perrin is willing to sell his soul.\n\nAt Tar Valon, Egwene al'Vere, the young Amyrlin of the rebel Aes Sedai, lays siege to the heart of Aes Sedai power, but she must win quickly, with as little bloodshed as possible, for unless the Aes Sedai are reunited, only the male Asha'man will remain to defend the world against the Dark One, and nothing can hold the Asha'man themselves back from total power except the Aes Sedai and a unified White Tower.\n\nIn Andor, Elayne Trakland fights for the Lion Throne that is hers by right, but enemies and Darkfriends surround her, plotting her destruction. If she fails, Andor may fall to the Shadow, and the Dragon Reborn with it.\n\nRand al'Thor, the Dragon Reborn himself, has cleansed the Dark One's taint from the male half of the True Source, and everything has changed. Yet nothing has, for only men who can channel believe that saidin is clean again, and a man who can channel is still hated and feared-even one prophesied to save the world. Now, Rand must gamble again, with himself at stake, and he cannot be sure which of his allies are really enemies.",
+          "featured_series": {
+            "collection": false,
+            "details": "10",
+            "featured": false,
+            "id": 306706,
+            "position": 10.0,
+            "series": {
+              "books_count": 87,
+              "id": 1097,
+              "name": "The Wheel of Time",
+              "primary_books_count": 14,
+              "slug": "the-wheel-of-time"
+            },
+            "unreleased": false
+          },
+          "featured_series_position": 10.0,
+          "genres": [
+            "Fantasy",
+            "Science Fiction",
+            "Fantasy fiction",
+            "Adventure",
+            "The Wheel Of Time",
+            "Young Adult",
+            "Fantasy - Epic",
+            "Fiction - Fantasy",
+            "General",
+            "Fantasy - Series"
+          ],
+          "has_audiobook": true,
+          "has_ebook": true,
+          "id": "429113",
+          "image": {
+            "color": "#005266",
+            "color_name": "Blue",
+            "height": 2339,
+            "id": 6990602,
+            "url": "https://assets.hardcover.app/edition/30499507/680bb461-388f-4c6d-8e07-0ab2b796c369.png",
+            "width": 1488
+          },
+          "isbns": [
+            "0765337819",
+            "9780765337818",
+            "0312864590",
+            "9780312864590",
+            "0356517098",
+            "9780356517094",
+            "1841491403",
+            "9781841491400",
+            "1429960744",
+            "9781429960748",
+            "1841491837",
+            "9781841491837",
+            "0812571339",
+            "9780812571332",
+            "1841491292",
+            "9781841491295",
+            "6060065686",
+            "9786060065685",
+            "8448006178",
+            "9788448006174",
+            "3492707203",
+            "9783492707206",
+            "8834715330",
+            "9788834715338",
+            "8445007092",
+            "9788445007099",
+            "5389221923",
+            "9785389221925",
+            "1593970366",
+            "9781593970369",
+            "8652106614",
+            "9788652106615",
+            "9752733239",
+            "9789752733237",
+            "9791028107192",
+            "1663605025",
+            "9781663605023",
+            "9024558603",
+            "9789024558605",
+            "8834728807",
+            "9788834728802",
+            "0356503917",
+            "9780356503912",
+            "0765305925",
+            "9780765305923",
+            "9176138992",
+            "9789176138991",
+            "6258475272",
+            "9786258475272",
+            "8448034724",
+            "9788448034726",
+            "9791028119171",
+            "8372986649",
+            "9788372986641",
+            "1250252539",
+            "9781250252531",
+            "1559278064",
+            "9781559278065",
+            "0748115439",
+            "9780748115433",
+            "030794123X",
+            "9780307941237"
+          ],
+          "lists_count": 531,
+          "moods": [
+            "Adventurous",
+            "dark",
+            "mysterious",
+            "tense",
+            "challenging",
+            "reflective",
+            "emotional",
+            "1735854679407",
+            "inspiring",
+            "funny"
+          ],
+          "pages": 832,
+          "prompts_count": 0,
+          "rating": 3.458904109589041,
+          "ratings_count": 803,
+          "release_date": "2003-01-01",
+          "release_year": 2003,
+          "reviews_count": 48,
+          "series_ids": [
+            1097
+          ],
+          "series_names": [
+            "The Wheel of Time"
+          ],
+          "slug": "crossroads-of-twilight",
+          "subtitle": "Book Ten of 'The Wheel of Time'",
+          "tags": [
+            "Diverse Characters",
+            "Loveable Characters",
+            "Strong Character Development",
+            "Unloveable Characters",
+            "Weak Character Development",
+            "A mix driven",
+            "Character driven",
+            "Plot driven",
+            "Not Diverse Characters",
+            "Fantasy - Epic"
+          ],
+          "title": "Crossroads of Twilight",
+          "users_count": 1791,
+          "users_read_count": 1316
+        },
+        "highlight": {
+          "alternative_titles": [
+            {
+              "matched_tokens": [
+                "Wheel",
+                "of",
+                "Time",
+                "of"
+              ],
+              "snippet": "[<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>, Book 10] Crossroads <mark>of</mark> Twilight"
+            },
+            {
+              "matched_tokens": [
+                "Of",
+                "of",
+                "the",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "Crossroads <mark>Of</mark> Twilight: Book 10 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            },
+            {
+              "matched_tokens": [
+                "of"
+              ],
+              "snippet": "Crossroads <mark>of</mark> Twilight"
+            },
+            {
+              "matched_tokens": [
+                "of",
+                "of",
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "Crossroads <mark>of</mark> Twilight: Book Ten <mark>of</mark> <mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            },
+            {
+              "matched_tokens": [
+                "Wheel",
+                "of",
+                "Time",
+                "of"
+              ],
+              "snippet": "<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark> 10 - Crossroads <mark>of</mark> Twilight"
+            },
+            {
+              "matched_tokens": [
+                "Of"
+              ],
+              "snippet": "Crossroads <mark>Of</mark> Twilight"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Răscruce de drumuri în amurg"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Encrucijada en el Crepúsculo"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Zwielichtige Pfade"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Crocevia del crepuscolo"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Encrucijada en el Crepusculo"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Перекрестки сумерек"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Raskršće sumraka"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Alacakaranlık Kavşağı"
+            },
+            {
+              "matched_tokens": [
+                "of"
+              ],
+              "snippet": "Crossroads <mark>of</mark> Twlight."
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Le carrefour du crépuscule"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Viersprong van de Schemer"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "De dödas stad"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Encrucijada en el crepúsculo"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Le Carrefour du Crépuscule"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Кръстопътища по здрач"
+            },
+            {
+              "matched_tokens": [],
+              "snippet": "Rozstaje Zmierzchu"
+            }
+          ],
+          "series_names": [
+            {
+              "matched_tokens": [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            }
+          ],
+          "title": {
+            "matched_tokens": [
+              "of"
+            ],
+            "snippet": "Crossroads <mark>of</mark> Twilight"
+          }
+        },
+        "highlights": [
+          {
+            "field": "series_names",
+            "indices": [
+              0
+            ],
+            "matched_tokens": [
+              [
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ]
+            ],
+            "snippets": [
+              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
+            ]
+          },
+          {
+            "field": "alternative_titles",
+            "indices": [
+              1,
+              3,
+              0,
+              4,
+              2
+            ],
+            "matched_tokens": [
+              [
+                "Of",
+                "of",
+                "the",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              [
+                "of",
+                "of",
+                "The",
+                "Wheel",
+                "of",
+                "Time"
+              ],
+              [
+                "Wheel",
+                "of",
+                "Time",
+                "of"
+              ],
+              [
+                "Wheel",
+                "of",
+                "Time",
+                "of"
+              ],
+              [
+                "of"
+              ]
+            ],
+            "snippets": [
+              "Crossroads <mark>Of</mark> Twilight: Book 10 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
+              "Crossroads <mark>of</mark> Twilight: Book Ten <mark>of</mark> <mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
+              "[<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>, Book 10] Crossroads <mark>of</mark> Twilight",
+              "<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark> 10 - Crossroads <mark>of</mark> Twilight",
+              "Crossroads <mark>of</mark> Twilight"
+            ]
+          },
+          {
+            "field": "title",
+            "matched_tokens": [
+              "of"
+            ],
+            "snippet": "Crossroads <mark>of</mark> Twilight"
           }
         ],
         "text_match": 2314894167593451547,
@@ -4684,439 +5113,6 @@
       },
       {
         "document": {
-          "activities_count": 1092,
-          "alternative_titles": [
-            "[Wheel of Time, Book 10] Crossroads of Twilight",
-            "Crossroads Of Twilight: Book 10 of the Wheel of Time",
-            "Crossroads of Twilight",
-            "Crossroads of Twilight: Book Ten of The Wheel of Time",
-            "Wheel of Time 10 - Crossroads of Twilight",
-            "Crossroads Of Twilight",
-            "Răscruce de drumuri în amurg",
-            "Encrucijada en el Crepúsculo",
-            "Zwielichtige Pfade",
-            "Crocevia del crepuscolo",
-            "Encrucijada en el Crepusculo",
-            "Перекрестки сумерек",
-            "Raskršće sumraka",
-            "Alacakaranlık Kavşağı",
-            "Crossroads of Twlight.",
-            "Le carrefour du crépuscule",
-            "Viersprong van de Schemer",
-            "De dödas stad",
-            "Encrucijada en el crepúsculo",
-            "Le Carrefour du Crépuscule",
-            "Кръстопътища по здрач",
-            "Rozstaje Zmierzchu"
-          ],
-          "author_names": [
-            "Robert Jordan"
-          ],
-          "book_category_id": 1,
-          "compilation": false,
-          "content_warnings": [],
-          "contribution_specializations": [],
-          "contribution_types": [
-            "Author"
-          ],
-          "contributions": [
-            {
-              "author": {
-                "id": 151072,
-                "image": {
-                  "color": "#671a08",
-                  "color_name": "Brown",
-                  "height": 330,
-                  "id": 5495291,
-                  "url": "https://assets.hardcover.app/author/151072/b9e9b7aa-f077-4c18-8039-3129da8571a6.png",
-                  "width": 330
-                },
-                "name": "Robert Jordan",
-                "slug": "robert-jordan"
-              },
-              "contribution": "Author",
-              "contributor_role_id": 1,
-              "contributor_role_name": "Author",
-              "primary": true
-            }
-          ],
-          "cover_color": "Blue",
-          "description": "In the tenth book of The Wheel of Time from the New York Times #1 bestselling author Robert Jordan, the world and the characters stand at a crossroads, and the world approaches twilight, when the power of the Shadow grows stronger.\n\nFleeing from Ebou Dar with the kidnapped Daughter of the Nine Moons, whom he is fated to marry, Mat Cauthon learns that he can neither keep her nor let her go, not in safety for either of them, for both the Shadow and the might of the Seanchan Empire are in deadly pursuit.\n\nPerrin Aybara seeks to free his wife, Faile, a captive of the Shaido, but his only hope may be an alliance with the enemy. Can he remain true to his friend Rand and to himself? For his love of Faile, Perrin is willing to sell his soul.\n\nAt Tar Valon, Egwene al'Vere, the young Amyrlin of the rebel Aes Sedai, lays siege to the heart of Aes Sedai power, but she must win quickly, with as little bloodshed as possible, for unless the Aes Sedai are reunited, only the male Asha'man will remain to defend the world against the Dark One, and nothing can hold the Asha'man themselves back from total power except the Aes Sedai and a unified White Tower.\n\nIn Andor, Elayne Trakland fights for the Lion Throne that is hers by right, but enemies and Darkfriends surround her, plotting her destruction. If she fails, Andor may fall to the Shadow, and the Dragon Reborn with it.\n\nRand al'Thor, the Dragon Reborn himself, has cleansed the Dark One's taint from the male half of the True Source, and everything has changed. Yet nothing has, for only men who can channel believe that saidin is clean again, and a man who can channel is still hated and feared-even one prophesied to save the world. Now, Rand must gamble again, with himself at stake, and he cannot be sure which of his allies are really enemies.",
-          "featured_series": {
-            "collection": false,
-            "details": "10",
-            "featured": false,
-            "id": 306706,
-            "position": 10.0,
-            "series": {
-              "books_count": 87,
-              "id": 1097,
-              "name": "The Wheel of Time",
-              "primary_books_count": 14,
-              "slug": "the-wheel-of-time"
-            },
-            "unreleased": false
-          },
-          "featured_series_position": 10.0,
-          "genres": [
-            "Fantasy",
-            "Science Fiction",
-            "Fantasy fiction",
-            "Adventure",
-            "The Wheel Of Time",
-            "Young Adult",
-            "Fantasy - Epic",
-            "Fiction - Fantasy",
-            "General",
-            "Fantasy - Series"
-          ],
-          "has_audiobook": true,
-          "has_ebook": true,
-          "id": "429113",
-          "image": {
-            "color": "#005266",
-            "color_name": "Blue",
-            "height": 2339,
-            "id": 6990602,
-            "url": "https://assets.hardcover.app/edition/30499507/680bb461-388f-4c6d-8e07-0ab2b796c369.png",
-            "width": 1488
-          },
-          "isbns": [
-            "0765337819",
-            "9780765337818",
-            "0312864590",
-            "9780312864590",
-            "0356517098",
-            "9780356517094",
-            "1841491403",
-            "9781841491400",
-            "1429960744",
-            "9781429960748",
-            "1841491837",
-            "9781841491837",
-            "0812571339",
-            "9780812571332",
-            "1841491292",
-            "9781841491295",
-            "6060065686",
-            "9786060065685",
-            "8448006178",
-            "9788448006174",
-            "3492707203",
-            "9783492707206",
-            "8834715330",
-            "9788834715338",
-            "8445007092",
-            "9788445007099",
-            "5389221923",
-            "9785389221925",
-            "1593970366",
-            "9781593970369",
-            "8652106614",
-            "9788652106615",
-            "9752733239",
-            "9789752733237",
-            "9791028107192",
-            "1663605025",
-            "9781663605023",
-            "9024558603",
-            "9789024558605",
-            "8834728807",
-            "9788834728802",
-            "0356503917",
-            "9780356503912",
-            "0765305925",
-            "9780765305923",
-            "9176138992",
-            "9789176138991",
-            "6258475272",
-            "9786258475272",
-            "8448034724",
-            "9788448034726",
-            "9791028119171",
-            "8372986649",
-            "9788372986641",
-            "1250252539",
-            "9781250252531",
-            "1559278064",
-            "9781559278065",
-            "0748115439",
-            "9780748115433",
-            "030794123X",
-            "9780307941237"
-          ],
-          "lists_count": 531,
-          "moods": [
-            "Adventurous",
-            "dark",
-            "mysterious",
-            "tense",
-            "challenging",
-            "reflective",
-            "emotional",
-            "1735854679407",
-            "inspiring",
-            "funny"
-          ],
-          "pages": 832,
-          "prompts_count": 0,
-          "rating": 3.458904109589041,
-          "ratings_count": 803,
-          "release_date": "2003-01-01",
-          "release_year": 2003,
-          "reviews_count": 48,
-          "series_ids": [
-            1097
-          ],
-          "series_names": [
-            "The Wheel of Time"
-          ],
-          "slug": "crossroads-of-twilight",
-          "subtitle": "Book Ten of 'The Wheel of Time'",
-          "tags": [
-            "Diverse Characters",
-            "Loveable Characters",
-            "Strong Character Development",
-            "Unloveable Characters",
-            "Weak Character Development",
-            "A mix driven",
-            "Character driven",
-            "Plot driven",
-            "Not Diverse Characters",
-            "Fantasy - Epic"
-          ],
-          "title": "Crossroads of Twilight",
-          "users_count": 1790,
-          "users_read_count": 1316
-        },
-        "highlight": {
-          "alternative_titles": [
-            {
-              "matched_tokens": [
-                "Wheel",
-                "of",
-                "Time",
-                "of"
-              ],
-              "snippet": "[<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>, Book 10] Crossroads <mark>of</mark> Twilight"
-            },
-            {
-              "matched_tokens": [
-                "Of",
-                "of",
-                "the",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "Crossroads <mark>Of</mark> Twilight: Book 10 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            },
-            {
-              "matched_tokens": [
-                "of"
-              ],
-              "snippet": "Crossroads <mark>of</mark> Twilight"
-            },
-            {
-              "matched_tokens": [
-                "of",
-                "of",
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "Crossroads <mark>of</mark> Twilight: Book Ten <mark>of</mark> <mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            },
-            {
-              "matched_tokens": [
-                "Wheel",
-                "of",
-                "Time",
-                "of"
-              ],
-              "snippet": "<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark> 10 - Crossroads <mark>of</mark> Twilight"
-            },
-            {
-              "matched_tokens": [
-                "Of"
-              ],
-              "snippet": "Crossroads <mark>Of</mark> Twilight"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Răscruce de drumuri în amurg"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Encrucijada en el Crepúsculo"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Zwielichtige Pfade"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Crocevia del crepuscolo"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Encrucijada en el Crepusculo"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Перекрестки сумерек"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Raskršće sumraka"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Alacakaranlık Kavşağı"
-            },
-            {
-              "matched_tokens": [
-                "of"
-              ],
-              "snippet": "Crossroads <mark>of</mark> Twlight."
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Le carrefour du crépuscule"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Viersprong van de Schemer"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "De dödas stad"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Encrucijada en el crepúsculo"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Le Carrefour du Crépuscule"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Кръстопътища по здрач"
-            },
-            {
-              "matched_tokens": [],
-              "snippet": "Rozstaje Zmierzchu"
-            }
-          ],
-          "series_names": [
-            {
-              "matched_tokens": [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              "snippet": "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            }
-          ],
-          "title": {
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "Crossroads <mark>of</mark> Twilight"
-          }
-        },
-        "highlights": [
-          {
-            "field": "series_names",
-            "indices": [
-              0
-            ],
-            "matched_tokens": [
-              [
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ]
-            ],
-            "snippets": [
-              "<mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>"
-            ]
-          },
-          {
-            "field": "alternative_titles",
-            "indices": [
-              1,
-              3,
-              0,
-              4,
-              2
-            ],
-            "matched_tokens": [
-              [
-                "Of",
-                "of",
-                "the",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              [
-                "of",
-                "of",
-                "The",
-                "Wheel",
-                "of",
-                "Time"
-              ],
-              [
-                "Wheel",
-                "of",
-                "Time",
-                "of"
-              ],
-              [
-                "Wheel",
-                "of",
-                "Time",
-                "of"
-              ],
-              [
-                "of"
-              ]
-            ],
-            "snippets": [
-              "Crossroads <mark>Of</mark> Twilight: Book 10 <mark>of</mark> <mark>the</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
-              "Crossroads <mark>of</mark> Twilight: Book Ten <mark>of</mark> <mark>The</mark> <mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>",
-              "[<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark>, Book 10] Crossroads <mark>of</mark> Twilight",
-              "<mark>Wheel</mark> <mark>of</mark> <mark>Time</mark> 10 - Crossroads <mark>of</mark> Twilight",
-              "Crossroads <mark>of</mark> Twilight"
-            ]
-          },
-          {
-            "field": "title",
-            "matched_tokens": [
-              "of"
-            ],
-            "snippet": "Crossroads <mark>of</mark> Twilight"
-          }
-        ],
-        "text_match": 2314894167593451547,
-        "text_match_info": {
-          "best_field_score": "4419510927616",
-          "best_field_weight": 3,
-          "fields_matched": 3,
-          "num_tokens_dropped": 0,
-          "score": "2314894167593451547",
-          "tokens_matched": 4,
-          "typo_prefix_score": 0
-        }
-      },
-      {
-        "document": {
           "activities_count": 1002,
           "alternative_titles": [
             "Knife of Dreams",
@@ -5161,12 +5157,8 @@
                 "slug": "robert-jordan"
               },
               "contribution": "Author",
-              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
-              "contributor_specialization_blurb": null,
-              "contributor_specialization_id": null,
-              "contributor_specialization_name": null,
               "primary": true
             }
           ],
@@ -5311,7 +5303,7 @@
             "Not Diverse Characters"
           ],
           "title": "Knife of Dreams",
-          "users_count": 1772,
+          "users_count": 1773,
           "users_read_count": 1293
         },
         "highlight": {
@@ -8564,7 +8556,7 @@
         }
       }
     ],
-    "out_of": 2585391,
+    "out_of": 2585408,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -8573,6 +8565,6 @@
       "q": "The Wheel of Time"
     },
     "search_cutoff": false,
-    "search_time_ms": 43
+    "search_time_ms": 48
   }
 }

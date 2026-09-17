@@ -1,6 +1,6 @@
 use crate::database::bson_chrono_datetime::bson_chrono_datetime;
-use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
+use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
