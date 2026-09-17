@@ -7,9 +7,9 @@ use crate::{
     library::book::Book,
     metadata::update_meta::update_metadata,
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{path::Path, sync::Arc};
 use tokio::fs;
 use tracing::{debug, error, info};
@@ -17,14 +17,35 @@ use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ScanResponse {
-    pub scan_id: Uuid,
+    pub scan_id: String,
+}
+
+mod bson_chrono_datetime {
+    use super::*;
+
+    pub fn serialize<S>(value: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        bson::DateTime::from_chrono(*value).serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = bson::DateTime::deserialize(deserializer)?;
+        Ok(value.to_chrono())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanDocument {
     pub status: ScanStatus,
-    /// ISO-8601 formatted timestamp string (e.g., "2026-09-11T00:38:00Z")
-    pub timestamp: String,
+
+    #[serde(with = "bson_chrono_datetime")]
+    pub timestamp: DateTime<Utc>,
+
     pub details: ScanDetails,
 }
 
@@ -40,7 +61,7 @@ impl ScanDocument {
     pub fn start() -> Self {
         Self {
             status: ScanStatus::Running,
-            timestamp: Utc::now().to_rfc3339(),
+            timestamp: Utc::now(),
             details: ScanDetails::Started,
         }
     }

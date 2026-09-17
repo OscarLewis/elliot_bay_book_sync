@@ -126,7 +126,7 @@ mod tests {
         scan::scanner::{ScanDetails, ScanDocument, ScanStatus},
         test_helpers::test_mongodb,
     };
-    use chrono::Utc;
+    use chrono::{DateTime, DurationRound, Utc};
     use test_log::test;
 
     /// Verifies that inserting a `ScanDocument` persists it to MongoDB and
@@ -138,7 +138,7 @@ mod tests {
 
         let scan = ScanDocument {
             status: ScanStatus::Running,
-            timestamp: Utc::now().to_rfc3339(),
+            timestamp: Utc::now(),
             details: ScanDetails::Started,
         };
 
@@ -177,15 +177,19 @@ mod tests {
         // Use timestamps far in the future so Utc::now() records don't out-sort them
         let older = ScanDocument {
             status: ScanStatus::Finished,
-            timestamp: "2099-01-01T00:00:00Z".to_string(),
-            details: ScanDetails::Started,
-        };
-        let newer = ScanDocument {
-            status: ScanStatus::Running,
-            timestamp: "2100-01-01T00:00:00Z".to_string(),
+            timestamp: DateTime::parse_from_rfc3339("2099-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
             details: ScanDetails::Started,
         };
 
+        let newer = ScanDocument {
+            status: ScanStatus::Running,
+            timestamp: DateTime::parse_from_rfc3339("2100-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+            details: ScanDetails::Started,
+        };
         let mut inserted_ids = Vec::new();
 
         let run_test = async {
@@ -219,7 +223,7 @@ mod tests {
 
         let scan = ScanDocument {
             status: ScanStatus::Running,
-            timestamp: Utc::now().to_rfc3339(),
+            timestamp: Utc::now(),
             details: ScanDetails::Started,
         };
 
@@ -250,7 +254,7 @@ mod tests {
                     skipped_count: 0,
                 }
             );
-            assert_eq!(found.timestamp, scan.timestamp);
+            assert!((found.timestamp - scan.timestamp).abs() <= chrono::TimeDelta::seconds(1));
             Ok(())
         };
 
@@ -272,7 +276,7 @@ mod tests {
 
         let scan = ScanDocument {
             status: ScanStatus::Running,
-            timestamp: Utc::now().to_rfc3339(),
+            timestamp: Utc::now(),
             details: ScanDetails::Started,
         };
 

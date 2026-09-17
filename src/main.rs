@@ -238,8 +238,7 @@ pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResp
     ));
 
     Ok(Json(ScanResponse {
-        scan_id: Uuid::parse_str(&scan_id.to_string().clone())
-            .map_err(|e| AppError::Internal(format!("Failed to parse UUID: {}", e)))?,
+        scan_id: scan_id.to_string(),
     }))
 }
 
@@ -407,7 +406,6 @@ mod tests {
         response.assert_status(StatusCode::OK);
 
         let body: ScanResponse = response.json();
-        assert!(!body.scan_id.is_nil());
     }
 
     #[test(tokio::test)]
