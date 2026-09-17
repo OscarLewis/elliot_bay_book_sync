@@ -117,6 +117,27 @@ pub(crate) async fn run_library_scan(
                 let mut skipped_books: Vec<(String, Book)> = Vec::new();
 
                 for book in book_list {
+                    // Query MongoDB by path (or by name if path matches name)
+                    let path_str = book.path.to_str().unwrap_or_default();
+                    // If you have a find_by_path method on BookRepository, use that.
+                    // Otherwise, querying by find_one with path
+                    // match mongodb.books.find_by_path(path_str).await {
+                    //     Ok(Some((existing_id, existing_book))) => {
+                    //         if existing_book.size_kb != book.size_kb
+                    //             || existing_book.modified_at != book.modified_at
+                    //         {
+                    //             let mut book = book;
+                    //             book.has_metadata = false;
+
+                    //             updated_books.push((existing_id, book));
+                    //         } else {
+                    //             skipped_books.push((existing_id, book));
+                    //         }
+                    //     }
+                    //     Ok(None) => new_books.push(book),
+                    //     Err(err) => error!(?err, path = ?book.path, "Failed to check path index"),
+                    // }
+
                     match db.get_book_by_path::<_, Book>(&book.path) {
                         Ok(Some((existing_id, existing_book))) => {
                             if existing_book.size_kb != book.size_kb
@@ -142,6 +163,9 @@ pub(crate) async fn run_library_scan(
 
                 for (id, book) in updated_books {
                     // TODO Diff this with what's in mongodb and update changed fields
+                    // Diff with what's in mongodb and update only changed fields
+                    // TODO This ID needs to be ObjectID from MongoDB
+                    // mongodb.books.update_diff(id, &book).await?;
 
                     db.update(
                         DocumentTable::Books,
