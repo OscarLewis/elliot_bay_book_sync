@@ -323,9 +323,24 @@ pub mod test_helpers {
         mongodb: MongoDatabase,
     }
 
-    impl AsyncTestContext for MongoTestContext {
-        async fn setup() -> Self {
+    impl MongoTestContext {
+        pub async fn set_config(&mut self, config: AppConfig) {
+            let resources = self.state.kobo_resources.lock().await.clone();
+
+            let patched_resources = patch_kobo_resources(
+                resources,
+                &config.base_url,
+                &config.ebbooks_auth_key,
+                config.proxy_kobo_store,
+            );
+
+            self.state.config = Arc::new(config);
+            *self.state.patched_resources.lock().await = patched_resources;
+        }
+
+        pub async fn setup_with_config(config: AppConfig) -> Self {
             dotenv().ok();
+
             let uri = env::var("MONGODB_TEST_URI")
                 .expect("MONGODB_TEST_URI must be set to run tests that require MongoDB");
             let database = format!("ebbooks_test_{}", uuid::Uuid::new_v4());
@@ -334,8 +349,8 @@ pub mod test_helpers {
                 .await
                 .expect("Failed to connect to MongoDB using MONGODB_TEST_URI");
 
-            let config = AppConfig::default(); // however you build a default test AppConfig
-            let db = DocumentDB::open_in_memory().expect("Unable to open database"); // your in-memory DocumentDB
+            let db = DocumentDB::open_in_memory().expect("Unable to open database");
+
             let kobo_resources = Resources::default();
             let patched_resources = patch_kobo_resources(
                 kobo_resources.clone(),
@@ -348,13 +363,19 @@ pub mod test_helpers {
                 config: Arc::new(config),
                 req_client: reqwest::Client::new(),
                 db: Arc::new(db),
-                mongodb: Arc::new(mongodb.clone()), // needs Clone, see note below
+                mongodb: Arc::new(mongodb.clone()),
                 hardcover_api_token: None,
                 kobo_resources: Arc::new(Mutex::new(kobo_resources)),
                 patched_resources: Arc::new(Mutex::new(patched_resources)),
             };
 
             Self { state, mongodb }
+        }
+    }
+
+    impl AsyncTestContext for MongoTestContext {
+        async fn setup() -> Self {
+            Self::setup_with_config(AppConfig::default()).await
         }
 
         async fn teardown(self) {
@@ -364,46 +385,6 @@ pub mod test_helpers {
         }
     }
 
-    /// Connects to the MongoDB instance used for integration tests, reading
-    /// `MONGODB_TEST_URI` from the environment. Panics with a clear message
-    /// if the variable is unset or the connection fails, so a missing test
-    /// dependency shows up immediately rather than as a confusing later error.
-    pub async fn test_mongodb() -> MongoDatabase {
-        dotenv().ok();
-
-        let uri = env::var("MONGODB_TEST_URI")
-            .expect("MONGODB_TEST_URI must be set to run tests that require MongoDB");
-
-        let database = format!("ebbooks_test_{}", uuid::Uuid::new_v4());
-
-        MongoDatabase::connect(&uri, &database)
-            .await
-            .expect("Failed to connect to MongoDB using MONGODB_TEST_URI")
-    }
-
-    /// Builds an `AppState` for tests, given a config and an in-memory
-    /// `DocumentDB`. Centralizing this means callers only need to update one
-    /// place (here) as `AppState`'s fields keep changing during the Mongo
-    /// migration, instead of every test literal.
-    pub async fn test_state(config: AppConfig, db: DocumentDB) -> AppState {
-        let kobo_resources = Resources::default();
-        let patched_resources = patch_kobo_resources(
-            kobo_resources.clone(),
-            &config.base_url,
-            &config.ebbooks_auth_key,
-            config.proxy_kobo_store,
-        );
-
-        AppState {
-            config: Arc::new(config),
-            req_client: reqwest::Client::new(),
-            db: Arc::new(db),
-            mongodb: Arc::new(test_mongodb().await),
-            hardcover_api_token: None,
-            kobo_resources: Arc::new(Mutex::new(kobo_resources)),
-            patched_resources: Arc::new(Mutex::new(patched_resources)),
-        }
-    }
     /// Helper utility to bootstrap a `TestServer` instance for integration testing.
     pub fn setup_test_app(state: AppState) -> TestServer {
         let router = Router::new().merge(app(state));

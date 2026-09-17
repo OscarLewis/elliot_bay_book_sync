@@ -222,25 +222,24 @@ pub fn get_download_url_format_for_book(uri: &str, auth_token: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        api::init_resources::Resources, config::AppConfig, database::document::DocumentDB,
-        test_helpers::test_state,
-    };
+    use crate::{api::init_resources::Resources, test_helpers::MongoTestContext};
     use axum::http::Uri;
-    use std::{str::FromStr, sync::Arc};
+    use std::str::FromStr;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_get_store_url_for_current_request() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
+    async fn test_get_store_url_for_current_request(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
         config.proxy_kobo_store = true;
-        let db = DocumentDB::open_in_memory()?;
+        state.config = std::sync::Arc::new(config);
 
         let mut resources = Resources::default();
         resources.device_auth = "https://storeapi.kobo.com/v1/auth/device".to_string();
-
-        let state = test_state(config, db).await;
 
         let token = "test-token-123";
         let uri = Uri::from_str("/kobo/test-token-123/v1/user/profile?param=value")?;

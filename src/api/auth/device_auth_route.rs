@@ -96,25 +96,24 @@ fn make_mock_auth_response(body: Bytes) -> impl IntoResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{
-        api::init_resources::Resources,
-        config::AppConfig,
-        database::document::DocumentDB,
-        test_helpers::{setup_test_app, test_state},
-    };
-    use reqwest::StatusCode;
     use std::sync::Arc;
+
+    use super::*;
+    use crate::test_helpers::{MongoTestContext, setup_test_app};
+    use reqwest::StatusCode;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_auth_handler() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
-        config.proxy_kobo_store = false;
-        let db = DocumentDB::open_in_memory()?;
+    async fn test_auth_handler(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
 
-        let state = test_state(config, db).await;
+        let mut config = (*state.config).clone();
+        config.proxy_kobo_store = false;
+        state.config = Arc::new(config);
 
         let server = setup_test_app(state);
 
@@ -122,13 +121,10 @@ mod tests {
 
         let response = server.post(&format!("/kobo/{token}/v1/auth/device")).await;
 
-        // Assert response is successful
         assert_eq!(response.status_code(), StatusCode::OK);
 
-        // Parse response body as JSON
         let body = response.json::<serde_json::Value>();
 
-        // Assert required fields are present
         assert!(body.get("AccessToken").is_some());
         assert!(body.get("RefreshToken").is_some());
         assert_eq!(
@@ -138,13 +134,11 @@ mod tests {
         assert!(body.get("TrackingId").is_some());
         assert!(body.get("UserKey").is_some());
 
-        // Assert tokens are non-empty base64 strings
         let access_token = body.get("AccessToken").and_then(|v| v.as_str());
         let refresh_token = body.get("RefreshToken").and_then(|v| v.as_str());
         assert!(access_token.is_some_and(|t| !t.is_empty()));
         assert!(refresh_token.is_some_and(|t| !t.is_empty()));
 
-        // Assert TrackingId is a valid UUID
         let tracking_id = body.get("TrackingId").and_then(|v| v.as_str());
         assert!(tracking_id.is_some_and(|id| uuid::Uuid::parse_str(id).is_ok()));
 

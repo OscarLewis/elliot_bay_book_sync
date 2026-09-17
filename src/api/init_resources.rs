@@ -497,16 +497,27 @@ pub fn patch_kobo_resources(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        AppState, config::AppConfig, database::document::DocumentDB, test_helpers::test_state,
-    };
+    use crate::{config::AppConfig, test_helpers::MongoTestContext};
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_app_state_patched_resources_differ_from_defaults()
-    -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_app_state_patched_resources_differ_from_defaults(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "https://books.example.com/";
         let test_auth_key = "test-token-123";
+
+        // let config = AppConfig {
+        //     base_url: test_base_url.to_string(),
+        //     ebbooks_auth_key: test_auth_key.to_string(),
+        //     proxy_kobo_store: false,
+        //     ..AppConfig::default()
+        // };
+
+        // let ctx = MongoTestContext::setup_with_config(config).await;
+        // let state = ctx.state.clone();
 
         let config = AppConfig {
             base_url: test_base_url.to_string(),
@@ -514,13 +525,12 @@ mod tests {
             proxy_kobo_store: false,
             ..AppConfig::default()
         };
-        let db = DocumentDB::open_in_memory()?;
 
-        let state = test_state(config, db).await;
+        ctx.set_config(config).await;
 
         // Lock both resource instances for comparison
-        let original = state.kobo_resources.lock().await;
-        let patched = state.patched_resources.lock().await;
+        let original = ctx.state.kobo_resources.lock().await;
+        let patched = ctx.state.patched_resources.lock().await;
 
         let clean_base = test_base_url.trim_end_matches('/');
 

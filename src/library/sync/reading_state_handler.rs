@@ -261,35 +261,24 @@ pub async fn reading_state_handler(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::DocumentDB,
         library::{
             book::{Book, ReadStatus},
             sync::entitlement_models::ReadingState,
         },
-        test_helpers::{setup_test_app, test_state},
+        test_helpers::{MongoTestContext, setup_test_app},
     };
     use axum::http::StatusCode;
-    use dotenvy::dotenv;
-    use mongodb::bson::oid::ObjectId;
-    use std::sync::OnceLock;
-    use tokio::sync::Mutex;
-    fn mongodb_test_lock() -> &'static Mutex<()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(()))
-    }
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_get_method_store_reading_state() -> Result<(), Box<dyn std::error::Error>> {
-        dotenv().ok();
-        let _lock = mongodb_test_lock().lock().await;
-        let config = AppConfig::default();
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
-        state.mongodb.books.delete_all().await?;
+    async fn test_get_method_store_reading_state(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
+
         let epub_path = std::path::PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
@@ -301,37 +290,43 @@ mod tests {
             .get(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .await;
         response.assert_status(StatusCode::OK);
+
         let response_body: ReadingState = response.json();
         assert_eq!(response_body.entitlement_id, book_id.to_string());
+
         let updated_book = state
             .mongodb
             .books
             .find_by_id(book_id)
             .await?
             .expect("Book should exist in database");
+
         let db_reading_state = updated_book
             .reading_state
             .expect("Reading state should be initialized on the book");
+
         assert_eq!(db_reading_state.book_id, book_id);
         assert_eq!(db_reading_state.entitlement_id, book_id.to_string());
+
         let second_get_response = server
             .get(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .await;
         second_get_response.assert_status(StatusCode::OK);
+
         let fetched_state: ReadingState = second_get_response.json();
         assert_eq!(fetched_state.entitlement_id, book_id.to_string());
+
         Ok(())
     }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_put_method_updates_reading_state() -> Result<(), Box<dyn std::error::Error>> {
-        dotenv().ok();
-        let _lock = mongodb_test_lock().lock().await;
-        let config = AppConfig::default();
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
-        state.mongodb.books.delete_all().await?;
+    async fn test_put_method_updates_reading_state(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
+
         let epub_path = std::path::PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
@@ -339,44 +334,69 @@ mod tests {
         let book_id = state.mongodb.books.insert(&mut book).await?;
 
         let token = state.config.ebbooks_auth_key.clone();
-        let put_payload = serde_json::json!({ "ReadingStates": [{ "EntitlementId": book_id.to_string(), "StatusInfo": { "Status": "Reading", "TimesStartedReading": 1 }, "Statistics": { "SpentReadingMinutes": 12, "RemainingTimeMinutes": 48 }, "CurrentBookmark": { "ProgressPercent": 25, "ContentSourceProgressPercent": 25, "Location": { "Value": "chapter-3", "Type": "KoboSpan", "Source": "epub" } } }] });
+        let put_payload = serde_json::json!({
+            "ReadingStates": [{
+                "EntitlementId": book_id.to_string(),
+                "StatusInfo": {
+                    "Status": "Reading",
+                    "TimesStartedReading": 1
+                },
+                "Statistics": {
+                    "SpentReadingMinutes": 12,
+                    "RemainingTimeMinutes": 48
+                },
+                "CurrentBookmark": {
+                    "ProgressPercent": 25,
+                    "ContentSourceProgressPercent": 25,
+                    "Location": {
+                        "Value": "chapter-3",
+                        "Type": "KoboSpan",
+                        "Source": "epub"
+                    }
+                }
+            }]
+        });
+
         let response = server
             .put(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .json(&put_payload)
             .await;
         response.assert_status(StatusCode::OK);
+
         let response_body: serde_json::Value = response.json();
         assert_eq!(
             response_body["UpdateResults"][0]["EntitlementId"],
             book_id.to_string()
         );
+
         let updated_book = state
             .mongodb
             .books
             .find_by_id(book_id)
             .await?
             .expect("Book should exist in database");
+
         let db_reading_state = updated_book
             .reading_state
             .expect("Reading state should exist on the book");
+
         assert_eq!(db_reading_state.book_id.to_hex(), book_id.to_hex());
         assert_eq!(db_reading_state.entitlement_id, book_id.to_string());
         assert_eq!(db_reading_state.status_info.status, ReadStatus::InProgress);
         assert!(db_reading_state.statistics.is_some());
         assert!(db_reading_state.current_bookmark.is_some());
+
         Ok(())
     }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_put_method_missing_reading_states_returns_bad_request()
-    -> Result<(), Box<dyn std::error::Error>> {
-        dotenv().ok();
-        let _lock = mongodb_test_lock().lock().await;
-        let config = AppConfig::default();
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
-        state.mongodb.books.delete_all().await?;
+    async fn test_put_method_missing_reading_states_returns_bad_request(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let state = ctx.state.clone();
         let server = setup_test_app(state.clone());
+
         let epub_path = std::path::PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
@@ -384,12 +404,17 @@ mod tests {
         let book_id = state.mongodb.books.insert(&mut book).await?;
 
         let token = state.config.ebbooks_auth_key.clone();
-        let put_payload = serde_json::json!({ "ReadingStates": [] });
+        let put_payload = serde_json::json!({
+            "ReadingStates": []
+        });
+
         let response = server
             .put(&format!("/kobo/{token}/v1/library/{book_id}/state"))
             .json(&put_payload)
             .await;
+
         response.assert_status(StatusCode::BAD_REQUEST);
+
         Ok(())
     }
 }

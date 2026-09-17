@@ -79,32 +79,31 @@ pub async fn oauth_token_handler(
 
     Ok((StatusCode::OK, Json(response_body)).into_response())
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        api::init_resources::Resources,
-        config::AppConfig,
-        database::document::DocumentDB,
-        test_helpers::{setup_test_app, test_state},
-    };
+    use crate::test_helpers::{MongoTestContext, setup_test_app};
     use reqwest::StatusCode;
     use std::sync::Arc;
+    use test_context::test_context;
     use test_log::test;
-    use tokio::sync::Mutex;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_oauth_token_handler() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
-        config.proxy_kobo_store = false;
-        let db = DocumentDB::open_in_memory()?;
+    async fn test_oauth_token_handler(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
 
-        let state = test_state(config, db).await;
+        let mut config = (*state.config).clone();
+        config.proxy_kobo_store = false;
+        state.config = Arc::new(config);
+
         let server = setup_test_app(state);
 
         let token = "test-token-123";
 
-        // POST request with a payload
         let payload = serde_json::json!({
             "scope": "read_write",
             "user_id": "user_123"
@@ -119,7 +118,6 @@ mod tests {
 
         let body = response.json::<serde_json::Value>();
 
-        // Assert camelCase and PascalCase (legacy) fields are present and correct
         assert_eq!(
             body.get("token_type").and_then(|v| v.as_str()),
             Some("Bearer")
@@ -138,7 +136,6 @@ mod tests {
             Some("user_123")
         );
 
-        // Assert token values exist, match each other, and are non-empty
         let access_token = body.get("access_token").and_then(|v| v.as_str());
         let legacy_access_token = body.get("AccessToken").and_then(|v| v.as_str());
         assert!(access_token.is_some_and(|t| !t.is_empty()));
@@ -152,43 +149,54 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_oauth_token_handler_empty_payload() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
-        config.proxy_kobo_store = false;
-        let db = DocumentDB::open_in_memory()?;
+    async fn test_oauth_token_handler_empty_payload(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
 
-        let state = test_state(config, db).await;
+        let mut config = (*state.config).clone();
+        config.proxy_kobo_store = false;
+        state.config = Arc::new(config);
 
         let server = setup_test_app(state);
 
         let token = "test-token-123";
 
-        // POST request without body (simulates request.get_json(silent=True) or {})
         let response = server.post(&format!("/kobo/{token}/oauth/token")).await;
 
         assert_eq!(response.status_code(), StatusCode::OK);
 
         let body = response.json::<serde_json::Value>();
 
-        // Missing fields should safely default to empty strings
         assert_eq!(body.get("scope").and_then(|v| v.as_str()), Some(""));
         assert_eq!(body.get("user_id").and_then(|v| v.as_str()), Some(""));
 
         Ok(())
     }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_oauth_token_handler_other_subpath() -> Result<(), Box<dyn std::error::Error>> {
-        let mut config = AppConfig::default();
+    async fn test_oauth_token_handler_other_subpath(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+
+        let mut config = (*state.config).clone();
         config.proxy_kobo_store = false;
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
+        state.config = Arc::new(config);
+
         let server = setup_test_app(state);
+
         let token = "test-token-123";
+
         let response = server.post(&format!("/kobo/{token}/oauth/refresh")).await;
+
         assert_eq!(response.status_code(), StatusCode::OK);
+
         let body = response.json::<serde_json::Value>();
+
         assert_eq!(
             body.get("token_type").and_then(|v| v.as_str()),
             Some("Bearer")
@@ -198,10 +206,13 @@ mod tests {
             Some("Bearer")
         );
         assert_eq!(body.get("expires_in").and_then(|v| v.as_u64()), Some(3600));
+
         let access_token = body.get("access_token").and_then(|v| v.as_str());
         assert!(access_token.is_some_and(|t| !t.is_empty()));
+
         let refresh_token = body.get("refresh_token").and_then(|v| v.as_str());
         assert!(refresh_token.is_some_and(|t| !t.is_empty()));
+
         Ok(())
     }
 }

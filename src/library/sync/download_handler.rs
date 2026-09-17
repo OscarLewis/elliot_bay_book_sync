@@ -95,21 +95,22 @@ pub async fn download_request_handler(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
         library::{
             book::Book,
             sync::entitlement_models::{BookMetadata, KoboFormat},
         },
-        test_helpers::{setup_test_app, test_state},
+        test_helpers::{MongoTestContext, setup_test_app},
     };
     use reqwest::StatusCode;
     use std::path::PathBuf;
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_download_handler() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_download_handler(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
         let epub_path = PathBuf::from(
@@ -118,15 +119,13 @@ mod tests {
         let book_format = KoboFormat::Epub;
         let book_format_str = book_format.download_format();
 
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
         let server = setup_test_app(state.clone());
 
         let mut book = Book::from_path(epub_path.clone());
@@ -145,6 +144,7 @@ mod tests {
 
         let body = download_response.into_bytes();
         assert_eq!(body.as_ref(), expected_body.as_slice());
+
         state.mongodb.books.delete(book_id).await?;
 
         Ok(())

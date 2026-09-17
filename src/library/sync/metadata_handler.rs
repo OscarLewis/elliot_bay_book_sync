@@ -12,6 +12,7 @@ use axum::{
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
+use mongodb::bson::oid::ObjectId;
 use reqwest::Method;
 use tracing::{debug, info};
 
@@ -24,7 +25,10 @@ pub async fn metadata_request_handler(
     body: Bytes,
 ) -> Result<Response, AppError> {
     info!(book_id, "Received Kobo metadata request");
-    let book: Option<Book> = state.db.read(DocumentTable::Books, &book_id)?;
+
+    let book_id = ObjectId::parse_str(&book_id).map_err(|_| AppError::InvalidObjectId)?;
+
+    let book = state.mongodb.books.find_by_id(book_id).await?;
 
     let Some(book) = book else {
         debug!("Book not found in database, proxying request");
@@ -43,11 +47,12 @@ pub async fn metadata_request_handler(
         .into_response());
     };
     let metadata_entitlement =
-        BookMetadata::from_book_tuple((&book_id, &book), state.config.clone());
+        BookMetadata::from_book_tuple((&book_id.to_string(), &book), state.config.clone());
 
     info!(
         uri = uri.to_string(),
-        book_id, "Received Kobo Metadata request"
+        ?book_id,
+        "Received Kobo Metadata request"
     );
 
     Ok(Json(vec![metadata_entitlement]).into_response())
@@ -56,24 +61,25 @@ pub async fn metadata_request_handler(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
         config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
         library::{book::Book, sync::entitlement_models::BookMetadata},
-        test_helpers::{setup_test_app, test_state},
+        test_helpers::{MongoTestContext, setup_test_app},
     };
     use reqwest::StatusCode;
     use std::path::PathBuf;
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_metadata_handler() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_metadata_handler(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
         let epub_path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
         );
-
         let config = AppConfig {
             base_url: test_base_url.to_string(),
             ebbooks_auth_key: token.to_string(),
@@ -81,18 +87,12 @@ mod tests {
             ..AppConfig::default()
         };
 
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
-        let server = setup_test_app(state.clone());
+        ctx.set_config(config).await;
+        let server = setup_test_app(ctx.state.clone());
 
-        let book = Book::from_path(epub_path);
+        let mut book = Book::from_path(epub_path);
 
-        let book_id = state.db.create(
-            DocumentTable::Books,
-            &book,
-            Some(|book: &Book| book.path.to_str().unwrap()),
-            None,
-        )?;
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
         // Send metadata request to test server
         let metadata_response = server
@@ -110,11 +110,11 @@ mod tests {
         let metadata = &metadata_list[0];
 
         // All book-scoped ids should be derived from the book_id
-        assert_eq!(metadata.cover_image_id, book_id);
-        assert_eq!(metadata.cross_revision_id, book_id);
-        assert_eq!(metadata.entitlement_id, book_id);
-        assert_eq!(metadata.revision_id, book_id);
-        assert_eq!(metadata.work_id, book_id);
+        assert_eq!(metadata.cover_image_id, book_id.to_string());
+        assert_eq!(metadata.cross_revision_id, book_id.to_string());
+        assert_eq!(metadata.entitlement_id, book_id.to_string());
+        assert_eq!(metadata.revision_id, book_id.to_string());
+        assert_eq!(metadata.work_id, book_id.to_string());
 
         // Title falls back to the parsed name if no title was found
         let expected_title = book.title.clone().unwrap_or_else(|| book.name.clone());
@@ -128,7 +128,7 @@ mod tests {
         assert_eq!(download_url.platform, "Generic");
         assert_eq!(download_url.drm_type, "None");
         assert!(download_url.url.starts_with(test_base_url));
-        assert!(download_url.url.contains(&book_id));
+        assert!(download_url.url.contains(&book_id.to_string()));
 
         Ok(())
     }

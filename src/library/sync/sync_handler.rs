@@ -352,37 +352,32 @@ pub async fn generate_sync_response(
 #[cfg(test)]
 mod tests {
     use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::{DocumentDB, DocumentTable},
-        library::{
-            book::Book,
-            sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
-        },
+        library::book::Book,
+        library::sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
         metadata::update_meta::update_metadata,
-        test_helpers::{setup_test_app, test_state},
+        test_helpers::{MongoTestContext, setup_test_app},
     };
     use reqwest::StatusCode;
+    use test_context::test_context;
     use test_log::test;
     use tokio::time::{Duration, sleep};
 
-    /*
-    // FIXME fix test to work with mongodb
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore]
-    async fn test_library_sync() -> Result<(), Box<dyn std::error::Error>> {
+    #[ignore = "requires mongodb test server setup"]
+    async fn test_library_sync(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
         let server = setup_test_app(state.clone());
 
         // Scan first to populate the library
@@ -391,39 +386,39 @@ mod tests {
 
         sleep(Duration::from_millis(500)).await;
 
-        // TODO fetch metadata before sync
         // Fetch all books and update metadata
         let books_needing_metadata = state.mongodb.books.fetch_all().await?;
         update_metadata(state.clone(), books_needing_metadata).await?;
 
-        // Wait for metadata update to complete
-        tokio::time::sleep(tokio::time::Duration::from_millis(2500)).await;
+        // Wait for metadata update and image extraction to complete
+        sleep(Duration::from_millis(2500)).await;
 
         // Now sync
         let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
         response.assert_status(StatusCode::OK);
 
         // Cleanup: remove all downloaded images
-        let all_books: Vec<(String, Book)> = state.db.get_all(DocumentTable::Books)?;
-        for (_, book) in all_books {
+        let all_books = state.mongodb.books.fetch_all().await?;
+        for book in all_books {
             if let Some(image_path) = book.image_path {
                 let _ = tokio::fs::remove_file(&image_path).await;
             }
         }
+
         Ok(())
-    } */
+    }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_generate_sync_response_no_proxy() -> Result<(), Box<dyn std::error::Error>> {
-        let config = AppConfig {
-            base_url: "http://books.example.com/".to_string(),
-            ebbooks_auth_key: "test-token".to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
+    async fn test_generate_sync_response_no_proxy(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
@@ -435,18 +430,17 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_generate_sync_response_with_continuation()
-    -> Result<(), Box<dyn std::error::Error>> {
-        let config = AppConfig {
-            base_url: "http://books.example.com/".to_string(),
-            ebbooks_auth_key: "test-token".to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
+    async fn test_generate_sync_response_with_continuation(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];
@@ -464,18 +458,17 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_generate_sync_response_includes_token() -> Result<(), Box<dyn std::error::Error>>
-    {
-        let config = AppConfig {
-            base_url: "http://books.example.com/".to_string(),
-            ebbooks_auth_key: "test-token".to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-        let state = test_state(config, db).await;
+    async fn test_generate_sync_response_includes_token(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
         let sync_results = vec![];

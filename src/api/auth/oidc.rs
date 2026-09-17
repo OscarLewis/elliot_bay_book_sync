@@ -69,30 +69,25 @@ pub async fn oidc_well_known_configuration_handler(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        AppState,
-        config::AppConfig,
-        database::document::DocumentDB,
-        test_helpers::{setup_test_app, test_state},
-    };
+    use crate::test_helpers::{MongoTestContext, setup_test_app};
     use reqwest::StatusCode;
+    use test_context::test_context;
     use test_log::test;
 
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    async fn test_oidc_endpoint() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_oidc_endpoint(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "https://books.example.com/";
         let token = "test-token-123";
 
-        let config = AppConfig {
-            base_url: test_base_url.to_string(),
-            ebbooks_auth_key: token.to_string(),
-            proxy_kobo_store: false,
-            ..AppConfig::default()
-        };
-
-        let db = DocumentDB::open_in_memory()?;
-
-        let state = test_state(config, db).await;
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
 
         let server = setup_test_app(state);
 

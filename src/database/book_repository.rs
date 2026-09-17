@@ -237,138 +237,110 @@ impl BookRepository {
 
 #[cfg(test)]
 mod tests {
-    use crate::{error::AppError, library::book::Book, test_helpers::test_mongodb};
-    use mongodb::bson::doc;
+    use crate::{error::AppError, library::book::Book, test_helpers::MongoTestContext};
+    use mongodb::bson::oid::ObjectId;
+    use test_context::test_context;
     use test_log::test;
 
     /// Verifies that inserting a `Book` persists it to MongoDB and that it can
     /// be retrieved by the `ObjectId` returned from the insert.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_insert() -> Result<(), AppError> {
+    async fn test_mongodb_book_insert(ctx: &mut MongoTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let mongodb = test_mongodb().await;
         let mut book = Book::from_path(epub_path);
 
-        let mut inserted_ids = Vec::new();
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let run_test = async {
-            let book_id = mongodb.books.insert(&mut book).await?;
-            inserted_ids.push(book_id);
+        assert_eq!(book.id, Some(book_id));
 
-            let found = mongodb
-                .books
-                .find_by_id(book_id)
-                .await?
-                .expect("book should have been inserted");
+        let found = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("book should have been inserted");
 
-            assert_eq!(found.name, book.name);
-            Ok(())
-        };
+        assert_eq!(found.name, book.name);
 
-        let result = run_test.await;
-
-        // Clean up only the inserted test records
-        for id in inserted_ids {
-            let _ = mongodb.books.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that the unique index on `Book::path` rejects a second insert
     /// of a book with the same path.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_path_unique_index() -> Result<(), AppError> {
+    async fn test_mongodb_book_path_unique_index(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let mongodb = test_mongodb().await;
         let mut book = Book::from_path(epub_path);
 
-        let mut inserted_ids = Vec::new();
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let run_test = async {
-            let book_id = mongodb.books.insert(&mut book).await?;
-            inserted_ids.push(book_id);
+        assert_eq!(book.id, Some(book_id));
 
-            let second_insert = mongodb.books.insert(&mut book).await;
-            assert!(second_insert.is_err(), "duplicate path should be rejected");
+        let second_insert = ctx.state.mongodb.books.insert(&mut book).await;
+        assert!(second_insert.is_err(), "duplicate path should be rejected");
 
-            Ok(())
-        };
-
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.books.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `update` overwrites an existing document's fields and
     /// reports `true` when a match was found.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_update() -> Result<(), AppError> {
+    async fn test_mongodb_book_update(ctx: &mut MongoTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let mongodb = test_mongodb().await;
         let mut original = Book::from_path(epub_path.clone());
 
-        let mut inserted_ids = Vec::new();
+        let book_id = ctx.state.mongodb.books.insert(&mut original).await?;
 
-        let run_test = async {
-            let book_id = mongodb.books.insert(&mut original).await?;
-            inserted_ids.push(book_id);
+        let mut updated = Book::from_path(epub_path);
+        updated.name = "Renamed Book".to_string();
 
-            let mut updated = Book::from_path(epub_path.clone());
-            updated.name = "Renamed Book".to_string();
+        let was_updated = ctx.state.mongodb.books.update(book_id, &updated).await?;
 
-            let was_updated = mongodb.books.update(book_id, &updated).await?;
-            assert!(was_updated, "update should report a matched document");
+        assert!(was_updated, "update should report a matched document");
 
-            let found = mongodb
-                .books
-                .find_by_id(book_id)
-                .await?
-                .expect("book should still exist after update");
+        let found = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("book should still exist after update");
 
-            assert_eq!(found.name, updated.name);
-            Ok(())
-        };
+        assert_eq!(found.name, updated.name);
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.books.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `update` reports `false` when no document matches the
     /// given id, rather than erroring or silently inserting.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_update_missing_returns_false() -> Result<(), AppError> {
+    async fn test_mongodb_book_update_missing_returns_false(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let mongodb = test_mongodb().await;
         let book = Book::from_path(epub_path);
+        let missing_id = ObjectId::new();
 
-        let missing_id = mongodb::bson::oid::ObjectId::new();
-        let was_updated = mongodb.books.update(missing_id, &book).await?;
+        let was_updated = ctx.state.mongodb.books.update(missing_id, &book).await?;
 
         assert!(!was_updated, "update should report no matched document");
 
@@ -377,140 +349,119 @@ mod tests {
 
     /// Verifies that `update_title` with `Some(title)` sets the `title`
     /// field without disturbing other fields on the document.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_update_title_some() -> Result<(), AppError> {
+    async fn test_mongodb_book_update_title_some(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let mongodb = test_mongodb().await;
         let mut book = Book::from_path(epub_path);
         let original_name = book.name.clone();
 
-        let mut inserted_ids = Vec::new();
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let run_test = async {
-            let book_id = mongodb.books.insert(&mut book).await?;
-            inserted_ids.push(book_id);
+        let was_updated = ctx
+            .state
+            .mongodb
+            .books
+            .update_title(book_id, Some("New Title".to_string()))
+            .await?;
 
-            let was_updated = mongodb
-                .books
-                .update_title(book_id, Some("New Title".to_string()))
-                .await?;
-            assert!(was_updated, "update_title should report a matched document");
+        assert!(was_updated, "update_title should report a matched document");
 
-            let found = mongodb
-                .books
-                .find_by_id(book_id)
-                .await?
-                .expect("book should still exist after update");
+        let found = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("book should still exist after update");
 
-            assert_eq!(found.title.as_deref(), Some("New Title"));
-            assert_eq!(found.name, original_name);
-            Ok(())
-        };
+        assert_eq!(found.title.as_deref(), Some("New Title"));
+        assert_eq!(found.name, original_name);
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.books.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `update_title` with `None` removes the `title` field
     /// from the document entirely.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_update_title_none() -> Result<(), AppError> {
+    async fn test_mongodb_book_update_title_none(
+        ctx: &mut MongoTestContext,
+    ) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
 
-        let mongodb = test_mongodb().await;
         let mut book = Book::from_path(epub_path);
         book.title = Some("Original Title".to_string());
 
-        let mut inserted_ids = Vec::new();
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
-        let run_test = async {
-            let book_id = mongodb.books.insert(&mut book).await?;
-            inserted_ids.push(book_id);
+        let was_updated = ctx.state.mongodb.books.update_title(book_id, None).await?;
 
-            let was_updated = mongodb.books.update_title(book_id, None).await?;
-            assert!(was_updated, "update_title should report a matched document");
+        assert!(was_updated, "update_title should report a matched document");
 
-            let found = mongodb
-                .books
-                .find_by_id(book_id)
-                .await?
-                .expect("book should still exist after update");
+        let found = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(book_id)
+            .await?
+            .expect("book should still exist after update");
 
-            assert_eq!(found.title, None);
-            Ok(())
-        };
+        assert_eq!(found.title, None);
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.books.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `insert_many` persists multiple `Book` documents at once and
     /// returns their generated `ObjectId`s in matching order.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
-    #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_book_insert_many() -> Result<(), AppError> {
+    async fn test_mongodb_book_insert_many(ctx: &mut MongoTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let path_a = temp_dir.path().join("book_a.epub");
         let path_b = temp_dir.path().join("book_b.epub");
         tokio::fs::write(&path_a, vec![0u8; 1024]).await?;
         tokio::fs::write(&path_b, vec![0u8; 1024]).await?;
 
-        let mongodb = test_mongodb().await;
-
         let book_a = Book::from_path(path_a);
         let book_b = Book::from_path(path_b);
         let mut books = vec![book_a.clone(), book_b.clone()];
 
-        let mut inserted_ids = Vec::new();
+        let ids = ctx.state.mongodb.books.insert_many(&mut books).await?;
 
-        let run_test = async {
-            let ids = mongodb.books.insert_many(&mut books).await?;
-            assert_eq!(ids.len(), 2);
-            inserted_ids.extend(&ids);
+        assert_eq!(ids.len(), 2);
+        assert_eq!(books[0].id, Some(ids[0]));
+        assert_eq!(books[1].id, Some(ids[1]));
 
-            let found_a = mongodb
-                .books
-                .find_by_id(ids[0])
-                .await?
-                .expect("first book should exist");
-            let found_b = mongodb
-                .books
-                .find_by_id(ids[1])
-                .await?
-                .expect("second book should exist");
+        let found_a = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(ids[0])
+            .await?
+            .expect("first book should exist");
 
-            assert_eq!(found_a.name, book_a.name);
-            assert_eq!(found_b.name, book_b.name);
+        let found_b = ctx
+            .state
+            .mongodb
+            .books
+            .find_by_id(ids[1])
+            .await?
+            .expect("second book should exist");
 
-            let empty_ids = mongodb.books.insert_many(&mut []).await?;
-            assert!(empty_ids.is_empty());
+        assert_eq!(found_a.name, book_a.name);
+        assert_eq!(found_b.name, book_b.name);
 
-            Ok(())
-        };
+        let empty_ids = ctx.state.mongodb.books.insert_many(&mut []).await?;
+        assert!(empty_ids.is_empty());
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.books.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 }

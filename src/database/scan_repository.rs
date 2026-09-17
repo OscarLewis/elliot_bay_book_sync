@@ -124,17 +124,19 @@ mod tests {
     use crate::{
         error::AppError,
         scan::scanner::{ScanDetails, ScanDocument, ScanStatus},
-        test_helpers::test_mongodb,
+        test_helpers::MongoTestContext,
     };
     use chrono::{DateTime, DurationRound, Utc};
+    use test_context::test_context;
     use test_log::test;
 
     /// Verifies that inserting a `ScanDocument` persists it to MongoDB and
     /// that it can be retrieved by the `ObjectId` returned from the insert.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_insert() -> Result<(), AppError> {
-        let mongodb = test_mongodb().await;
+    async fn test_mongodb_scan_insert(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+        let mongodb = &ctx.state.mongodb;
 
         let scan = ScanDocument {
             status: ScanStatus::Running,
@@ -142,37 +144,25 @@ mod tests {
             details: ScanDetails::Started,
         };
 
-        let mut inserted_ids = Vec::new();
+        let scan_id = mongodb.scans.insert(&scan).await?;
 
-        let run_test = async {
-            let scan_id = mongodb.scans.insert(&scan).await?;
-            inserted_ids.push(scan_id);
+        let found = mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("scan should have been inserted");
 
-            let found = mongodb
-                .scans
-                .find_by_id(scan_id)
-                .await?
-                .expect("scan should have been inserted");
-
-            assert_eq!(found.status, scan.status);
-            Ok(())
-        };
-
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.scans.delete(id).await;
-        }
-
-        result
+        assert_eq!(found.status, scan.status);
+        Ok(())
     }
 
     /// Verifies that `ScanRepository::latest` returns the most recently
     /// timestamped scan, using the descending index on `timestamp`.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_latest() -> Result<(), AppError> {
-        let mongodb = test_mongodb().await;
+    async fn test_mongodb_scan_latest(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+        let mongodb = &ctx.state.mongodb;
 
         // Use timestamps far in the future so Utc::now() records don't out-sort them
         let older = ScanDocument {
@@ -190,36 +180,27 @@ mod tests {
                 .with_timezone(&Utc),
             details: ScanDetails::Started,
         };
-        let mut inserted_ids = Vec::new();
 
-        let run_test = async {
-            let id_older = mongodb.scans.insert(&older).await?;
-            inserted_ids.push(id_older);
+        let id_older = mongodb.scans.insert(&older).await?;
+        let id_newer = mongodb.scans.insert(&newer).await?;
 
-            let id_newer = mongodb.scans.insert(&newer).await?;
-            inserted_ids.push(id_newer);
+        let latest = mongodb.scans.latest().await?.expect("should find a scan");
 
-            let latest = mongodb.scans.latest().await?.expect("should find a scan");
+        assert_eq!(latest.timestamp, newer.timestamp);
 
-            assert_eq!(latest.timestamp, newer.timestamp);
-            Ok(())
-        };
+        let _ = mongodb.scans.delete(id_older).await;
+        let _ = mongodb.scans.delete(id_newer).await;
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.scans.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `mark_completed` transitions a `Running` scan to
     /// `Finished` and attaches the given counts as `ScanDetails::Completed`.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_mark_completed() -> Result<(), AppError> {
-        let mongodb = test_mongodb().await;
+    async fn test_mongodb_scan_mark_completed(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+        let mongodb = &ctx.state.mongodb;
 
         let scan = ScanDocument {
             status: ScanStatus::Running,
@@ -227,52 +208,43 @@ mod tests {
             details: ScanDetails::Started,
         };
 
-        let mut inserted_ids = Vec::new();
+        let scan_id = mongodb.scans.insert(&scan).await?;
 
-        let run_test = async {
-            let scan_id = mongodb.scans.insert(&scan).await?;
-            inserted_ids.push(scan_id);
+        let was_updated = mongodb.scans.mark_completed(scan_id, 3, 1, 0).await?;
+        assert!(
+            was_updated,
+            "mark_completed should report a matched document"
+        );
 
-            let was_updated = mongodb.scans.mark_completed(scan_id, 3, 1, 0).await?;
-            assert!(
-                was_updated,
-                "mark_completed should report a matched document"
-            );
+        let found = mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("scan should still exist after update");
 
-            let found = mongodb
-                .scans
-                .find_by_id(scan_id)
-                .await?
-                .expect("scan should still exist after update");
+        assert_eq!(found.status, ScanStatus::Finished);
+        assert_eq!(
+            found.details,
+            ScanDetails::Completed {
+                added_count: 3,
+                updated_count: 1,
+                skipped_count: 0,
+            }
+        );
+        assert!((found.timestamp - scan.timestamp).abs() <= chrono::TimeDelta::seconds(1));
 
-            assert_eq!(found.status, ScanStatus::Finished);
-            assert_eq!(
-                found.details,
-                ScanDetails::Completed {
-                    added_count: 3,
-                    updated_count: 1,
-                    skipped_count: 0,
-                }
-            );
-            assert!((found.timestamp - scan.timestamp).abs() <= chrono::TimeDelta::seconds(1));
-            Ok(())
-        };
+        let _ = mongodb.scans.delete(scan_id).await;
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.scans.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `mark_failed` transitions a `Running` scan to `Error`
     /// and attaches the given reason as `ScanDetails::Failed`.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_mark_failed() -> Result<(), AppError> {
-        let mongodb = test_mongodb().await;
+    async fn test_mongodb_scan_mark_failed(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+        let mongodb = &ctx.state.mongodb;
 
         let scan = ScanDocument {
             status: ScanStatus::Running,
@@ -280,74 +252,55 @@ mod tests {
             details: ScanDetails::Started,
         };
 
-        let mut inserted_ids = Vec::new();
+        let scan_id = mongodb.scans.insert(&scan).await?;
 
-        let run_test = async {
-            let scan_id = mongodb.scans.insert(&scan).await?;
-            inserted_ids.push(scan_id);
+        let was_updated = mongodb
+            .scans
+            .mark_failed(scan_id, "disk read error".to_string())
+            .await?;
+        assert!(was_updated, "mark_failed should report a matched document");
 
-            let was_updated = mongodb
-                .scans
-                .mark_failed(scan_id, "disk read error".to_string())
-                .await?;
-            assert!(was_updated, "mark_failed should report a matched document");
+        let found = mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("scan should still exist after update");
 
-            let found = mongodb
-                .scans
-                .find_by_id(scan_id)
-                .await?
-                .expect("scan should still exist after update");
+        assert_eq!(found.status, ScanStatus::Error);
+        assert_eq!(
+            found.details,
+            ScanDetails::Failed {
+                reason: "disk read error".to_string(),
+            }
+        );
 
-            assert_eq!(found.status, ScanStatus::Error);
-            assert_eq!(
-                found.details,
-                ScanDetails::Failed {
-                    reason: "disk read error".to_string(),
-                }
-            );
-            Ok(())
-        };
+        let _ = mongodb.scans.delete(scan_id).await;
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.scans.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 
     /// Verifies that `start` inserts a new scan in the `Running`/`Started`
     /// state with a fresh timestamp, and that it can be retrieved by the
     /// returned `ObjectId`.
+    #[test_context(MongoTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_mongodb_scan_start() -> Result<(), AppError> {
-        let mongodb = test_mongodb().await;
+    async fn test_mongodb_scan_start(ctx: &mut MongoTestContext) -> Result<(), AppError> {
+        let mongodb = &ctx.state.mongodb;
 
-        let mut inserted_ids = Vec::new();
+        let scan_id = mongodb.scans.start().await?;
 
-        let run_test = async {
-            let scan_id = mongodb.scans.start().await?;
-            inserted_ids.push(scan_id);
+        let found = mongodb
+            .scans
+            .find_by_id(scan_id)
+            .await?
+            .expect("scan should have been inserted");
 
-            let found = mongodb
-                .scans
-                .find_by_id(scan_id)
-                .await?
-                .expect("scan should have been inserted");
+        assert_eq!(found.status, ScanStatus::Running);
+        assert_eq!(found.details, ScanDetails::Started);
 
-            assert_eq!(found.status, ScanStatus::Running);
-            assert_eq!(found.details, ScanDetails::Started);
-            Ok(())
-        };
+        let _ = mongodb.scans.delete(scan_id).await;
 
-        let result = run_test.await;
-
-        for id in inserted_ids {
-            let _ = mongodb.scans.delete(id).await;
-        }
-
-        result
+        Ok(())
     }
 }
