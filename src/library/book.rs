@@ -1,4 +1,4 @@
-use crate::database::bson_chrono_datetime::bson_chrono_datetime;
+use crate::database::bson_chrono_datetime::{bson_chrono_datetime, bson_chrono_datetime_option};
 use crate::error::AppError;
 use chrono::{DateTime, Utc};
 use image::DynamicImage;
@@ -11,9 +11,6 @@ use std::path::Path;
 pub struct Book {
     pub path: Box<Path>,
     // MongoDB ID value
-    // TODO FIX this and get ID working for mongo db documents
-    // #[serde(rename = "_id", default)]
-    // pub id: String,
     #[serde(rename = "_id", default, skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
     pub name: String,
@@ -25,7 +22,7 @@ pub struct Book {
     #[serde(default)]
     pub description: Option<String>,
     pub size_kb: u64,
-    // TODO with switch to MongoDB turn this into an actual date tiem
+    /// Stored as a BSON DateTime in MongoDB.
     #[serde(with = "bson_chrono_datetime")]
     pub modified_at: DateTime<Utc>,
     #[serde(default)]
@@ -153,10 +150,13 @@ impl Book {
 */
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReadingStateDocument {
-    pub book_id: String,
+    pub book_id: ObjectId,
     pub entitlement_id: String,
+    #[serde(with = "bson_chrono_datetime")]
     pub created: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime")]
     pub priority_timestamp: DateTime<Utc>,
     pub status_info: StatusInfoDocument,
     pub statistics: Option<StatisticsDocument>,
@@ -204,13 +204,16 @@ impl fmt::Display for ReadStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatusInfoDocument {
     pub status: ReadStatus,
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime_option")]
     pub last_time_started_reading: Option<DateTime<Utc>>,
     pub times_started_reading: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatisticsDocument {
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
     pub remaining_time_minutes: Option<i32>,
     pub spent_reading_minutes: Option<i32>,
@@ -218,6 +221,7 @@ pub struct StatisticsDocument {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CurrentBookmarkDocument {
+    #[serde(with = "bson_chrono_datetime")]
     pub last_modified: DateTime<Utc>,
     pub location_source: Option<String>,
     pub location_type: Option<String>,

@@ -217,11 +217,17 @@ impl BookRepository {
 
         Ok(books)
     }
+
+    pub async fn delete_all(&self) -> Result<(), AppError> {
+        self.collection.delete_many(doc! {}).await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{error::AppError, library::book::Book, test_helpers::test_mongodb};
+    use mongodb::bson::doc;
     use test_log::test;
 
     /// Verifies that inserting a `Book` persists it to MongoDB and that it can
