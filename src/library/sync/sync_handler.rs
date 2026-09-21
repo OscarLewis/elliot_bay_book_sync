@@ -491,7 +491,7 @@ mod tests {
         // Wait for metadata update and image extraction to complete
         sleep(Duration::from_millis(2500)).await;
 
-        // 1. Initial Sync Call (No Sync-Token in Header)
+        // Initial Sync Call (No Sync-Token in Header)
         let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
         response.assert_status(StatusCode::OK);
 
@@ -528,7 +528,7 @@ mod tests {
             "Returned sync payload item count mismatch"
         );
 
-        // 2. Second Sync Call using the newly received token
+        // Second Sync Call using the newly received token
         let re_sync_response = server
             .get(&format!("/kobo/{token}/v1/library/sync"))
             .add_header(SYNC_TOKEN_HEADER, token_header)
