@@ -7,7 +7,7 @@ use crate::{
         sync::{
             entitlement_models::{Entitlement, SyncResult},
             sync_document::SyncedBookDocument,
-            sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+            sync_token::SyncToken,
         },
     },
 };
@@ -17,7 +17,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use chrono::{TimeZone, Utc};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use tracing::{debug, error};
 
 pub const SYNC_ITEM_LIMIT: usize = 100;
@@ -43,6 +43,7 @@ pub async fn library_sync_handler(
     // Fetch all synced book records and library books
     let synced_books = state.mongodb.syncs.fetch_all().await?;
     let books = state.mongodb.books.fetch_all().await?;
+
     /*
     TODO: Update to how we handle updated entitlements to allow for metadata refresh post intitial sync
     UNSYNCED
@@ -179,6 +180,7 @@ pub async fn library_sync_handler(
     sync_token.data.books_last_modified = new_books_last_modified;
     sync_token.data.books_last_created = new_books_last_created;
     sync_token.data.archive_last_modified = new_archived_last_modified;
+    sync_token.data.reading_state_last_modified = new_reading_state_last_modified;
 
     // Only proxy to Kobo's real store when this sync doesn't touch local
     // content — proxying a sync that contains locally-added books will
@@ -283,12 +285,9 @@ pub async fn generate_sync_response(
 #[cfg(test)]
 mod tests {
     use crate::{
-        library::{
-            book::Book,
-            sync::{
-                sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
-                sync_token::{SYNC_TOKEN_HEADER, SyncToken},
-            },
+        library::sync::{
+            sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
+            sync_token::{SYNC_TOKEN_HEADER, SyncToken},
         },
         metadata::update_meta::update_metadata,
         test_helpers::{AppTestContext, setup_test_app},
