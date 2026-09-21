@@ -324,6 +324,8 @@ pub async fn generate_sync_response(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use crate::{
         library::sync::{
             sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
@@ -353,7 +355,7 @@ mod tests {
         config.base_url = test_base_url.to_string();
         config.ebbooks_auth_key = token.to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let server = setup_test_app(state.clone());
 
@@ -395,7 +397,7 @@ mod tests {
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
@@ -417,7 +419,7 @@ mod tests {
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
@@ -445,7 +447,7 @@ mod tests {
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
@@ -475,7 +477,7 @@ mod tests {
         config.base_url = test_base_url.to_string();
         config.ebbooks_auth_key = token.to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let server = setup_test_app(state.clone());
 
@@ -564,7 +566,7 @@ mod tests {
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         // Explicitly set custom timestamps on token
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
