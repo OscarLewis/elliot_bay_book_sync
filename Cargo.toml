@@ -38,3 +38,12 @@ mongodb = "3.9.1"
 bson = { version = "3.1.0", features = ["chrono-0_4", "serde"] }
 futures-util = "0.3.34"
 test-context = "0.5.8"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/ebbooks", dest = "/usr/bin/ebbooks", mode = "755" },
+
+    { dest = "/etc/ebbooks/", mode = "755" },
+    { dest = "/var/lib/ebbooks/", mode = "755" },
+    { dest = "/var/lib/ebbooks/images/", mode = "755" },
+]
