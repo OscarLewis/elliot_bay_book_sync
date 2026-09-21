@@ -55,16 +55,7 @@ pub(crate) async fn make_request_to_kobo_store(
 
     // Add sync token to headers if provided
     if let Some(token) = sync_token {
-        let mut token_headers = HashMap::new();
-        token.to_headers(&mut token_headers);
-
-        if let Some(token_value) = token_headers.get(SYNC_TOKEN_HEADER) {
-            headers.insert(
-                axum::http::HeaderName::from_static(SYNC_TOKEN_HEADER),
-                axum::http::HeaderValue::from_str(token_value)
-                    .unwrap_or_else(|_| axum::http::HeaderValue::from_static("")),
-            );
-        }
+        token.to_headers(&mut headers);
     }
 
     client

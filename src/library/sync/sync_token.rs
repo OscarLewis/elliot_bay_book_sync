@@ -1,4 +1,5 @@
 use crate::error::AppError;
+use axum::http::{HeaderMap, HeaderValue};
 use base64::{Engine, engine::general_purpose::STANDARD};
 use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -30,22 +31,29 @@ pub struct SyncToken {
 
 impl SyncToken {
     /// Parse SyncToken from HTTP headers
-    pub fn from_headers(headers: &HashMap<String, String>) -> Self {
-        let data = SyncTokenData::from_headers(headers);
+    pub fn from_headers(headers: &HeaderMap) -> Self {
         Self {
             version: SYNC_VERSION.to_string(),
-            data,
+            data: SyncTokenData::from_headers(headers),
         }
     }
 
     /// Merge from store response headers
-    pub fn merge_from_store_response(&mut self, headers: &HashMap<String, String>) {
+    pub fn merge_from_store_response(&mut self, headers: &HeaderMap) {
         self.data.merge_from_store_response(headers);
     }
 
     /// Add token to response headers
-    pub fn to_headers(&self, headers: &mut HashMap<String, String>) {
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), self.build_sync_token());
+    pub fn to_headers(&self, headers: &mut HeaderMap) {
+        match HeaderValue::from_str(&self.build_sync_token()) {
+            Ok(value) => {
+                headers.insert(SYNC_TOKEN_HEADER, value);
+            }
+            Err(e) => {
+                error!(?e, "Sync token is not a valid header value");
+                headers.insert(SYNC_TOKEN_HEADER, HeaderValue::from_static(""));
+            }
+        }
     }
 
     /// Build the encoded sync token
@@ -53,7 +61,6 @@ impl SyncToken {
         self.data.build_sync_token()
     }
 }
-
 impl SyncTokenData {
     pub fn new(
         raw_kobo_store_token: String,
@@ -109,16 +116,22 @@ impl SyncTokenData {
     }
 
     /// Set Kobo store header
-    pub fn set_kobo_store_header(&self, headers: &mut HashMap<String, String>) {
-        headers.insert(
-            SYNC_TOKEN_HEADER.to_string(),
-            self.raw_kobo_store_token.clone(),
-        );
+    pub fn set_kobo_store_header(&self, headers: &mut HeaderMap) {
+        match HeaderValue::from_str(&self.raw_kobo_store_token) {
+            Ok(value) => {
+                headers.insert(SYNC_TOKEN_HEADER, value);
+            }
+            Err(e) => error!(?e, "Kobo store token is not a valid header value"),
+        }
     }
 
     /// Merge from store response headers
-    pub fn merge_from_store_response(&mut self, headers: &HashMap<String, String>) {
-        self.raw_kobo_store_token = headers.get(SYNC_TOKEN_HEADER).cloned().unwrap_or_default();
+    pub fn merge_from_store_response(&mut self, headers: &HeaderMap) {
+        self.raw_kobo_store_token = headers
+            .get(SYNC_TOKEN_HEADER)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned)
+            .unwrap_or_default();
     }
 
     /// Build the encoded sync token
@@ -142,20 +155,22 @@ impl SyncTokenData {
     }
 
     /// Parse SyncToken out from HTTP headers
-    pub fn from_headers(headers: &HashMap<String, String>) -> Self {
-        let sync_token_header = headers.get(SYNC_TOKEN_HEADER).cloned().unwrap_or_default();
-
-        if sync_token_header.is_empty() {
+    pub fn from_headers(headers: &HeaderMap) -> Self {
+        let Some(sync_token_header) = headers
+            .get(SYNC_TOKEN_HEADER)
+            .and_then(|v| v.to_str().ok())
+            .filter(|s| !s.is_empty())
+        else {
             return Self::default();
-        }
+        };
 
         // Check if it's a raw Kobo store token (contains a dot)
         if sync_token_header.contains('.') {
-            return Self::default_with_token(sync_token_header);
+            return Self::default_with_token(sync_token_header.to_string());
         }
 
         // Try to decode and parse JSON
-        let sync_token_json = match Self::decode_and_parse(&sync_token_header) {
+        let sync_token_json = match Self::decode_and_parse(sync_token_header) {
             Ok(json) => json,
             Err(_) => {
                 error!("Sync token contents do not follow the expected json schema.");
@@ -244,6 +259,7 @@ impl fmt::Display for SyncTokenData {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::http::{HeaderMap, HeaderValue};
     use chrono::Utc;
 
     #[test]
@@ -284,8 +300,8 @@ mod tests {
         let original = SyncTokenData::default_with_token("roundtrip-token".to_string());
         let encoded = original.build_sync_token();
 
-        let mut headers = HashMap::new();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), encoded);
+        let mut headers = HeaderMap::new();
+        headers.insert(SYNC_TOKEN_HEADER, HeaderValue::from_str(&encoded).unwrap());
 
         let decoded = SyncTokenData::from_headers(&headers);
         assert_eq!(decoded.raw_kobo_store_token, "roundtrip-token");
@@ -293,16 +309,19 @@ mod tests {
 
     #[test]
     fn test_from_headers_empty() {
-        let headers = HashMap::new();
+        let headers = HeaderMap::new();
         let token = SyncTokenData::from_headers(&headers);
         assert_eq!(token.raw_kobo_store_token, "");
     }
 
     #[test]
     fn test_from_headers_raw_kobo_token() {
-        let mut headers = HashMap::new();
+        let mut headers = HeaderMap::new();
         let raw_token = "blob1.blob2".to_string();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), raw_token.clone());
+        headers.insert(
+            SYNC_TOKEN_HEADER,
+            HeaderValue::from_str(&raw_token).unwrap(),
+        );
 
         let token = SyncTokenData::from_headers(&headers);
         assert_eq!(token.raw_kobo_store_token, raw_token);
@@ -310,8 +329,8 @@ mod tests {
 
     #[test]
     fn test_from_headers_invalid_base64() {
-        let mut headers = HashMap::new();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), "!!!invalid!!!".to_string());
+        let mut headers = HeaderMap::new();
+        headers.insert(SYNC_TOKEN_HEADER, HeaderValue::from_static("!!!invalid!!!"));
 
         let token = SyncTokenData::from_headers(&headers);
         assert_eq!(token.raw_kobo_store_token, "");
@@ -319,12 +338,12 @@ mod tests {
 
     #[test]
     fn test_from_headers_missing_data_field() {
-        let mut headers = HashMap::new();
+        let mut headers = HeaderMap::new();
         let invalid_json = json!({"version": "1-1-0"});
         let encoded = STANDARD.encode(serde_json::to_string(&invalid_json).unwrap().as_bytes());
         headers.insert(
-            SYNC_TOKEN_HEADER.to_string(),
-            encoded.trim_end_matches('=').to_string(),
+            SYNC_TOKEN_HEADER,
+            HeaderValue::from_str(encoded.trim_end_matches('=')).unwrap(),
         );
 
         let token = SyncTokenData::from_headers(&headers);
@@ -333,15 +352,15 @@ mod tests {
 
     #[test]
     fn test_from_headers_version_too_old() {
-        let mut headers = HashMap::new();
+        let mut headers = HeaderMap::new();
         let old_version = json!({
             "version": "0-9-0",
             "data": {"raw_kobo_store_token": "token"}
         });
         let encoded = STANDARD.encode(serde_json::to_string(&old_version).unwrap().as_bytes());
         headers.insert(
-            SYNC_TOKEN_HEADER.to_string(),
-            encoded.trim_end_matches('=').to_string(),
+            SYNC_TOKEN_HEADER,
+            HeaderValue::from_str(encoded.trim_end_matches('=')).unwrap(),
         );
 
         let token = SyncTokenData::from_headers(&headers);
@@ -351,20 +370,20 @@ mod tests {
     #[test]
     fn test_set_kobo_store_header() {
         let token = SyncTokenData::default_with_token("store-token".to_string());
-        let mut headers = HashMap::new();
+        let mut headers = HeaderMap::new();
 
         token.set_kobo_store_header(&mut headers);
         assert_eq!(
             headers.get(SYNC_TOKEN_HEADER),
-            Some(&"store-token".to_string())
+            Some(&HeaderValue::from_static("store-token"))
         );
     }
 
     #[test]
     fn test_merge_from_store_response() {
         let mut token = SyncTokenData::default();
-        let mut headers = HashMap::new();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), "merged-token".to_string());
+        let mut headers = HeaderMap::new();
+        headers.insert(SYNC_TOKEN_HEADER, HeaderValue::from_static("merged-token"));
 
         token.merge_from_store_response(&headers);
         assert_eq!(token.raw_kobo_store_token, "merged-token");
@@ -372,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_to_headers() {
-        let mut headers = HashMap::new();
+        let mut headers = HeaderMap::new();
         let data = SyncTokenData::default_with_token("header-token".to_string());
         let token = SyncToken {
             version: SYNC_VERSION.to_string(),
@@ -410,8 +429,8 @@ mod tests {
         let original = SyncTokenData::new("full-test".to_string(), now, now, now, now, now);
 
         let encoded = original.build_sync_token();
-        let mut headers = HashMap::new();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), encoded);
+        let mut headers = HeaderMap::new();
+        headers.insert(SYNC_TOKEN_HEADER, HeaderValue::from_str(&encoded).unwrap());
 
         let decoded = SyncTokenData::from_headers(&headers);
         assert_eq!(decoded.raw_kobo_store_token, "full-test");
@@ -429,8 +448,8 @@ mod tests {
         assert!(!encoded.ends_with('='));
 
         // Should still decode properly
-        let mut headers = HashMap::new();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), encoded);
+        let mut headers = HeaderMap::new();
+        headers.insert(SYNC_TOKEN_HEADER, HeaderValue::from_str(&encoded).unwrap());
         let decoded = SyncTokenData::from_headers(&headers);
         assert_eq!(decoded.raw_kobo_store_token, "pad-test");
     }

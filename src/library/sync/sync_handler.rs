@@ -13,7 +13,7 @@ use crate::{
 };
 use axum::{
     extract::{self},
-    http::{HeaderMap, uri},
+    http::{HeaderMap, HeaderValue, uri},
     response::{IntoResponse, Response},
 };
 use chrono::{TimeZone, Utc};
@@ -29,16 +29,13 @@ pub async fn library_sync_handler(
     headers: HeaderMap,
 ) -> Result<Response, AppError> {
     // Convert HeaderMap to HashMap<String, String>
-    let headers_map: HashMap<String, String> = headers
-        .iter()
-        .filter_map(|(k, v)| v.to_str().ok().map(|s| (k.to_string(), s.to_string())))
-        .collect();
+
     debug!(
-        orgin_uri = &uri.to_string(),
-        headers = ?headers_map,
+        origin_uri = %uri,
+        ?headers,
         "Sync request received"
     );
-    let mut sync_token = SyncToken::from_headers(&headers_map);
+    let mut sync_token = SyncToken::from_headers(&headers);
     debug!(?sync_token, "Sync token generated from headers");
     let url_format = get_download_url_format_for_book(&state.config.base_url, &token);
     debug!(url_format, "Download link format");
@@ -210,23 +207,22 @@ pub async fn generate_sync_response(
             &state.req_client,
             reqwest::Method::POST,
             kobo_sync_endpoint,
-            response_headers.clone(),
+            HeaderMap::new(),
             serde_json::to_vec(sync_token)?.into(),
             Some(sync_token),
         )
         .await
         {
             Ok(store_response) => {
-                // Extract headers before consuming response
-                let sync_header = store_response.headers().get("x-kobo-sync").cloned();
-                let sync_mode = store_response.headers().get("x-kobo-sync-mode").cloned();
-                let recent_reads = store_response.headers().get("x-kobo-recent-reads").cloned();
+                // Copy headers from store response regardless of body shape
+                for name in ["x-kobo-sync", "x-kobo-sync-mode", "x-kobo-recent-reads"] {
+                    if let Some(value) = store_response.headers().get(name) {
+                        response_headers.insert(name, value.clone());
+                    }
+                }
 
-                let store_headers: HashMap<String, String> = store_response
-                    .headers()
-                    .iter()
-                    .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
-                    .collect();
+                // Merge store response token
+                sync_token.merge_from_store_response(store_response.headers());
 
                 // Read body as text first so we can log it when it isn't what we expect
                 let body_text = match store_response.text().await {
@@ -257,29 +253,6 @@ pub async fn generate_sync_response(
                         );
                     }
                 }
-
-                // Copy headers from store response regardless of body shape
-                if let Some(header) = sync_header {
-                    response_headers.insert(
-                        axum::http::HeaderName::from_static("x-kobo-sync"),
-                        header.clone(),
-                    );
-                }
-                if let Some(header) = sync_mode {
-                    response_headers.insert(
-                        axum::http::HeaderName::from_static("x-kobo-sync-mode"),
-                        header.clone(),
-                    );
-                }
-                if let Some(header) = recent_reads {
-                    response_headers.insert(
-                        axum::http::HeaderName::from_static("x-kobo-recent-reads"),
-                        header.clone(),
-                    );
-                }
-
-                // Merge store response token
-                sync_token.merge_from_store_response(&store_headers);
             }
             Err(e) => {
                 error!(?e, "Failed to receive response from Kobo's sync endpoint");
@@ -289,21 +262,11 @@ pub async fn generate_sync_response(
 
     // Add continuation header if needed
     if set_cont {
-        response_headers.insert(
-            axum::http::HeaderName::from_static("x-kobo-sync"),
-            axum::http::HeaderValue::from_static("continue"),
-        );
+        response_headers.insert("x-kobo-sync", HeaderValue::from_static("continue"));
     }
 
     // Add sync token to response headers
-    let mut token_headers = HashMap::new();
-    sync_token.to_headers(&mut token_headers);
-    if let Some(token_value) = token_headers.get(SYNC_TOKEN_HEADER) {
-        response_headers.insert(
-            axum::http::HeaderName::from_static(SYNC_TOKEN_HEADER),
-            axum::http::HeaderValue::from_str(token_value)?,
-        );
-    }
+    sync_token.to_headers(&mut response_headers);
 
     debug!(books_synced = final_results.len(), "Kobo sync completed");
 
@@ -311,7 +274,7 @@ pub async fn generate_sync_response(
     let json_body = serde_json::to_string(&final_results)?;
     response_headers.insert(
         axum::http::header::CONTENT_TYPE,
-        axum::http::HeaderValue::from_static("application/json; charset=utf-8"),
+        HeaderValue::from_static("application/json; charset=utf-8"),
     );
 
     Ok((response_headers, json_body).into_response())
@@ -319,8 +282,6 @@ pub async fn generate_sync_response(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use crate::{
         library::{
             book::Book,
@@ -332,6 +293,7 @@ mod tests {
         metadata::update_meta::update_metadata,
         test_helpers::{AppTestContext, setup_test_app},
     };
+    use axum::http::HeaderMap;
     use chrono::{TimeZone, Utc};
     use reqwest::StatusCode;
     use test_context::test_context;
@@ -396,7 +358,7 @@ mod tests {
         config.proxy_kobo_store = false;
         state.config = std::sync::Arc::new(config);
 
-        let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
+        let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
 
         let response =
@@ -418,7 +380,7 @@ mod tests {
         config.proxy_kobo_store = false;
         state.config = std::sync::Arc::new(config);
 
-        let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
+        let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
 
         let response =
@@ -446,7 +408,7 @@ mod tests {
         config.proxy_kobo_store = false;
         state.config = std::sync::Arc::new(config);
 
-        let mut sync_token = SyncToken::from_headers(&std::collections::HashMap::new());
+        let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
 
         let response =
@@ -503,9 +465,7 @@ mod tests {
             .to_str()?;
 
         // Reconstruct and verify SyncToken payload
-        let mut headers_map = HashMap::new();
-        headers_map.insert(SYNC_TOKEN_HEADER.to_string(), token_header.to_string());
-        let parsed_token = SyncToken::from_headers(&headers_map);
+        let parsed_token = SyncToken::from_headers(response.headers());
 
         // Verify token state reflects latest book additions/modifications
         assert_ne!(
@@ -568,7 +528,7 @@ mod tests {
         state.config = std::sync::Arc::new(config);
 
         // Explicitly set custom timestamps on token
-        let mut sync_token = SyncToken::from_headers(&HashMap::new());
+        let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let test_timestamp = Utc.with_ymd_and_hms(2026, 1, 15, 12, 0, 0).unwrap();
         sync_token.data.books_last_modified = test_timestamp;
         sync_token.data.books_last_created = test_timestamp;
@@ -576,17 +536,14 @@ mod tests {
         let response =
             generate_sync_response(&mut sync_token, vec![], false, &state, false).await?;
 
-        // Retrieve raw token header value
-        let token_header_val = response
-            .headers()
-            .get(SYNC_TOKEN_HEADER)
-            .expect("Token header should be present")
-            .to_str()?;
+        // Token header should be present
+        assert!(
+            response.headers().contains_key(SYNC_TOKEN_HEADER),
+            "Token header should be present"
+        );
 
         // Decode token back to verify value propagation
-        let mut headers = HashMap::new();
-        headers.insert(SYNC_TOKEN_HEADER.to_string(), token_header_val.to_string());
-        let reconstructed_token = SyncToken::from_headers(&headers);
+        let reconstructed_token = SyncToken::from_headers(response.headers());
 
         assert_eq!(
             reconstructed_token.data.books_last_modified, test_timestamp,
