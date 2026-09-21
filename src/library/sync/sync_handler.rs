@@ -16,8 +16,8 @@ use axum::{
     http::{HeaderMap, HeaderValue, uri},
     response::{IntoResponse, Response},
 };
-use chrono::{TimeZone, Utc};
-use std::collections::HashSet;
+use chrono::{DateTime, TimeZone, Utc};
+use std::collections::{HashMap, HashSet};
 use tracing::{debug, error};
 
 pub const SYNC_ITEM_LIMIT: usize = 100;
@@ -103,28 +103,46 @@ pub async fn library_sync_handler(
         }
     }
 
-    let books_to_sync: Vec<&Book> = books
+    // Map book_id -> last_synced_at
+    let synced_map: HashMap<&str, DateTime<Utc>> = synced_books
+        .iter()
+        .map(|sb| (sb.book_id.as_str(), sb.last_synced_at))
+        .collect();
+
+    // Find never-synced books (New Entitlements)
+    let never_synced_books: Vec<&Book> = books
         .iter()
         .filter(|book| {
-            book.id
-                .map(|id| !synced_book_ids.contains(&id.to_string()))
-                .unwrap_or(false)
+            book.id.as_ref().map_or(false, |id| {
+                !synced_map.contains_key(id.to_string().as_str())
+            })
         })
         .take(SYNC_ITEM_LIMIT)
         .collect();
 
+    let remaining_limit = SYNC_ITEM_LIMIT.saturating_sub(never_synced_books.len());
+
+    // Find previously synced books whose modified_at changed (Changed Entitlements)
+    let modified_synced_books: Vec<&Book> = books
+        .iter()
+        .filter(|book| {
+            book.id
+                .as_ref()
+                .and_then(|id| synced_map.get(id.to_string().as_str()))
+                .map_or(false, |&last_synced_at| book.modified_at > last_synced_at)
+        })
+        .collect();
+
     debug!(
-        num_books_to_sync = books_to_sync.len(),
+        num_never_synced = never_synced_books.len(),
+        num_modified_synced = modified_synced_books.len(),
         "Found books to sync"
     );
 
-    for book in books_to_sync {
+    // Process Never-Synced Books -> NewEntitlement
+    for book in never_synced_books {
         let book_id = book.id.ok_or(AppError::InvalidObjectId)?.to_string();
-
         has_local_books = true;
-
-        let book_modified: chrono::DateTime<Utc> = book.modified_at;
-        let is_new = book_modified > sync_token.data.books_last_created;
 
         let entitlement = Entitlement::from_book_tuple(
             (&book_id, book),
@@ -135,35 +153,19 @@ pub async fn library_sync_handler(
             false,
         );
 
-        if is_new {
-            sync_results.push(SyncResult {
-                changed_entitlement: None,
-                new_entitlement: Some(entitlement),
-                changed_reading_state: None,
-                deleted_tag: None,
-                new_tag: None,
-                changed_tag: None,
-            });
-        } else {
-            sync_results.push(SyncResult {
-                changed_entitlement: Some(entitlement),
-                new_entitlement: None,
-                changed_reading_state: None,
-                deleted_tag: None,
-                new_tag: None,
-                changed_tag: None,
-            });
-        }
+        sync_results.push(SyncResult {
+            changed_entitlement: None,
+            new_entitlement: Some(entitlement),
+            changed_reading_state: None,
+            deleted_tag: None,
+            new_tag: None,
+            changed_tag: None,
+        });
 
-        debug!(
-            book_id = %book_id,
-            title = book.title,
-            is_new,
-            "Attempting to sync book"
-        );
+        debug!(book_id = %book_id, title = book.title, "Syncing new book");
 
-        new_books_last_modified = std::cmp::max(new_books_last_modified, book_modified);
-        new_books_last_created = std::cmp::max(new_books_last_created, book_modified);
+        new_books_last_modified = std::cmp::max(new_books_last_modified, book.modified_at);
+        new_books_last_created = std::cmp::max(new_books_last_created, book.modified_at);
 
         let mut synced = SyncedBookDocument {
             book_id,
@@ -174,6 +176,44 @@ pub async fn library_sync_handler(
         };
 
         state.mongodb.syncs.insert(&mut synced).await?;
+    }
+
+    // Process Modified Synced Books -> ChangedEntitlement
+    for book in modified_synced_books {
+        let book_id = book.id.ok_or(AppError::InvalidObjectId)?.to_string();
+        has_local_books = true;
+
+        let entitlement = Entitlement::from_book_tuple(
+            (&book_id, book),
+            state.config.clone(),
+            None,
+            None,
+            None,
+            false,
+        );
+
+        sync_results.push(SyncResult {
+            changed_entitlement: Some(entitlement),
+            new_entitlement: None,
+            changed_reading_state: None,
+            deleted_tag: None,
+            new_tag: None,
+            changed_tag: None,
+        });
+
+        debug!(book_id = %book_id, title = book.title, "Syncing modified book");
+
+        new_books_last_modified = std::cmp::max(new_books_last_modified, book.modified_at);
+
+        let mut synced = SyncedBookDocument {
+            book_id,
+            user_id: "default".to_string(),
+            id: None,
+            synced_at: Utc::now(),
+            last_synced_at: Utc::now(),
+        };
+
+        state.mongodb.syncs.upsert(&mut synced).await?;
     }
 
     // Update sync token

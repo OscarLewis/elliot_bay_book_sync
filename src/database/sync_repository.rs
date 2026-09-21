@@ -3,6 +3,7 @@ use futures_util::TryStreamExt;
 use mongodb::{
     Collection, Database, IndexModel,
     bson::{doc, oid::ObjectId},
+    options::ReplaceOptions,
 };
 
 #[derive(Clone)]
@@ -49,6 +50,25 @@ impl SyncRepository {
         self.collection
             .delete_many(doc! { "book_id": book_id })
             .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert(&self, synced_book: &mut SyncedBookDocument) -> Result<(), AppError> {
+        let filter = doc! {
+            "book_id": &synced_book.book_id,
+            "user_id": &synced_book.user_id
+        };
+
+        let result = self
+            .collection
+            .replace_one(filter, &*synced_book)
+            .upsert(true)
+            .await?;
+
+        if let Some(id) = result.upserted_id.and_then(|id| id.as_object_id()) {
+            synced_book.id = Some(id);
+        }
 
         Ok(())
     }
