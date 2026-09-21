@@ -7,6 +7,7 @@ use crate::{
         fetch_meta::fetch_metadata_for_book, match_results::match_metadata_for_book,
     },
 };
+use chrono::Utc;
 use strsim::jaro_winkler;
 use tracing::debug;
 
@@ -23,6 +24,7 @@ pub async fn update_metadata(
         );
 
         let book_id = book.id.ok_or(AppError::InvalidObjectId)?;
+        book.modified_at = Utc::now();
 
         if let Some(token) = state.hardcover_api_token.as_deref() {
             debug!(
