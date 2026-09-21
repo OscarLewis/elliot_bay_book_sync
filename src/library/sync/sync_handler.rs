@@ -595,4 +595,6 @@ mod tests {
 
         Ok(())
     }
+
+    // TODO write a test that edits the metadata and modified_at for a book post sync and confirms that a ChangedEntitlement is generated
 }
