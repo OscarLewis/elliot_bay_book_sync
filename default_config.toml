@@ -1,0 +1,6 @@
+library_path = "test ebooks"
+proxy_kobo_store = true
+database_path = "sync_db.redb"
+ebbooks_auth_key = "test-key-456"
+base_url = "http://localhost:3000"
+mongodb_name = "ebbooks_dunes"

@@ -1,0 +1,17 @@
+[Unit]
+Description=E-Reader Sync Server
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/ebbooks
+Restart=on-failure
+StateDirectory=ebbooks ebbooks/images
+ConfigurationDirectory=ebbooks
+# In an systemd drop in file, include your hardcover token and mongodb connection uri
+# Environment="HARDCOVER_TOKEN=your_hardcover_token_here"
+# Environment="MONGODB_URI=mongodb://localhost:27017/ebbooks"
+
+
+[Install]
+WantedBy=multi-user.target

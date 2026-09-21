@@ -3,7 +3,7 @@ name = "ebbooks"
 version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
-
+description = "A rust implementation of a certain ereader sync protocall"
 
 
 [dependencies]
@@ -44,9 +44,6 @@ test-context = "0.5.8"
 
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/ebbooks", dest = "/usr/bin/ebbooks", mode = "755" },
-
-    { dest = "/etc/ebbooks/", mode = "755" },
-    { dest = "/var/lib/ebbooks/", mode = "755" },
-    { dest = "/var/lib/ebbooks/images/", mode = "755" },
+    { source = "target/release/ebbooks", dest = "/usr/bin/ebbooks", mode = "755", is_built = true },
+    { source = "ebbooks.service", dest = "/usr/lib/systemd/system/ebbooks.service", mode = "644" },
 ]
