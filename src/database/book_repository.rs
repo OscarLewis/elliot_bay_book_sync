@@ -100,6 +100,8 @@ impl BookRepository {
         Ok(ids)
     }
 
+    // TODO Write a function that fetches all books with a book.modified_at greater than their related SyncedBookDocument.last_synced_at
+
     /// Updates only the fields of `book` that differ from the existing document in MongoDB.
     /// Returns `Ok(true)` if the document existed and was updated, `Ok(false)` otherwise.
     pub async fn update_diff(&self, id: ObjectId, book: &Book) -> Result<bool, AppError> {

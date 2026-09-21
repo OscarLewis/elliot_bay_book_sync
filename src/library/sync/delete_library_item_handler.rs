@@ -1,21 +1,12 @@
-use crate::{
-    AppState,
-    api::make_requests::{get_store_url_for_current_request, redirect_or_proxy_request},
-    error::AppError,
-    library::{
-        book::Book,
-        sync::{entitlement_models::BookMetadata, sync_document::SyncedBookDocument},
-    },
-};
+use crate::{AppState, error::AppError};
 use axum::{
-    Json,
     body::Bytes,
     extract::{self, OriginalUri},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use reqwest::Method;
-use tracing::{debug, info};
+use tracing::debug;
 
 pub async fn library_item_delete_handler(
     extract::Path((token, book_id)): extract::Path<(String, String)>,
@@ -39,6 +30,7 @@ mod tests {
         library::sync::sync_document::SyncedBookDocument,
         test_helpers::{AppTextContext, setup_test_app},
     };
+    use chrono::Utc;
     use test_context::test_context;
     use test_log::test;
 
@@ -54,7 +46,8 @@ mod tests {
             book_id: book_id.to_string(),
             user_id: "default".to_string(),
             id: None,
-            synced_at: chrono::Utc::now(),
+            synced_at: Utc::now(),
+            last_synced_at: Utc::now(),
         };
 
         ctx.state.mongodb.syncs.insert(&mut synced_book).await?;
