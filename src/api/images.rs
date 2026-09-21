@@ -200,17 +200,17 @@ mod tests {
     use crate::{
         library::book::Book,
         metadata::extract_images::extract_imgs_for_books,
-        test_helpers::{AppTextContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app},
     };
     use axum::http::StatusCode;
     use std::path::PathBuf;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_image_handler(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from("test ebooks/The Lions of Al-Rassan - Guy Gavriel Kay.epub");
 
@@ -273,10 +273,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_image_handler_proxy(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let server = setup_test_app(ctx.state.clone());
 
@@ -304,10 +304,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_image_handler_proxy_quality(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let server = setup_test_app(ctx.state.clone());
 

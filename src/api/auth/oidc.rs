@@ -69,15 +69,15 @@ pub async fn oidc_well_known_configuration_handler(
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::{AppTextContext, setup_test_app};
+    use crate::test_helpers::{AppTestContext, setup_test_app};
     use reqwest::StatusCode;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_oidc_endpoint(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "https://books.example.com/";
         let token = "test-token-123";

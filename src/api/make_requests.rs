@@ -222,16 +222,16 @@ pub fn get_download_url_format_for_book(uri: &str, auth_token: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{api::init_resources::Resources, test_helpers::AppTextContext};
+    use crate::{api::init_resources::Resources, test_helpers::AppTestContext};
     use axum::http::Uri;
     use std::str::FromStr;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_get_store_url_for_current_request(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();

@@ -10,7 +10,6 @@ pub struct SyncRepository {
     collection: Collection<SyncedBookDocument>,
 }
 
-// TODO implement Sync Repository
 impl SyncRepository {
     pub async fn new(db: &Database) -> Result<Self, AppError> {
         let collection: Collection<SyncedBookDocument> = db.collection("synced_books");

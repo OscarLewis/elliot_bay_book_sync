@@ -99,16 +99,14 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::test_helpers::{AppTextContext, setup_test_app};
+    use crate::test_helpers::{AppTestContext, setup_test_app};
     use reqwest::StatusCode;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_auth_handler(
-        ctx: &mut AppTextContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_auth_handler(ctx: &mut AppTestContext) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
 
         let mut config = (*state.config).clone();

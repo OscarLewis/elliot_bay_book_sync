@@ -8,7 +8,7 @@
     "hits": [
       {
         "document": {
-          "activities_count": 66,
+          "activities_count": 67,
           "alternative_titles": [
             "Absolute Martian Manhunter - Bd. 1: Wahrheit gegen Wahn",
             "Absolute Martian Manhunter, Vol. 1: Martian Vision",
@@ -44,8 +44,12 @@
                 "slug": "deniz-camp"
               },
               "contribution": "Author",
+              "contributor_role_blurb": null,
               "contributor_role_id": 1,
               "contributor_role_name": "Author",
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": true
             },
             {
@@ -56,6 +60,12 @@
                 "slug": "javier-rodriguez"
               },
               "contribution": "Illustrator",
+              "contributor_role_blurb": null,
+              "contributor_role_id": null,
+              "contributor_role_name": null,
+              "contributor_specialization_blurb": null,
+              "contributor_specialization_id": null,
+              "contributor_specialization_name": null,
               "primary": false
             }
           ],
@@ -127,8 +137,8 @@
           "subtitle": "Martian Vision",
           "tags": [],
           "title": "Absolute Martian Manhunter, Vol. 1: Martian Vision",
-          "users_count": 57,
-          "users_read_count": 42
+          "users_count": 58,
+          "users_read_count": 43
         },
         "highlight": {
           "alternative_titles": [
@@ -342,7 +352,7 @@
         }
       }
     ],
-    "out_of": 2585762,
+    "out_of": 2595105,
     "page": 1,
     "request_params": {
       "collection_name": "Book_production_1760914612",
@@ -351,6 +361,6 @@
       "q": "Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp"
     },
     "search_cutoff": false,
-    "search_time_ms": 10
+    "search_time_ms": 7
   }
 }

@@ -28,16 +28,16 @@ mod tests {
     use super::*;
     use crate::{
         library::sync::sync_document::SyncedBookDocument,
-        test_helpers::{AppTextContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app},
     };
     use chrono::Utc;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_library_item_delete_handler(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let token = "test-token-123";
         let book_id = "test-book-id";

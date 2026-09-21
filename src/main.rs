@@ -286,12 +286,12 @@ pub mod test_helpers {
     use test_context::AsyncTestContext;
     use tokio::sync::Mutex;
 
-    pub struct AppTextContext {
+    pub struct AppTestContext {
         pub state: AppState,
         mongodb: MongoDatabase,
     }
 
-    impl AppTextContext {
+    impl AppTestContext {
         pub async fn set_config(&mut self, config: AppConfig) {
             let resources = self.state.kobo_resources.lock().await.clone();
 
@@ -338,7 +338,7 @@ pub mod test_helpers {
         }
     }
 
-    impl AsyncTestContext for AppTextContext {
+    impl AsyncTestContext for AppTestContext {
         async fn setup() -> Self {
             Self::setup_with_config(AppConfig::default()).await
         }
@@ -362,7 +362,7 @@ mod tests {
     use crate::{
         library::book::Book,
         scan::scanner::ScanResponse,
-        test_helpers::{AppTextContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app},
     };
     use axum::http::StatusCode;
     use std::path::PathBuf;
@@ -370,9 +370,9 @@ mod tests {
     use test_log::test;
 
     /// Tests the root endpoint response.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_root_handler(ctx: &mut AppTextContext) {
+    async fn test_root_handler(ctx: &mut AppTestContext) {
         let server = setup_test_app(ctx.state.clone());
 
         let response = server.get("/").await;
@@ -380,9 +380,9 @@ mod tests {
     }
 
     /// Verifies that calling POST `/scan` triggers a background scan and returns a valid UUID.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
-    async fn test_scan_handler_triggers_scan(ctx: &mut AppTextContext) {
+    async fn test_scan_handler_triggers_scan(ctx: &mut AppTestContext) {
         let server = setup_test_app(ctx.state.clone());
 
         let response = server.post("/scan").await;
@@ -391,10 +391,10 @@ mod tests {
         let _body: ScanResponse = response.json();
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_refresh_single_book_metadata_handler(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut book = Book::from_path(PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",

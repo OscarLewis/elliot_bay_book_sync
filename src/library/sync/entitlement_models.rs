@@ -373,7 +373,6 @@ pub fn get_download_url_for_book_id(
     )
 }
 
-// TODO Change this to take references
 impl BookMetadata {
     pub fn from_book_tuple((book_id, book): (&str, &Book), app_config: Arc<AppConfig>) -> Self {
         // Parse UTC timestamp or fallback to `now`
@@ -383,7 +382,6 @@ impl BookMetadata {
             Some("kepub") => KoboFormat::Kepub,
             _ => KoboFormat::Epub,
         };
-        // TODO this should return a fucking enum
 
         // Size in bytes (size_kb * 1024)
         let download_urls = vec![DownloadUrl {

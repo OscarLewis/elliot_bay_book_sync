@@ -497,14 +497,14 @@ pub fn patch_kobo_resources(
 
 #[cfg(test)]
 mod tests {
-    use crate::{config::AppConfig, test_helpers::AppTextContext};
+    use crate::{config::AppConfig, test_helpers::AppTestContext};
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_app_state_patched_resources_differ_from_defaults(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "https://books.example.com/";
         let test_auth_key = "test-token-123";

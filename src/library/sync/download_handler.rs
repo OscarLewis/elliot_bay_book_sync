@@ -46,7 +46,6 @@ pub async fn download_request_handler(
         }
     };
 
-    // Book is avaliable here
     // book.path is a Box<Path> pointing to the file on disk
 
     let filename = match format {
@@ -87,8 +86,6 @@ pub async fn download_request_handler(
     );
 
     Ok(response.into_response())
-
-    // TODO implement download handler
 }
 
 #[cfg(test)]
@@ -98,17 +95,17 @@ mod tests {
             book::Book,
             sync::entitlement_models::{BookMetadata, KoboFormat},
         },
-        test_helpers::{AppTextContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app},
     };
     use reqwest::StatusCode;
     use std::path::PathBuf;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_download_handler(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";

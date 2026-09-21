@@ -9,7 +9,6 @@ use std::{
 };
 use tracing::debug;
 
-// TODO switch to using directories.rs to determine data directory and config directory.
 const LIBRARY_PATH: &str = "test ebooks";
 const PROXY_KOBO_STORE: bool = true;
 const DB_PATH: &str = "sync_db.redb";

@@ -109,16 +109,16 @@ pub async fn update_metadata(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{config::AppConfig, library::book::Book, test_helpers::AppTextContext};
+    use crate::{config::AppConfig, library::book::Book, test_helpers::AppTestContext};
     use std::path::PathBuf;
     use test_context::test_context;
     use test_log::test;
     use tracing::debug;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_update_metadata(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let epub_path = PathBuf::from(
             "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",

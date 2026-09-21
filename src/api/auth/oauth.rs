@@ -83,16 +83,16 @@ pub async fn oauth_token_handler(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{AppTextContext, setup_test_app};
+    use crate::test_helpers::{AppTestContext, setup_test_app};
     use reqwest::StatusCode;
     use std::sync::Arc;
     use test_context::test_context;
     use test_log::test;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_oauth_token_handler(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
 
@@ -149,10 +149,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_oauth_token_handler_empty_payload(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
 
@@ -176,10 +176,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_oauth_token_handler_other_subpath(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
 

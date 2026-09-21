@@ -319,21 +319,31 @@ pub async fn generate_sync_response(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{
-        library::book::Book,
-        library::sync::{sync_handler::generate_sync_response, sync_token::SyncToken},
+        library::{
+            book::Book,
+            sync::{
+                sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
+                sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+            },
+        },
         metadata::update_meta::update_metadata,
-        test_helpers::{AppTextContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app},
     };
+    use chrono::{TimeZone, Utc};
     use reqwest::StatusCode;
     use test_context::test_context;
     use test_log::test;
     use tokio::time::{Duration, sleep};
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_library_sync(ctx: &mut AppTextContext) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_library_sync_status_code(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
@@ -374,10 +384,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_generate_sync_response_no_proxy(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
@@ -396,10 +406,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_generate_sync_response_with_continuation(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
@@ -424,10 +434,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_generate_sync_response_includes_token(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
@@ -447,6 +457,146 @@ mod tests {
             response.headers().get("content-type").unwrap().to_str()?,
             "application/json; charset=utf-8"
         );
+        Ok(())
+    }
+
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    #[ignore = "requires mongodb test server setup"]
+    async fn test_library_sync_updates_and_returns_valid_sync_token(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let test_base_url = "http://books.example.com/";
+        let token = "test-token-123";
+
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
+
+        let server = setup_test_app(state.clone());
+
+        // Scan first to populate the library
+        let scan_response = server.post("/scan").await;
+        scan_response.assert_status(StatusCode::OK);
+        sleep(Duration::from_millis(500)).await;
+
+        // Fetch all books and update metadata
+        let books_needing_metadata = state.mongodb.books.fetch_all().await?;
+        let expected_book_count = books_needing_metadata.len();
+        update_metadata(state.clone(), books_needing_metadata).await?;
+
+        // Wait for metadata update and image extraction to complete
+        sleep(Duration::from_millis(2500)).await;
+
+        // 1. Initial Sync Call (No Sync-Token in Header)
+        let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
+        response.assert_status(StatusCode::OK);
+
+        // Assert header presence
+        let token_header = response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from response")
+            .to_str()?;
+
+        // Reconstruct and verify SyncToken payload
+        let mut headers_map = HashMap::new();
+        headers_map.insert(SYNC_TOKEN_HEADER.to_string(), token_header.to_string());
+        let parsed_token = SyncToken::from_headers(&headers_map);
+
+        // Verify token state reflects latest book additions/modifications
+        assert_ne!(
+            parsed_token.data.books_last_modified,
+            Utc.timestamp_opt(0, 0).unwrap(),
+            "Expected books_last_modified in token to be updated past epoch"
+        );
+        assert_ne!(
+            parsed_token.data.books_last_created,
+            Utc.timestamp_opt(0, 0).unwrap(),
+            "Expected books_last_created in token to be updated past epoch"
+        );
+
+        // Verify JSON body payload contains synced entitlement items
+        let body_bytes = response.as_bytes();
+        let sync_results: Vec<serde_json::Value> = serde_json::from_slice(body_bytes)?;
+        assert_eq!(
+            sync_results.len(),
+            std::cmp::min(expected_book_count, SYNC_ITEM_LIMIT),
+            "Returned sync payload item count mismatch"
+        );
+
+        // 2. Second Sync Call using the newly received token
+        let re_sync_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, token_header)
+            .await;
+
+        re_sync_response.assert_status(StatusCode::OK);
+
+        // Verify second sync returns empty entitlements as no new books were added
+        let re_sync_body = re_sync_response.into_bytes();
+        let re_sync_results: Vec<serde_json::Value> = serde_json::from_slice(&re_sync_body)?;
+        assert!(
+            re_sync_results.is_empty(),
+            "Expected no new synced entitlements on second call with existing token"
+        );
+
+        // Cleanup: remove all downloaded images
+        let all_books = state.mongodb.books.fetch_all().await?;
+        for book in all_books {
+            if let Some(image_path) = book.image_path {
+                let _ = tokio::fs::remove_file(&image_path).await;
+            }
+        }
+
+        Ok(())
+    }
+
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_generate_sync_response_encodes_token_correctly(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+        config.base_url = "http://books.example.com/".to_string();
+        config.ebbooks_auth_key = "test-token".to_string();
+        config.proxy_kobo_store = false;
+        state.config = std::sync::Arc::new(config);
+
+        // Explicitly set custom timestamps on token
+        let mut sync_token = SyncToken::from_headers(&HashMap::new());
+        let test_timestamp = Utc.with_ymd_and_hms(2026, 1, 15, 12, 0, 0).unwrap();
+        sync_token.data.books_last_modified = test_timestamp;
+        sync_token.data.books_last_created = test_timestamp;
+
+        let response =
+            generate_sync_response(&mut sync_token, vec![], false, &state, false).await?;
+
+        // Retrieve raw token header value
+        let token_header_val = response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("Token header should be present")
+            .to_str()?;
+
+        // Decode token back to verify value propagation
+        let mut headers = HashMap::new();
+        headers.insert(SYNC_TOKEN_HEADER.to_string(), token_header_val.to_string());
+        let reconstructed_token = SyncToken::from_headers(&headers);
+
+        assert_eq!(
+            reconstructed_token.data.books_last_modified, test_timestamp,
+            "books_last_modified was not preserved through response header serialization"
+        );
+        assert_eq!(
+            reconstructed_token.data.books_last_created, test_timestamp,
+            "books_last_created was not preserved through response header serialization"
+        );
+
         Ok(())
     }
 }

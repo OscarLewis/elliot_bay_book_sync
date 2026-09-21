@@ -195,14 +195,14 @@ pub(crate) async fn run_library_scan(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{database::ScanRepository, test_helpers::AppTextContext};
+    use crate::{database::ScanRepository, test_helpers::AppTestContext};
     use tempfile::tempdir;
     use test_context::test_context;
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[tokio::test]
     async fn test_scan_updates_existing_book(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("test.epub");
@@ -250,10 +250,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[tokio::test]
     async fn test_scan_adds_new_book(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("new.epub");
@@ -283,10 +283,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[tokio::test]
     async fn test_scan_skips_unchanged_book(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("existing.epub");
@@ -340,10 +340,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[tokio::test]
     async fn test_scan_updates_book_when_size_changes(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("changed.epub");
@@ -397,10 +397,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[tokio::test]
     async fn test_scan_updates_book_when_modified_at_changes(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("modified.epub");
@@ -460,10 +460,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[tokio::test]
     async fn test_scan_preserves_book_id_when_updated(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let epub_path = temp_dir.path().join("preserve-id.epub");

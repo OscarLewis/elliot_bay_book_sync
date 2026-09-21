@@ -208,16 +208,16 @@ async fn process_store_response(
 mod tests {
     use crate::{
         api::init_resources::{ResourcesRoot, patch_kobo_resources},
-        test_helpers::{AppTextContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app},
     };
     use axum::http::StatusCode;
     use test_context::test_context;
     use test_log::test;
 
     /// Verifies that the initialization handler matches the known Kobo test data
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_initialization_handler_matches_kobo_test_data(ctx: &mut AppTextContext) {
+    async fn test_initialization_handler_matches_kobo_test_data(ctx: &mut AppTestContext) {
         // Disable store proxying so the test exercises the local fallback resources
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();

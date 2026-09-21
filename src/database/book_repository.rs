@@ -251,16 +251,16 @@ impl BookRepository {
 
 #[cfg(test)]
 mod tests {
-    use crate::{error::AppError, library::book::Book, test_helpers::AppTextContext};
+    use crate::{error::AppError, library::book::Book, test_helpers::AppTestContext};
     use mongodb::bson::oid::ObjectId;
     use test_context::test_context;
     use test_log::test;
 
     /// Verifies that inserting a `Book` persists it to MongoDB and that it can
     /// be retrieved by the `ObjectId` returned from the insert.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_insert(ctx: &mut AppTextContext) -> Result<(), AppError> {
+    async fn test_mongodb_book_insert(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -286,9 +286,9 @@ mod tests {
 
     /// Verifies that the unique index on `Book::path` rejects a second insert
     /// of a book with the same path.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_path_unique_index(ctx: &mut AppTextContext) -> Result<(), AppError> {
+    async fn test_mongodb_book_path_unique_index(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -307,9 +307,9 @@ mod tests {
 
     /// Verifies that `update` overwrites an existing document's fields and
     /// reports `true` when a match was found.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_update(ctx: &mut AppTextContext) -> Result<(), AppError> {
+    async fn test_mongodb_book_update(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -340,10 +340,10 @@ mod tests {
 
     /// Verifies that `update` reports `false` when no document matches the
     /// given id, rather than erroring or silently inserting.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
     async fn test_mongodb_book_update_missing_returns_false(
-        ctx: &mut AppTextContext,
+        ctx: &mut AppTestContext,
     ) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
@@ -361,9 +361,9 @@ mod tests {
 
     /// Verifies that `update_title` with `Some(title)` sets the `title`
     /// field without disturbing other fields on the document.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_update_title_some(ctx: &mut AppTextContext) -> Result<(), AppError> {
+    async fn test_mongodb_book_update_title_some(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -398,9 +398,9 @@ mod tests {
 
     /// Verifies that `update_title` with `None` removes the `title` field
     /// from the document entirely.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_update_title_none(ctx: &mut AppTextContext) -> Result<(), AppError> {
+    async fn test_mongodb_book_update_title_none(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let epub_path = temp_dir.path().join("test_name.epub");
         tokio::fs::write(&epub_path, vec![0u8; 2 * 1024]).await?;
@@ -429,9 +429,9 @@ mod tests {
 
     /// Verifies that `insert_many` persists multiple `Book` documents at once and
     /// returns their generated `ObjectId`s in matching order.
-    #[test_context(AppTextContext)]
+    #[test_context(AppTestContext)]
     #[test(tokio::test)]
-    async fn test_mongodb_book_insert_many(ctx: &mut AppTextContext) -> Result<(), AppError> {
+    async fn test_mongodb_book_insert_many(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let temp_dir = tempfile::tempdir()?;
         let path_a = temp_dir.path().join("book_a.epub");
         let path_b = temp_dir.path().join("book_b.epub");
