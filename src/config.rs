@@ -1,3 +1,5 @@
+use crate::{directories::AppDirs, error::AppError};
+use config::{FileFormat, FileSource};
 use serde::Deserialize;
 use std::{
     net::{IpAddr, SocketAddr, ToSocketAddrs},
@@ -5,11 +7,12 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use tracing::debug;
 
+// TODO switch to using directories.rs to determine data directory and config directory.
 const LIBRARY_PATH: &str = "test ebooks";
 const PROXY_KOBO_STORE: bool = true;
 const DB_PATH: &str = "sync_db.redb";
-const IMG_PATH: &str = "static/images";
 const TEST_AUTH_KEY: &str = "test-key-123";
 const BASE_URL: &str = "http://localhost:3000";
 const HOST: &str = "0.0.0.0";
@@ -19,9 +22,11 @@ const MONGODB_NAME: &str = "ebbooks";
 #[derive(Clone, Debug)]
 pub struct AppConfig {
     pub library_path: Arc<Path>,
+    pub config_dir: Arc<Path>,
+    pub data_dir: Arc<Path>,
+    pub image_dir: Arc<Path>,
     pub proxy_kobo_store: bool,
     pub database_path: String,
-    pub image_path: String,
     pub ebbooks_auth_key: String,
     pub base_url: String,
     pub mongodb_name: String,
@@ -39,7 +44,6 @@ struct ConfigFile {
     library_path: Option<String>,
     proxy_kobo_store: Option<bool>,
     database_path: Option<String>,
-    image_path: Option<String>,
     ebbooks_auth_key: Option<String>,
     base_url: Option<String>,
     mongodb_name: Option<String>,
@@ -50,9 +54,21 @@ struct ConfigFile {
 }
 
 impl AppConfig {
-    pub fn load() -> Result<Self, config::ConfigError> {
+    pub fn load() -> Result<Self, AppError> {
+        let dirs = AppDirs::system();
+
+        let config_source = config::File::with_name(
+            dirs.config_dir
+                .join("config")
+                .to_str()
+                .expect("config path must be valid UTF-8"),
+        )
+        .required(false);
+
+        debug!(?config_source, "Configuration source");
+
         let config: ConfigFile = config::Config::builder()
-            .add_source(config::File::with_name("config").required(false))
+            .add_source(config_source)
             .add_source(config::Environment::with_prefix("EBBOOKS"))
             .build()?
             .try_deserialize()?;
@@ -68,10 +84,12 @@ impl AppConfig {
                 .library_path
                 .map(|path| Arc::from(Path::new(&path)))
                 .unwrap_or(default.library_path),
+            config_dir: dirs.config_dir,
+            data_dir: dirs.data_dir,
+            image_dir: dirs.image_dir,
             proxy_kobo_store: config.proxy_kobo_store.unwrap_or(default.proxy_kobo_store),
             database_path: config.database_path.unwrap_or(default.database_path),
             mongodb_name: config.mongodb_name.unwrap_or(default.mongodb_name),
-            image_path: config.image_path.unwrap_or(default.image_path),
             ebbooks_auth_key: config.ebbooks_auth_key.unwrap_or(default.ebbooks_auth_key),
             base_url: config.base_url.unwrap_or(default.base_url),
             bind_addr,
@@ -82,12 +100,15 @@ impl AppConfig {
 
 impl Default for AppConfig {
     fn default() -> Self {
+        let dirs = AppDirs::system();
         Self {
             library_path: Arc::from(Path::new(LIBRARY_PATH)),
+            config_dir: dirs.config_dir,
+            data_dir: dirs.data_dir,
+            image_dir: dirs.image_dir,
             proxy_kobo_store: PROXY_KOBO_STORE,
             database_path: DB_PATH.to_string(),
             mongodb_name: MONGODB_NAME.to_string(),
-            image_path: IMG_PATH.to_string(),
             ebbooks_auth_key: TEST_AUTH_KEY.to_string(),
             base_url: BASE_URL.to_string(),
             bind_addr: resolve_bind_addr(HOST, PORT).expect("default HOST/PORT must be valid"),
@@ -99,6 +120,9 @@ impl Default for AppConfig {
 impl AppConfig {
     pub fn new(
         library_path: Option<impl AsRef<Path>>,
+        config_dir: Option<impl AsRef<Path>>,
+        data_dir: Option<impl AsRef<Path>>,
+        image_dir: Option<impl AsRef<Path>>,
         proxy_kobo_store: Option<bool>,
         database_path: Option<impl Into<String>>,
         mongodb_name: Option<impl Into<String>>,
@@ -114,12 +138,20 @@ impl AppConfig {
             library_path: library_path
                 .map(|p| Arc::from(p.as_ref()))
                 .unwrap_or(default.library_path),
+            config_dir: config_dir
+                .map(|p| Arc::from(p.as_ref()))
+                .unwrap_or(default.config_dir),
+            data_dir: data_dir
+                .map(|p| Arc::from(p.as_ref()))
+                .unwrap_or(default.data_dir),
+            image_dir: image_dir
+                .map(|p| Arc::from(p.as_ref()))
+                .unwrap_or(default.image_dir),
             proxy_kobo_store: proxy_kobo_store.unwrap_or(default.proxy_kobo_store),
             database_path: database_path
                 .map(Into::into)
                 .unwrap_or(default.database_path),
             mongodb_name: mongodb_name.map(Into::into).unwrap_or(default.mongodb_name),
-            image_path: image_path.map(Into::into).unwrap_or(default.image_path),
             ebbooks_auth_key: ebbooks_auth_key
                 .map(Into::into)
                 .unwrap_or(default.ebbooks_auth_key),

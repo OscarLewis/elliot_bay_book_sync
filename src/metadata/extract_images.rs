@@ -13,7 +13,7 @@ pub(crate) async fn extract_imgs_for_books(
 ) -> Result<Vec<PathBuf>, AppError> {
     debug!(
         ?book_list,
-        state.config.image_path, "Extracting images for book list"
+        ?state.config.image_dir, "Extracting images for book list"
     );
 
     let mut image_paths = Vec::new();
@@ -84,8 +84,7 @@ pub(crate) async fn extract_imgs_for_books(
             };
 
             if save_to_fs {
-                let image_path =
-                    Path::new(&state.config.image_path).join(format!("{book_id}.webp"));
+                let image_path = state.config.image_dir.join(format!("{book_id}.webp"));
 
                 book.image_path = Some(image_path.to_string_lossy().into_owned());
                 book.has_image = true;
