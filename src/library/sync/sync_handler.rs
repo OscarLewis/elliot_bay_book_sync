@@ -46,8 +46,16 @@ pub async fn library_sync_handler(
     // Fetch all synced book records and library books
     let synced_books = state.mongodb.syncs.fetch_all().await?;
     let books = state.mongodb.books.fetch_all().await?;
+    /*
+    TODO: Update to how we handle updated entitlements to allow for metadata refresh post intitial sync
+    UNSYNCED
+        ↓
+    NewEntitlement
 
-    // TODO WIP FLAG FOR Mongodb re-write - PICK UP FROM HERE
+    SYNCED + modified
+        ↓
+    ChangedEntitlement
+    */
 
     // If we have no synced books, we disrespect the SyncToken
     // His shoes wack
@@ -164,6 +172,7 @@ pub async fn library_sync_handler(
             user_id: "default".to_string(),
             id: None,
             synced_at: Utc::now(),
+            last_synced_at: Utc::now(),
         };
 
         state.mongodb.syncs.insert(&mut synced).await?;

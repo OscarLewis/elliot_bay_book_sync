@@ -11,4 +11,6 @@ pub struct SyncedBookDocument {
     pub id: Option<ObjectId>,
     #[serde(with = "bson_chrono_datetime")]
     pub synced_at: DateTime<Utc>,
+    #[serde(with = "bson_chrono_datetime")]
+    pub last_synced_at: DateTime<Utc>,
 }
