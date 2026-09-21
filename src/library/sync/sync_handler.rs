@@ -327,12 +327,17 @@ mod tests {
     use std::sync::Arc;
 
     use crate::{
-        library::sync::{
-            sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
-            sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+        error::AppError,
+        library::{
+            book::Book,
+            sync::{
+                entitlement_models::SyncResult,
+                sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
+                sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+            },
         },
         metadata::update_meta::update_metadata,
-        test_helpers::{AppTestContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app, write_minimal_epub},
     };
     use axum::http::HeaderMap;
     use chrono::{TimeZone, Utc};
@@ -340,13 +345,12 @@ mod tests {
     use test_context::test_context;
     use test_log::test;
     use tokio::time::{Duration, sleep};
+    use tracing::debug;
 
     #[test_context(AppTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_library_sync_status_code(
-        ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_library_sync_status_code(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
@@ -391,7 +395,7 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_no_proxy(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
@@ -413,7 +417,7 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_with_continuation(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
@@ -441,7 +445,7 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_includes_token(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
@@ -457,7 +461,7 @@ mod tests {
 
         assert!(response.headers().get("x-kobo-synctoken").is_some());
         assert_eq!(
-            response.headers().get("content-type").unwrap().to_str()?,
+            response.headers().get("content-type").unwrap(),
             "application/json; charset=utf-8"
         );
         Ok(())
@@ -468,7 +472,7 @@ mod tests {
     #[ignore = "requires mongodb test server setup"]
     async fn test_library_sync_updates_and_returns_valid_sync_token(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
@@ -503,7 +507,8 @@ mod tests {
             .headers()
             .get(SYNC_TOKEN_HEADER)
             .expect("x-kobo-synctoken header missing from response")
-            .to_str()?;
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8");
 
         // Reconstruct and verify SyncToken payload
         let parsed_token = SyncToken::from_headers(response.headers());
@@ -560,7 +565,7 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_encodes_token_correctly(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
@@ -599,4 +604,91 @@ mod tests {
     }
 
     // TODO write a test that edits the metadata and modified_at for a book post sync and confirms that a ChangedEntitlement is generated
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_edit_metadata_generates_changed_entitlement(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), AppError> {
+        let temp_dir = tempfile::tempdir()?;
+        let epub_path = temp_dir.path().join("test_name.epub");
+
+        // Write a valid minimal EPUB file instead of zeroed bytes
+        write_minimal_epub(&epub_path, "Test Book")?;
+
+        let mut book = Book::from_path(epub_path);
+        book.hardcover_slug = Some("hamlet".into());
+        book.hardcover_id = Some(4083277);
+
+        let test_base_url = "http://books.example.com/";
+        let token = "test-token-123";
+
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
+
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = Arc::new(config);
+
+        let server = setup_test_app(state.clone());
+
+        // TODO Update metadata
+        // update_metadata(state.clone(), vec![book]).await?;
+        // Then sync
+        // Explicitly set custom timestamps on token
+        let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
+        let test_timestamp = Utc.with_ymd_and_hms(2026, 1, 15, 12, 0, 0).unwrap();
+        sync_token.data.books_last_modified = test_timestamp;
+        sync_token.data.books_last_created = test_timestamp;
+
+        // Initial Sync Call (No Sync-Token in Header)
+        let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
+        response.assert_status(StatusCode::OK);
+        // Decode token back to verify value propagation
+        let reconstructed_token = SyncToken::from_headers(response.headers());
+        let results: Vec<SyncResult> = response.json();
+
+        debug!(?results, ?reconstructed_token, "Decoded sync response");
+
+        // Then update that books metadata
+        book.description = Some(
+            "The Tragedy of Hamlet, Prince of Denmark, often shortened to Hamlet is a tragedy written by William Shakespeare sometime between 1599 and 1601.".into(),
+        );
+        book.modified_at = Utc::now();
+
+        ctx.state
+            .mongodb
+            .books
+            .update_diff(book_id, &mut book)
+            .await?;
+        // Assert header presence
+        let token_header = response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8");
+
+        // Then sync again
+        let post_edit_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, token_header)
+            .await;
+
+        post_edit_response.assert_status(StatusCode::OK);
+        // Decode token back to verify value propagation
+        let post_edit_reconstructed_token = SyncToken::from_headers(response.headers());
+        let post_edit_results: Vec<SyncResult> = response.json();
+
+        debug!(
+            ?post_edit_results,
+            ?post_edit_reconstructed_token,
+            "Decoded post metadata edit sync response"
+        );
+        // Make sure theres a resulting changed entitlement
+
+        Ok(())
+    }
 }

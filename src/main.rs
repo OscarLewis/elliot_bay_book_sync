@@ -276,15 +276,22 @@ pub async fn refresh_single_book_metadata_handler(
 #[cfg(test)]
 pub mod test_helpers {
     use crate::api::init_resources::{Resources, patch_kobo_resources};
-    use crate::database::MongoDatabase; // adjust to actual module path
+    use crate::database::MongoDatabase;
+    use crate::error::AppError;
+    // adjust to actual module path
     use crate::{AppState, app, config::AppConfig};
     use axum::Router;
     use axum_test::TestServer;
     use dotenvy::dotenv;
     use std::env;
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::Path;
     use std::sync::Arc;
     use test_context::AsyncTestContext;
     use tokio::sync::Mutex;
+    use zip::write::SimpleFileOptions;
+    use zip::{CompressionMethod, ZipWriter};
 
     pub struct AppTestContext {
         pub state: AppState,
@@ -354,6 +361,67 @@ pub mod test_helpers {
     pub fn setup_test_app(state: AppState) -> TestServer {
         let router = Router::new().merge(app(state));
         TestServer::new(router)
+    }
+
+    pub fn write_minimal_epub(path: &Path, title: &str) -> Result<(), AppError> {
+        let mut zip = ZipWriter::new(File::create(path)?);
+
+        // The mimetype entry must come first and be uncompressed
+        let stored_options =
+            SimpleFileOptions::default().compression_method(CompressionMethod::Stored);
+        let default_options = SimpleFileOptions::default();
+
+        zip.start_file("mimetype", stored_options)?;
+        zip.write_all(b"application/epub+zip")?;
+
+        zip.start_file("META-INF/container.xml", default_options)?;
+        zip.write_all(
+            r#"<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>"#
+                .as_bytes(),
+        )?;
+
+        zip.start_file("OEBPS/content.opf", default_options)?;
+        let content_opf = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>{title}</dc:title>
+    <dc:creator>Test Author</dc:creator>
+    <dc:language>en</dc:language>
+    <dc:identifier id="id">urn:uuid:00000000-0000-0000-0000-000000000001</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"/>
+  </spine>
+</package>"#
+        );
+        zip.write_all(content_opf.as_bytes())?;
+
+        zip.start_file("OEBPS/chapter1.xhtml", default_options)?;
+        zip.write_all(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Ch 1</title>
+  </head>
+  <body>
+    <p>Hello</p>
+  </body>
+</html>"#
+                .as_bytes(),
+        )?;
+
+        zip.finish()?;
+        Ok(())
     }
 }
 

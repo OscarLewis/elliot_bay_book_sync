@@ -64,12 +64,16 @@ pub enum AppError {
 
     #[error("MongoDB did not return an ObjectId for the inserted document")]
     InvalidObjectId,
+
+    #[error("ZIP file error: {0}")]
+    Zip(#[from] zip::result::ZipError),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = match self {
             AppError::BsonSer(_)
+            | AppError::Zip(_)
             | AppError::Config(_)
             | AppError::MongoDB(_)
             | AppError::InvalidObjectId
