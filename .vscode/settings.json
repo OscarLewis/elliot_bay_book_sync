@@ -1,6 +1,6 @@
 {
     "rust-analyzer.linkedProjects": [
-        "./kobink/Cargo.toml",
+        // "./kobink/Cargo.toml",
         "./Cargo.toml"
     ],
     "ruff.enable": false,
