@@ -81,6 +81,19 @@ fn title_score(epub_title: Option<&str>, result: &IntermediateBookSearchResult) 
 
 fn author_score(epub_author: Option<&str>, result: &IntermediateBookSearchResult) -> f64 {
     fn normalize_author(author: &str) -> String {
+        let author = author.trim();
+
+        if let Some((last, first)) = author.split_once(',') {
+            return format!(
+                "{} {}",
+                first.trim().to_lowercase(),
+                last.trim().to_lowercase()
+            )
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+        }
+
         author
             .chars()
             .filter(|c| c.is_alphanumeric() || c.is_whitespace())

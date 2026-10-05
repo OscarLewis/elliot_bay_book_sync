@@ -663,6 +663,7 @@ mod tests {
             .books
             .update_diff(book_id, &mut book)
             .await?;
+
         // Assert header presence
         let token_header = response
             .headers()

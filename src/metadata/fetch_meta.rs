@@ -84,7 +84,16 @@ pub async fn fetch_metadata_for_book(
     book_title: &str,
     epub_metadata: &EpubDiskMetadata,
 ) -> Result<Vec<IntermediateBookSearchResult>, AppError> {
-    let result = search_books_query(authorization_token, book_title).await?;
+    let mut query = match &epub_metadata.title {
+        Some(title) => title.clone(),
+        None => book_title.to_string(),
+    };
+
+    if let Some(author) = &epub_metadata.author {
+        query = format!("{query} {author}");
+    }
+
+    let result = search_books_query(authorization_token, &query).await?;
 
     let search_results = result
         .and_then(|s| s.results)
