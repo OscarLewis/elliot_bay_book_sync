@@ -690,6 +690,7 @@ mod tests {
         );
         // Make sure theres a resulting changed entitlement
 
+        // TODO currently this test results in a new entitlement
         Ok(())
     }
 }
