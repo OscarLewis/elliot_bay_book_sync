@@ -634,28 +634,43 @@ mod tests {
 
         let server = setup_test_app(state.clone());
 
-        // TODO Update metadata
-        // update_metadata(state.clone(), vec![book]).await?;
-        // Then sync
-        // Explicitly set custom timestamps on token
-        let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
-        let test_timestamp = Utc.with_ymd_and_hms(2026, 1, 15, 12, 0, 0).unwrap();
-        sync_token.data.books_last_modified = test_timestamp;
-        sync_token.data.books_last_created = test_timestamp;
-
-        // Initial Sync Call (No Sync-Token in Header)
+        // --- Initial sync: the book has never been synced, so expect a NewEntitlement ---
         let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
         response.assert_status(StatusCode::OK);
-        // Decode token back to verify value propagation
-        let reconstructed_token = SyncToken::from_headers(response.headers());
+
+        let token_header = response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8")
+            .to_string();
+
         let results: Vec<SyncResult> = response.json();
+        debug!(?results, "Decoded initial sync response");
 
-        debug!(?results, ?reconstructed_token, "Decoded sync response");
-
-        // Then update that books metadata
-        book.description = Some(
-            "The Tragedy of Hamlet, Prince of Denmark, often shortened to Hamlet is a tragedy written by William Shakespeare sometime between 1599 and 1601.".into(),
+        assert_eq!(
+            results.len(),
+            1,
+            "Expected exactly one result on initial sync"
         );
+        assert!(
+            results[0].new_entitlement.is_some(),
+            "Expected a NewEntitlement on initial sync"
+        );
+        assert!(
+            results[0].changed_entitlement.is_none(),
+            "Did not expect a ChangedEntitlement on initial sync"
+        );
+
+        // Ensure modified_at is strictly later than the recorded last_synced_at
+        // (Mongo datetimes have millisecond precision)
+        sleep(Duration::from_millis(50)).await;
+
+        // --- Edit the book's metadata and bump modified_at ---
+        book.description = Some(
+        "The Tragedy of Hamlet, Prince of Denmark, often shortened to Hamlet is a tragedy written by William Shakespeare sometime between 1599 and 1601.".into(),
+    );
         book.modified_at = Utc::now();
 
         ctx.state
@@ -664,33 +679,55 @@ mod tests {
             .update_diff(book_id, &mut book)
             .await?;
 
-        // Assert header presence
-        let token_header = response
-            .headers()
-            .get(SYNC_TOKEN_HEADER)
-            .expect("x-kobo-synctoken header missing from response")
-            .to_str()
-            .expect("x-kobo-synctoken header is not valid UTF-8");
-
-        // Then sync again
+        // --- Second sync: the book was synced before and modified since ---
         let post_edit_response = server
             .get(&format!("/kobo/{token}/v1/library/sync"))
-            .add_header(SYNC_TOKEN_HEADER, token_header)
+            .add_header(SYNC_TOKEN_HEADER, &token_header)
             .await;
-
         post_edit_response.assert_status(StatusCode::OK);
-        // Decode token back to verify value propagation
-        let post_edit_reconstructed_token = SyncToken::from_headers(response.headers());
-        let post_edit_results: Vec<SyncResult> = response.json();
 
+        let post_edit_token_header = post_edit_response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from post-edit response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8")
+            .to_string();
+
+        let post_edit_results: Vec<SyncResult> = post_edit_response.json();
         debug!(
             ?post_edit_results,
-            ?post_edit_reconstructed_token,
             "Decoded post metadata edit sync response"
         );
-        // Make sure theres a resulting changed entitlement
 
-        // TODO currently this test results in a new entitlement
+        assert_eq!(
+            post_edit_results.len(),
+            1,
+            "Expected exactly one result after metadata edit"
+        );
+        assert!(
+            post_edit_results[0].changed_entitlement.is_some(),
+            "Expected a ChangedEntitlement after metadata edit"
+        );
+        assert!(
+            post_edit_results[0].new_entitlement.is_none(),
+            "Did not expect a NewEntitlement for an already-synced book"
+        );
+
+        // --- Third sync: nothing changed since, so last_synced_at should have been
+        // refreshed by the upsert and the result should be empty ---
+        let third_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, &post_edit_token_header)
+            .await;
+        third_response.assert_status(StatusCode::OK);
+
+        let third_results: Vec<SyncResult> = third_response.json();
+        assert!(
+            third_results.is_empty(),
+            "Expected no entitlements once the edit has been synced"
+        );
+
         Ok(())
     }
 }
