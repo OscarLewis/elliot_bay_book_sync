@@ -7,6 +7,7 @@ use crate::{
         },
         images::{image_handler, image_handler_with_quality},
         initialization::initialization_handler,
+        middleware::sync_auth_middleware,
     },
     library::sync::{
         delete_library_item_handler::library_item_delete_handler,
@@ -19,12 +20,12 @@ use crate::{
     },
 };
 use axum::{
-    Router,
+    Router, middleware,
     routing::{any, delete, get, post},
 };
 
 /// Return a `Router<AppState>` so it can be merged with the main app router
-pub fn kobo_routes() -> Router<AppState> {
+pub fn kobo_routes(state: AppState) -> Router<AppState> {
     Router::new()
         // Initialization
         .route(
@@ -94,4 +95,31 @@ pub fn kobo_routes() -> Router<AppState> {
             "/kobo/{token}/v1/library/{book_uuid}",
             delete(library_item_delete_handler),
         )
+        // Auth Middleware for all routes under /kobo/{token}/
+        .route_layer(middleware::from_fn_with_state(state, sync_auth_middleware))
 }
+
+/*
+// TODO: Consider moving routes into seperate protected/unprotected routers and merging them together, so that the auth middleware is only applied to the protected routes.
+// This would make it easier to add new routes in the future without having to worry about accidentally exposing them without auth.
+pub fn kobo_routes(state: AppState) -> Router<AppState> {
+    let protected = Router::new()
+        .route("/kobo/{token}/v1/initialization", get(initialization_handler))
+        .route("/kobo/{token}/v1/library/sync", get(library_sync_handler))
+        .route(
+            "/kobo/{token}/v1/library/{book_uuid}/state",
+            get(reading_state_handler).put(reading_state_handler),
+        )
+        // ... more protected routes ...
+        .route_layer(middleware::from_fn_with_state(state, sync_auth_middleware));
+
+    let open = Router::new()
+        .route("/kobo/{token}/v1/auth/device", post(device_auth_request_handler))
+        .route(
+            "/kobo/{token}/oauth/{*subpath}",
+            get(oauth_token_handler).post(oauth_token_handler),
+        );
+
+    protected.merge(open)
+}
+*/

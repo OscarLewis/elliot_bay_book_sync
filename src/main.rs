@@ -87,7 +87,7 @@ pub fn app(state: AppState) -> Router {
             "/metadata/refresh/{book_doc_id}",
             post(refresh_single_book_metadata_handler),
         )
-        .merge(api::kobo_routes::kobo_routes())
+        .merge(api::kobo_routes::kobo_routes(state.clone()))
         .with_state(state)
         // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
