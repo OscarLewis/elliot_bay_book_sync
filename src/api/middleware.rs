@@ -14,6 +14,9 @@ pub struct TokenParam {
     token: String,
 }
 
+/// Middleware to check if the provided token matches the configured auth key.
+/// If the token is valid, the request is passed to the next handler;
+/// otherwise, a 401 Unauthorized response is returned.
 pub async fn sync_auth_middleware(
     Path(TokenParam { token }): Path<TokenParam>,
     State(state): State<AppState>,
