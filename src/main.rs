@@ -430,7 +430,7 @@ mod tests {
     use crate::{
         library::book::Book,
         scan::scanner::ScanResponse,
-        test_helpers::{AppTestContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app, write_minimal_epub},
     };
     use axum::http::StatusCode;
     use std::path::PathBuf;
@@ -464,9 +464,15 @@ mod tests {
     async fn test_refresh_single_book_metadata_handler(
         ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut book = Book::from_path(PathBuf::from(
-            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
-        ));
+        // TODO Use write_minimal_epub() here and assign test metadata instead
+        let temp_dir = tempfile::tempdir()?;
+        let epub_path = temp_dir.path().join("test_name.epub");
+
+        // Write a valid minimal EPUB file instead of zeroed bytes
+        write_minimal_epub(&epub_path, "Test Book")?;
+        let mut book = Book::from_path(epub_path);
+        book.hardcover_slug = Some("hamlet".into());
+        book.hardcover_id = Some(4083277);
 
         let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
