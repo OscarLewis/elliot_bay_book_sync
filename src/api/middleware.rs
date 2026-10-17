@@ -6,10 +6,16 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use serde::Deserialize;
 use tracing::debug;
 
+#[derive(Deserialize)]
+pub struct TokenParam {
+    token: String,
+}
+
 pub async fn sync_auth_middleware(
-    Path(token): Path<String>,
+    Path(TokenParam { token }): Path<TokenParam>,
     State(state): State<AppState>,
     req: Request<Body>,
     next: Next,
