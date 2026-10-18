@@ -19,8 +19,11 @@ use axum::{
 use dotenvy::dotenv;
 use mongodb::bson::{doc, oid::ObjectId};
 use reqwest::StatusCode;
-use std::{env, sync::Arc};
+use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
+use tower_governor::{
+    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
+};
 use tower_http::services::ServeDir;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -95,18 +98,40 @@ async fn index_handler() -> Result<Html<String>, AppError> {
 
 /// Constructs the main application `Router` and registers API routes with shared state
 pub fn app(state: AppState) -> Router {
-    Router::new()
-        .route("/", get(get(index_handler)))
+    // Heavy routes: scanning the library and hitting the Hardcover API
+    let gov = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(10) // refill: 1 request every 10s per IP
+            .burst_size(3) // allow a short burst of 3
+            .key_extractor(SmartIpKeyExtractor)
+            .finish()
+            .expect("valid governor config"),
+    );
+
+    // Prune stale per-IP entries so the limiter can't leak memory
+    let limiter = gov.limiter().clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            limiter.retain_recent();
+        }
+    });
+
+    let rate_limited = Router::new()
         .route("/scan", post(scan_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
         .route(
             "/metadata/refresh/{book_doc_id}",
             post(refresh_single_book_metadata_handler),
         )
+        .layer(GovernorLayer::new(gov)); // older versions: GovernorLayer { config: gov }
+
+    Router::new()
+        .route("/", get(index_handler))
+        .merge(rate_limited)
         .merge(api::kobo_routes::kobo_routes(state.clone()))
         .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
-        // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
 }
 
@@ -202,7 +227,12 @@ async fn main() -> Result<(), AppError> {
     info!(addr = ?listener.local_addr().unwrap(), "listening");
 
     // Start serving HTTP requests with Axum
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
     Ok(())
 }
 
