@@ -18,7 +18,7 @@ use axum::{
 };
 use chrono::{DateTime, TimeZone, Utc};
 use std::collections::{HashMap, HashSet};
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 pub const SYNC_ITEM_LIMIT: usize = 100;
 
@@ -334,7 +334,7 @@ pub async fn generate_sync_response(
     // Add sync token to response headers
     sync_token.to_headers(&mut response_headers);
 
-    debug!(books_synced = final_results.len(), "Kobo sync completed");
+    info!(books_synced = final_results.len(), "Kobo sync completed");
 
     // Build JSON response with proper encoding
     let json_body = serde_json::to_string(&final_results)?;

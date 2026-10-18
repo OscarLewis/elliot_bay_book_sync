@@ -1,11 +1,11 @@
 use axum::{body::Body, http::Request, middleware::Next, response::Response};
-use tracing::debug;
+use tracing::trace;
 
 pub async fn log_with_body(req: Request<Body>, next: Next) -> Response {
     let (parts, body) = req.into_parts();
     let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
-    debug!(
+    trace!(
         method = %parts.method,
         uri = %parts.uri,
         headers = ?parts.headers,

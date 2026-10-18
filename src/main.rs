@@ -123,7 +123,7 @@ async fn main() -> Result<(), AppError> {
 
     // Load config from file and environment
     let config = AppConfig::load()?;
-    debug!(?config, "Loaded config");
+    debug!("Loaded config");
 
     // Load the .env file into the system environment
     dotenv().ok();
@@ -213,7 +213,7 @@ async fn main() -> Result<(), AppError> {
 pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResponse>, AppError> {
     let scan_id = state.mongodb.scans.start().await?;
 
-    debug!(doc_id = ?scan_id, "Initialized scan execution record");
+    info!(doc_id = ?scan_id, "Initialized scan");
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(run_library_scan(
