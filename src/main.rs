@@ -43,6 +43,7 @@ pub mod error;
 pub mod library;
 pub mod logging;
 pub(crate) mod metadata;
+pub mod opds;
 pub mod scan;
 pub(crate) mod scss;
 
