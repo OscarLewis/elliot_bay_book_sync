@@ -43,6 +43,7 @@ futures-util = "0.3.34"
 test-context = "0.5.8"
 zip = "8.6.0"
 grass = "0.13.4"
+sha2 = "0.11.1"
 
 [package.metadata.generate-rpm]
 assets = [

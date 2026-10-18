@@ -5,7 +5,7 @@ use crate::{
     library::{
         book::Book,
         sync::{
-            entitlement_models::{Entitlement, SyncResult},
+            entitlement_models::{Entitlement, SyncResult, entitlement_hash},
             sync_document::SyncedBookDocument,
             sync_token::SyncToken,
         },
@@ -104,9 +104,14 @@ pub async fn library_sync_handler(
     }
 
     // Map book_id -> last_synced_at
-    let synced_map: HashMap<&str, DateTime<Utc>> = synced_books
+    // let synced_map: HashMap<&str, DateTime<Utc>> = synced_books
+    //     .iter()
+    //     .map(|sb| (sb.book_id.as_str(), sb.last_synced_at))
+    //     .collect();
+
+    let synced_map: HashMap<&str, &SyncedBookDocument> = synced_books
         .iter()
-        .map(|sb| (sb.book_id.as_str(), sb.last_synced_at))
+        .map(|sb| (sb.book_id.as_str(), sb))
         .collect();
 
     // Find never-synced books (New Entitlements)
@@ -129,7 +134,7 @@ pub async fn library_sync_handler(
             book.id
                 .as_ref()
                 .and_then(|id| synced_map.get(id.to_string().as_str()))
-                .map_or(false, |&last_synced_at| book.modified_at > last_synced_at)
+                .map_or(false, |sb| book.modified_at > sb.last_synced_at)
         })
         .collect();
 
@@ -153,6 +158,8 @@ pub async fn library_sync_handler(
             false,
         );
 
+        let hash = entitlement_hash(&entitlement);
+
         sync_results.push(SyncResult {
             changed_entitlement: None,
             new_entitlement: Some(entitlement),
@@ -173,6 +180,7 @@ pub async fn library_sync_handler(
             id: None,
             synced_at: Utc::now(),
             last_synced_at: Utc::now(),
+            entitlement_hash: Some(hash),
         };
 
         state.mongodb.syncs.insert(&mut synced).await?;
@@ -192,6 +200,31 @@ pub async fn library_sync_handler(
             false,
         );
 
+        let hash = entitlement_hash(&entitlement);
+
+        // No stored hash means it was synced before this feature existed.
+        // Treat that as unchanged and backfill, so the upgrade doesn't resend the library.
+        let unchanged = synced_map
+            .get(book_id.as_str())
+            .and_then(|sb| sb.entitlement_hash.as_deref())
+            .map_or(true, |prev| prev == hash);
+
+        let mut synced = SyncedBookDocument {
+            book_id: book_id.clone(),
+            user_id: "default".to_string(),
+            id: None,
+            synced_at: Utc::now(),
+            last_synced_at: Utc::now(),
+            entitlement_hash: Some(hash),
+        };
+
+        if unchanged {
+            debug!(%book_id, "modified_at moved but entitlement is identical, skipping resend");
+            state.mongodb.syncs.upsert(&mut synced).await?;
+            continue;
+        }
+
+        has_local_books = true;
         sync_results.push(SyncResult {
             changed_entitlement: Some(entitlement),
             new_entitlement: None,
@@ -202,16 +235,7 @@ pub async fn library_sync_handler(
         });
 
         debug!(book_id = %book_id, title = book.title, "Syncing modified book");
-
         new_books_last_modified = std::cmp::max(new_books_last_modified, book.modified_at);
-
-        let mut synced = SyncedBookDocument {
-            book_id,
-            user_id: "default".to_string(),
-            id: None,
-            synced_at: Utc::now(),
-            last_synced_at: Utc::now(),
-        };
 
         state.mongodb.syncs.upsert(&mut synced).await?;
     }

@@ -1,4 +1,7 @@
-use crate::database::bson_chrono_datetime::bson_chrono_datetime;
+use crate::{
+    database::bson_chrono_datetime::bson_chrono_datetime,
+    library::sync::entitlement_models::Entitlement,
+};
 use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
@@ -13,5 +16,6 @@ pub struct SyncedBookDocument {
     pub synced_at: DateTime<Utc>,
     #[serde(with = "bson_chrono_datetime")]
     pub last_synced_at: DateTime<Utc>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entitlement_hash: Option<String>,
 }

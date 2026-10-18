@@ -6,6 +6,8 @@ use crate::{
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::fmt::Write;
 use std::{collections::HashMap, sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
@@ -297,6 +299,17 @@ pub struct Entitlement {
     pub reading_state: Option<ReadingState>,
 }
 
+pub fn entitlement_hash(e: &Entitlement) -> String {
+    let bytes =
+        serde_json::to_vec(&(&e.book_metadata, e.book_entitlement.is_removed)).unwrap_or_default();
+
+    Sha256::digest(&bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut s, b| {
+            let _ = write!(s, "{b:02x}");
+            s
+        })
+}
 impl Entitlement {
     pub fn from_book_tuple(
         (book_id, book): (&str, &Book),

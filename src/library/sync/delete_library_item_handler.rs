@@ -48,6 +48,7 @@ mod tests {
             id: None,
             synced_at: Utc::now(),
             last_synced_at: Utc::now(),
+            entitlement_hash: None,
         };
 
         ctx.state.mongodb.syncs.insert(&mut synced_book).await?;
