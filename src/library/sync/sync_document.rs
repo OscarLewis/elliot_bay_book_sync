@@ -13,4 +13,5 @@ pub struct SyncedBookDocument {
     pub synced_at: DateTime<Utc>,
     #[serde(with = "bson_chrono_datetime")]
     pub last_synced_at: DateTime<Utc>,
+    pub entitlement_hash: Option<String>,
 }

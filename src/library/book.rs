@@ -1,6 +1,6 @@
 use crate::database::bson_chrono_datetime::{bson_chrono_datetime, bson_chrono_datetime_option};
 use crate::error::AppError;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use image::DynamicImage;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
@@ -25,6 +25,13 @@ pub struct Book {
     /// Stored as a BSON DateTime in MongoDB.
     #[serde(with = "bson_chrono_datetime")]
     pub modified_at: DateTime<Utc>,
+    /// When the book was first added. Stored as a BSON DateTime.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "bson_chrono_datetime_option"
+    )]
+    pub created_at: Option<DateTime<Utc>>,
     #[serde(default)]
     pub hardcover_id: Option<u64>,
     #[serde(default)]
@@ -74,13 +81,26 @@ impl Book {
             has_image: false,
             image_path: None,
             modified_at: Utc::now(),
+            created_at: None,
             reading_state: None,
         }
     }
 
+    /// Stable creation time: the stored value if present, else the ObjectId's embedded timestamp.
+    pub fn created_or_default(&self) -> DateTime<Utc> {
+        self.created_at
+            .or_else(|| {
+                self.id.and_then(|id| {
+                    let ms = id.timestamp().timestamp_millis();
+                    DateTime::<Utc>::from_timestamp_millis(ms)
+                })
+            })
+            .unwrap_or_else(|| Utc.timestamp_opt(0, 0).unwrap())
+    }
+
     pub fn from_path(path: impl Into<Box<Path>>) -> Self {
         let path = path.into();
-
+        let created_at = DateTime::<Utc>::from_timestamp_millis(Utc::now().timestamp_millis());
         let name = path
             .file_stem()
             .and_then(|stem| {
@@ -134,6 +154,7 @@ impl Book {
             initial_format,
             size_kb,
             modified_at,
+            created_at,
             ..Default::default()
         }
     }
