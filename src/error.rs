@@ -64,15 +64,39 @@ pub enum AppError {
 
     #[error("MongoDB did not return an ObjectId for the inserted document")]
     InvalidObjectId,
+
+    #[error("ZIP file error: {0}")]
+    Zip(#[from] zip::result::ZipError),
+
+    #[error("SCSS compile error in `{path}`: {source}")]
+    Scss {
+        path: String,
+        #[source]
+        source: Box<grass::Error>,
+    },
+
+    #[error("Failed to write CSS to `{path}`: {source}")]
+    CssWrite {
+        path: String,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Template render error: {0}")]
+    Askama(#[from] askama::Error),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = match self {
             AppError::BsonSer(_)
+            | AppError::Zip(_)
             | AppError::Config(_)
             | AppError::MongoDB(_)
             | AppError::InvalidObjectId
+            | AppError::Scss { .. }
+            | AppError::CssWrite { .. }
+            | AppError::Askama(_)
             | AppError::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Json(_) => StatusCode::BAD_REQUEST,
             AppError::Uuid(_) => StatusCode::BAD_REQUEST,

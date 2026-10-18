@@ -16,8 +16,8 @@ use axum::{
     http::{HeaderMap, HeaderValue, uri},
     response::{IntoResponse, Response},
 };
-use chrono::{TimeZone, Utc};
-use std::collections::HashSet;
+use chrono::{DateTime, TimeZone, Utc};
+use std::collections::{HashMap, HashSet};
 use tracing::{debug, error};
 
 pub const SYNC_ITEM_LIMIT: usize = 100;
@@ -103,28 +103,46 @@ pub async fn library_sync_handler(
         }
     }
 
-    let books_to_sync: Vec<&Book> = books
+    // Map book_id -> last_synced_at
+    let synced_map: HashMap<&str, DateTime<Utc>> = synced_books
+        .iter()
+        .map(|sb| (sb.book_id.as_str(), sb.last_synced_at))
+        .collect();
+
+    // Find never-synced books (New Entitlements)
+    let never_synced_books: Vec<&Book> = books
         .iter()
         .filter(|book| {
-            book.id
-                .map(|id| !synced_book_ids.contains(&id.to_string()))
-                .unwrap_or(false)
+            book.id.as_ref().map_or(false, |id| {
+                !synced_map.contains_key(id.to_string().as_str())
+            })
         })
         .take(SYNC_ITEM_LIMIT)
         .collect();
 
+    let remaining_limit = SYNC_ITEM_LIMIT.saturating_sub(never_synced_books.len());
+
+    // Find previously synced books whose modified_at changed (Changed Entitlements)
+    let modified_synced_books: Vec<&Book> = books
+        .iter()
+        .filter(|book| {
+            book.id
+                .as_ref()
+                .and_then(|id| synced_map.get(id.to_string().as_str()))
+                .map_or(false, |&last_synced_at| book.modified_at > last_synced_at)
+        })
+        .collect();
+
     debug!(
-        num_books_to_sync = books_to_sync.len(),
+        num_never_synced = never_synced_books.len(),
+        num_modified_synced = modified_synced_books.len(),
         "Found books to sync"
     );
 
-    for book in books_to_sync {
+    // Process Never-Synced Books -> NewEntitlement
+    for book in never_synced_books {
         let book_id = book.id.ok_or(AppError::InvalidObjectId)?.to_string();
-
         has_local_books = true;
-
-        let book_modified: chrono::DateTime<Utc> = book.modified_at;
-        let is_new = book_modified > sync_token.data.books_last_created;
 
         let entitlement = Entitlement::from_book_tuple(
             (&book_id, book),
@@ -135,35 +153,19 @@ pub async fn library_sync_handler(
             false,
         );
 
-        if is_new {
-            sync_results.push(SyncResult {
-                changed_entitlement: None,
-                new_entitlement: Some(entitlement),
-                changed_reading_state: None,
-                deleted_tag: None,
-                new_tag: None,
-                changed_tag: None,
-            });
-        } else {
-            sync_results.push(SyncResult {
-                changed_entitlement: Some(entitlement),
-                new_entitlement: None,
-                changed_reading_state: None,
-                deleted_tag: None,
-                new_tag: None,
-                changed_tag: None,
-            });
-        }
+        sync_results.push(SyncResult {
+            changed_entitlement: None,
+            new_entitlement: Some(entitlement),
+            changed_reading_state: None,
+            deleted_tag: None,
+            new_tag: None,
+            changed_tag: None,
+        });
 
-        debug!(
-            book_id = %book_id,
-            title = book.title,
-            is_new,
-            "Attempting to sync book"
-        );
+        debug!(book_id = %book_id, title = book.title, "Syncing new book");
 
-        new_books_last_modified = std::cmp::max(new_books_last_modified, book_modified);
-        new_books_last_created = std::cmp::max(new_books_last_created, book_modified);
+        new_books_last_modified = std::cmp::max(new_books_last_modified, book.modified_at);
+        new_books_last_created = std::cmp::max(new_books_last_created, book.modified_at);
 
         let mut synced = SyncedBookDocument {
             book_id,
@@ -174,6 +176,44 @@ pub async fn library_sync_handler(
         };
 
         state.mongodb.syncs.insert(&mut synced).await?;
+    }
+
+    // Process Modified Synced Books -> ChangedEntitlement
+    for book in modified_synced_books {
+        let book_id = book.id.ok_or(AppError::InvalidObjectId)?.to_string();
+        has_local_books = true;
+
+        let entitlement = Entitlement::from_book_tuple(
+            (&book_id, book),
+            state.config.clone(),
+            None,
+            None,
+            None,
+            false,
+        );
+
+        sync_results.push(SyncResult {
+            changed_entitlement: Some(entitlement),
+            new_entitlement: None,
+            changed_reading_state: None,
+            deleted_tag: None,
+            new_tag: None,
+            changed_tag: None,
+        });
+
+        debug!(book_id = %book_id, title = book.title, "Syncing modified book");
+
+        new_books_last_modified = std::cmp::max(new_books_last_modified, book.modified_at);
+
+        let mut synced = SyncedBookDocument {
+            book_id,
+            user_id: "default".to_string(),
+            id: None,
+            synced_at: Utc::now(),
+            last_synced_at: Utc::now(),
+        };
+
+        state.mongodb.syncs.upsert(&mut synced).await?;
     }
 
     // Update sync token
@@ -284,13 +324,20 @@ pub async fn generate_sync_response(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use crate::{
-        library::sync::{
-            sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
-            sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+        error::AppError,
+        library::{
+            book::Book,
+            sync::{
+                entitlement_models::SyncResult,
+                sync_handler::{SYNC_ITEM_LIMIT, generate_sync_response},
+                sync_token::{SYNC_TOKEN_HEADER, SyncToken},
+            },
         },
         metadata::update_meta::update_metadata,
-        test_helpers::{AppTestContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app, write_minimal_epub},
     };
     use axum::http::HeaderMap;
     use chrono::{TimeZone, Utc};
@@ -298,13 +345,12 @@ mod tests {
     use test_context::test_context;
     use test_log::test;
     use tokio::time::{Duration, sleep};
+    use tracing::debug;
 
     #[test_context(AppTestContext)]
     #[test(tokio::test)]
     #[ignore = "requires mongodb test server setup"]
-    async fn test_library_sync_status_code(
-        ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_library_sync_status_code(ctx: &mut AppTestContext) -> Result<(), AppError> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
@@ -313,7 +359,7 @@ mod tests {
         config.base_url = test_base_url.to_string();
         config.ebbooks_auth_key = token.to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let server = setup_test_app(state.clone());
 
@@ -349,13 +395,13 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_no_proxy(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
@@ -371,13 +417,13 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_with_continuation(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
@@ -399,13 +445,13 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_includes_token(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
         let sync_results = vec![];
@@ -415,7 +461,7 @@ mod tests {
 
         assert!(response.headers().get("x-kobo-synctoken").is_some());
         assert_eq!(
-            response.headers().get("content-type").unwrap().to_str()?,
+            response.headers().get("content-type").unwrap(),
             "application/json; charset=utf-8"
         );
         Ok(())
@@ -426,7 +472,7 @@ mod tests {
     #[ignore = "requires mongodb test server setup"]
     async fn test_library_sync_updates_and_returns_valid_sync_token(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let test_base_url = "http://books.example.com/";
         let token = "test-token-123";
 
@@ -435,7 +481,7 @@ mod tests {
         config.base_url = test_base_url.to_string();
         config.ebbooks_auth_key = token.to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         let server = setup_test_app(state.clone());
 
@@ -461,7 +507,8 @@ mod tests {
             .headers()
             .get(SYNC_TOKEN_HEADER)
             .expect("x-kobo-synctoken header missing from response")
-            .to_str()?;
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8");
 
         // Reconstruct and verify SyncToken payload
         let parsed_token = SyncToken::from_headers(response.headers());
@@ -518,13 +565,13 @@ mod tests {
     #[test(tokio::test)]
     async fn test_generate_sync_response_encodes_token_correctly(
         ctx: &mut AppTestContext,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         let mut state = ctx.state.clone();
         let mut config = (*state.config).clone();
         config.base_url = "http://books.example.com/".to_string();
         config.ebbooks_auth_key = "test-token".to_string();
         config.proxy_kobo_store = false;
-        state.config = std::sync::Arc::new(config);
+        state.config = Arc::new(config);
 
         // Explicitly set custom timestamps on token
         let mut sync_token = SyncToken::from_headers(&HeaderMap::new());
@@ -551,6 +598,134 @@ mod tests {
         assert_eq!(
             reconstructed_token.data.books_last_created, test_timestamp,
             "books_last_created was not preserved through response header serialization"
+        );
+
+        Ok(())
+    }
+
+    // TODO write a test that edits the metadata and modified_at for a book post sync and confirms that a ChangedEntitlement is generated
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_edit_metadata_generates_changed_entitlement(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), AppError> {
+        let temp_dir = tempfile::tempdir()?;
+        let epub_path = temp_dir.path().join("test_name.epub");
+
+        // Write a valid minimal EPUB file instead of zeroed bytes
+        write_minimal_epub(&epub_path, "Test Book")?;
+
+        let mut book = Book::from_path(epub_path);
+        book.hardcover_slug = Some("hamlet".into());
+        book.hardcover_id = Some(4083277);
+
+        let test_base_url = "http://books.example.com/";
+        let token = "test-token-123";
+
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
+
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = Arc::new(config);
+
+        let server = setup_test_app(state.clone());
+
+        // --- Initial sync: the book has never been synced, so expect a NewEntitlement ---
+        let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
+        response.assert_status(StatusCode::OK);
+
+        let token_header = response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8")
+            .to_string();
+
+        let results: Vec<SyncResult> = response.json();
+        debug!(?results, "Decoded initial sync response");
+
+        assert_eq!(
+            results.len(),
+            1,
+            "Expected exactly one result on initial sync"
+        );
+        assert!(
+            results[0].new_entitlement.is_some(),
+            "Expected a NewEntitlement on initial sync"
+        );
+        assert!(
+            results[0].changed_entitlement.is_none(),
+            "Did not expect a ChangedEntitlement on initial sync"
+        );
+
+        // Ensure modified_at is strictly later than the recorded last_synced_at
+        // (Mongo datetimes have millisecond precision)
+        sleep(Duration::from_millis(50)).await;
+
+        // --- Edit the book's metadata and bump modified_at ---
+        book.description = Some(
+        "The Tragedy of Hamlet, Prince of Denmark, often shortened to Hamlet is a tragedy written by William Shakespeare sometime between 1599 and 1601.".into(),
+    );
+        book.modified_at = Utc::now();
+
+        ctx.state
+            .mongodb
+            .books
+            .update_diff(book_id, &mut book)
+            .await?;
+
+        // --- Second sync: the book was synced before and modified since ---
+        let post_edit_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, &token_header)
+            .await;
+        post_edit_response.assert_status(StatusCode::OK);
+
+        let post_edit_token_header = post_edit_response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from post-edit response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8")
+            .to_string();
+
+        let post_edit_results: Vec<SyncResult> = post_edit_response.json();
+        debug!(
+            ?post_edit_results,
+            "Decoded post metadata edit sync response"
+        );
+
+        assert_eq!(
+            post_edit_results.len(),
+            1,
+            "Expected exactly one result after metadata edit"
+        );
+        assert!(
+            post_edit_results[0].changed_entitlement.is_some(),
+            "Expected a ChangedEntitlement after metadata edit"
+        );
+        assert!(
+            post_edit_results[0].new_entitlement.is_none(),
+            "Did not expect a NewEntitlement for an already-synced book"
+        );
+
+        // --- Third sync: nothing changed since, so last_synced_at should have been
+        // refreshed by the upsert and the result should be empty ---
+        let third_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, &post_edit_token_header)
+            .await;
+        third_response.assert_status(StatusCode::OK);
+
+        let third_results: Vec<SyncResult> = third_response.json();
+        assert!(
+            third_results.is_empty(),
+            "Expected no entitlements once the edit has been synced"
         );
 
         Ok(())

@@ -5,12 +5,15 @@ use crate::{
     error::AppError,
     metadata::update_meta::update_metadata,
     scan::scanner::{ScanResponse, run_library_scan},
+    scss::compile_scss,
 };
+use askama::Template;
 use axum::{
     Json, Router,
     extract::State,
     http::{self, HeaderMap},
     middleware,
+    response::Html,
     routing::{get, post},
 };
 use dotenvy::dotenv;
@@ -18,6 +21,7 @@ use mongodb::bson::{doc, oid::ObjectId};
 use reqwest::StatusCode;
 use std::{env, sync::Arc};
 use tokio::sync::Mutex;
+use tower_http::services::ServeDir;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -30,6 +34,7 @@ pub mod library;
 pub mod logging;
 pub(crate) mod metadata;
 pub mod scan;
+pub(crate) mod scss;
 
 /// Holds shared application state accessible across request handlers
 #[derive(Clone)]
@@ -77,17 +82,29 @@ impl AppState {
     }
 }
 
+#[derive(Template)]
+#[template(path = "index.html")]
+struct IndexTemplate<'a> {
+    title: &'a str,
+}
+
+async fn index_handler() -> Result<Html<String>, AppError> {
+    let html = IndexTemplate { title: "ebbooks" }.render()?;
+    Ok(Html(html))
+}
+
 /// Constructs the main application `Router` and registers API routes with shared state
 pub fn app(state: AppState) -> Router {
     Router::new()
-        .route("/", get(|| async { "Ebook Sync Server" }))
+        .route("/", get(get(index_handler)))
         .route("/scan", post(scan_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
         .route(
             "/metadata/refresh/{book_doc_id}",
             post(refresh_single_book_metadata_handler),
         )
-        .merge(api::kobo_routes::kobo_routes())
+        .merge(api::kobo_routes::kobo_routes(state.clone()))
+        .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
         // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
@@ -147,6 +164,10 @@ async fn main() -> Result<(), AppError> {
     // Fetch and debug all stored books & scans from redb
     // let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
     // debug!(?books, count = books.len(), "All stored books in database");
+
+    // Compile SCSS styles
+    debug!("Compiling scss styles");
+    compile_scss()?;
 
     // Construct App state
     let state = AppState::new(config, mongodb, hardcover_api_token);
@@ -276,15 +297,22 @@ pub async fn refresh_single_book_metadata_handler(
 #[cfg(test)]
 pub mod test_helpers {
     use crate::api::init_resources::{Resources, patch_kobo_resources};
-    use crate::database::MongoDatabase; // adjust to actual module path
+    use crate::database::MongoDatabase;
+    use crate::error::AppError;
+    // adjust to actual module path
     use crate::{AppState, app, config::AppConfig};
     use axum::Router;
     use axum_test::TestServer;
     use dotenvy::dotenv;
     use std::env;
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::Path;
     use std::sync::Arc;
     use test_context::AsyncTestContext;
     use tokio::sync::Mutex;
+    use zip::write::SimpleFileOptions;
+    use zip::{CompressionMethod, ZipWriter};
 
     pub struct AppTestContext {
         pub state: AppState,
@@ -355,6 +383,67 @@ pub mod test_helpers {
         let router = Router::new().merge(app(state));
         TestServer::new(router)
     }
+
+    pub fn write_minimal_epub(path: &Path, title: &str) -> Result<(), AppError> {
+        let mut zip = ZipWriter::new(File::create(path)?);
+
+        // The mimetype entry must come first and be uncompressed
+        let stored_options =
+            SimpleFileOptions::default().compression_method(CompressionMethod::Stored);
+        let default_options = SimpleFileOptions::default();
+
+        zip.start_file("mimetype", stored_options)?;
+        zip.write_all(b"application/epub+zip")?;
+
+        zip.start_file("META-INF/container.xml", default_options)?;
+        zip.write_all(
+            r#"<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>"#
+                .as_bytes(),
+        )?;
+
+        zip.start_file("OEBPS/content.opf", default_options)?;
+        let content_opf = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>{title}</dc:title>
+    <dc:creator>Test Author</dc:creator>
+    <dc:language>en</dc:language>
+    <dc:identifier id="id">urn:uuid:00000000-0000-0000-0000-000000000001</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"/>
+  </spine>
+</package>"#
+        );
+        zip.write_all(content_opf.as_bytes())?;
+
+        zip.start_file("OEBPS/chapter1.xhtml", default_options)?;
+        zip.write_all(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Ch 1</title>
+  </head>
+  <body>
+    <p>Hello</p>
+  </body>
+</html>"#
+                .as_bytes(),
+        )?;
+
+        zip.finish()?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -362,7 +451,7 @@ mod tests {
     use crate::{
         library::book::Book,
         scan::scanner::ScanResponse,
-        test_helpers::{AppTestContext, setup_test_app},
+        test_helpers::{AppTestContext, setup_test_app, write_minimal_epub},
     };
     use axum::http::StatusCode;
     use std::path::PathBuf;
@@ -396,9 +485,15 @@ mod tests {
     async fn test_refresh_single_book_metadata_handler(
         ctx: &mut AppTestContext,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut book = Book::from_path(PathBuf::from(
-            "test ebooks/Absolute Martian Manhunter Vol. 1_ Martian Vision - Deniz Camp.epub",
-        ));
+        // TODO Use write_minimal_epub() here and assign test metadata instead
+        let temp_dir = tempfile::tempdir()?;
+        let epub_path = temp_dir.path().join("test_name.epub");
+
+        // Write a valid minimal EPUB file instead of zeroed bytes
+        write_minimal_epub(&epub_path, "Test Book")?;
+        let mut book = Book::from_path(epub_path);
+        book.hardcover_slug = Some("hamlet".into());
+        book.hardcover_id = Some(4083277);
 
         let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
 
