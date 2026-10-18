@@ -46,7 +46,7 @@ pub(crate) mod metadata;
 pub mod scan;
 pub(crate) mod scss;
 
-const DEFAULT_PER_PAGE: u64 = 25;
+const DEFAULT_PER_PAGE: u64 = 40;
 const MAX_PER_PAGE: u64 = 100;
 
 /// Holds shared application state accessible across request handlers
