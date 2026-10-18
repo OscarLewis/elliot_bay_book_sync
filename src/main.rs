@@ -29,6 +29,7 @@ use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod api;
+pub mod auth;
 pub(crate) mod config;
 pub(crate) mod database;
 pub(crate) mod directories;
@@ -50,6 +51,7 @@ pub struct AppState {
     pub hardcover_api_token: Option<String>,
     pub kobo_resources: Arc<Mutex<Resources>>,
     pub patched_resources: Arc<Mutex<Resources>>,
+    pub admin_key: Arc<str>,
 }
 
 impl AppState {
@@ -58,6 +60,7 @@ impl AppState {
         config: impl Into<Arc<AppConfig>>,
         mongodb: MongoDatabase,
         hardcover_api_token: Option<String>,
+        admin_key: impl Into<Arc<str>>,
     ) -> Self {
         let config: Arc<AppConfig> = config.into();
         let client = reqwest::Client::builder()
@@ -81,6 +84,7 @@ impl AppState {
             hardcover_api_token,
             kobo_resources: Arc::new(Mutex::new(kobo_resources)),
             patched_resources: Arc::new(Mutex::new(patched_resources)),
+            admin_key: admin_key.into(),
         }
     }
 }
@@ -117,18 +121,22 @@ pub fn app(state: AppState) -> Router {
         }
     });
 
-    let rate_limited = Router::new()
+    let admin = Router::new()
         .route("/scan", post(scan_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
         .route(
             "/metadata/refresh/{book_doc_id}",
             post(refresh_single_book_metadata_handler),
         )
-        .layer(GovernorLayer::new(gov)); // older versions: GovernorLayer { config: gov }
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::require_admin,
+        ))
+        .layer(GovernorLayer::new(gov));
 
     Router::new()
         .route("/", get(index_handler))
-        .merge(rate_limited)
+        .merge(admin)
         .merge(api::kobo_routes::kobo_routes(state.clone()))
         .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
@@ -178,6 +186,19 @@ async fn main() -> Result<(), AppError> {
     mongodb.db.run_command(doc! { "ping": 1 }).await?;
     info!("MongoDB connection confirmed (ping ok)");
 
+    let admin_key = env::var("ADMIN_KEY").map_err(|e| {
+        error!("Could not find ADMIN_KEY: {e}");
+        AppError::Internal(format!(
+            "Missing required ADMIN_KEY environment variable: {e}"
+        ))
+    })?;
+    if admin_key.len() < 32 {
+        error!("ADMIN_KEY is too short");
+        return Err(AppError::Internal(
+            "ADMIN_KEY must be at least 32 characters".into(),
+        ));
+    }
+
     // Open DB
     // TODO Switch to being backed by MongoDB
 
@@ -195,7 +216,7 @@ async fn main() -> Result<(), AppError> {
     compile_scss()?;
 
     // Construct App state
-    let state = AppState::new(config, mongodb, hardcover_api_token);
+    let state = AppState::new(config, mongodb, hardcover_api_token, admin_key);
 
     // Bind state to app
     let app = app(state.clone());
@@ -343,7 +364,7 @@ pub mod test_helpers {
     use tokio::sync::Mutex;
     use zip::write::SimpleFileOptions;
     use zip::{CompressionMethod, ZipWriter};
-
+    pub const TEST_ADMIN_KEY: &str = "test-admin-key";
     pub struct AppTestContext {
         pub state: AppState,
         mongodb: MongoDatabase,
@@ -390,6 +411,7 @@ pub mod test_helpers {
                 hardcover_api_token: None,
                 kobo_resources: Arc::new(Mutex::new(kobo_resources)),
                 patched_resources: Arc::new(Mutex::new(patched_resources)),
+                admin_key: Arc::from(TEST_ADMIN_KEY),
             };
 
             Self { state, mongodb }
