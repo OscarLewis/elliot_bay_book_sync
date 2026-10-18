@@ -145,7 +145,7 @@ pub fn app(state: AppState) -> Router {
         ))
         .layer(GovernorLayer::new(gov.clone()));
 
-    let client_with_token = Router::new()
+    let client_with_sync_auth_token = Router::new()
         .route(
             "/book/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}",
             get(image_handler_with_quality),
@@ -159,7 +159,7 @@ pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/", get(index_handler))
         .merge(admin)
-        .merge(client_with_token)
+        .merge(client_with_sync_auth_token)
         .merge(api::kobo_routes::kobo_routes(state.clone()))
         .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
