@@ -56,6 +56,24 @@ impl BookRepository {
         Ok(Some((id, book)))
     }
 
+    pub async fn fetch_page(&self, skip: u64, limit: i64) -> Result<(Vec<Book>, u64), AppError> {
+        let total = self.collection.count_documents(doc! {}).await?;
+
+        let books: Vec<Book> = self
+            .collection
+            .find(doc! {})
+            // Sort must be deterministic or pages can overlap/skip items.
+            // `_id` as a tiebreaker guarantees that.
+            .sort(doc! { "name": 1, "_id": 1 })
+            .skip(skip)
+            .limit(limit)
+            .await?
+            .try_collect()
+            .await?;
+
+        Ok((books, total))
+    }
+
     pub async fn fetch_all(&self) -> Result<Vec<Book>, AppError> {
         let mut cursor = self.collection.find(doc! {}).await?;
         let mut books = Vec::new();
@@ -246,6 +264,17 @@ impl BookRepository {
             .await?;
 
         Ok(result.matched_count > 0)
+    }
+
+    pub async fn count_all(&self) -> Result<u64, AppError> {
+        Ok(self.collection.count_documents(doc! {}).await?)
+    }
+
+    pub async fn count_needing_metadata(&self) -> Result<u64, AppError> {
+        Ok(self
+            .collection
+            .count_documents(doc! { "has_metadata": false })
+            .await?)
     }
 }
 

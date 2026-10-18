@@ -1,8 +1,13 @@
 use crate::{
-    api::init_resources::{Resources, patch_kobo_resources},
+    api::{
+        images::image_handler_with_quality,
+        init_resources::{Resources, patch_kobo_resources},
+        middleware::sync_auth_middleware,
+    },
     config::AppConfig,
     database::MongoDatabase,
     error::AppError,
+    library::book::Book,
     metadata::update_meta::update_metadata,
     scan::scanner::{ScanResponse, run_library_scan},
     scss::compile_scss,
@@ -10,7 +15,7 @@ use crate::{
 use askama::Template;
 use axum::{
     Json, Router,
-    extract::State,
+    extract::{Query, State},
     http::{self, HeaderMap},
     middleware,
     response::Html,
@@ -19,6 +24,7 @@ use axum::{
 use dotenvy::dotenv;
 use mongodb::bson::{doc, oid::ObjectId};
 use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use tower_governor::{
@@ -39,6 +45,9 @@ pub mod logging;
 pub(crate) mod metadata;
 pub mod scan;
 pub(crate) mod scss;
+
+const DEFAULT_PER_PAGE: u64 = 25;
+const MAX_PER_PAGE: u64 = 100;
 
 /// Holds shared application state accessible across request handlers
 #[derive(Clone)]
@@ -102,11 +111,11 @@ async fn index_handler() -> Result<Html<String>, AppError> {
 
 /// Constructs the main application `Router` and registers API routes with shared state
 pub fn app(state: AppState) -> Router {
-    // Heavy routes: scanning the library and hitting the Hardcover API
+    // Heavy routes: scanning the library, generating images, and hitting the Hardcover API
     let gov = Arc::new(
         GovernorConfigBuilder::default()
-            .per_second(10) // refill: 1 request every 10s per IP
-            .burst_size(3) // allow a short burst of 3
+            .per_second(7) // refill: 1 request every 7s per IP
+            .burst_size(10) // allow a short burst of 10 requests per IP
             .key_extractor(SmartIpKeyExtractor)
             .finish()
             .expect("valid governor config"),
@@ -123,6 +132,8 @@ pub fn app(state: AppState) -> Router {
 
     let admin = Router::new()
         .route("/scan", post(scan_handler))
+        .route("/library/info", get(library_info_handler))
+        .route("/library/list", get(library_list_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
         .route(
             "/metadata/refresh/{book_doc_id}",
@@ -132,11 +143,23 @@ pub fn app(state: AppState) -> Router {
             state.clone(),
             auth::require_admin,
         ))
+        .layer(GovernorLayer::new(gov.clone()));
+
+    let client_with_token = Router::new()
+        .route(
+            "/book/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}",
+            get(image_handler_with_quality),
+        )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            sync_auth_middleware,
+        ))
         .layer(GovernorLayer::new(gov));
 
     Router::new()
         .route("/", get(index_handler))
         .merge(admin)
+        .merge(client_with_token)
         .merge(api::kobo_routes::kobo_routes(state.clone()))
         .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
@@ -257,6 +280,34 @@ async fn main() -> Result<(), AppError> {
     Ok(())
 }
 
+#[derive(Debug, Serialize)]
+pub struct LibraryInfo {
+    pub library_path: String,
+    pub total_books: u64,
+    pub books_with_metadata: u64,
+    pub books_needing_metadata: u64,
+}
+
+/// GET `/library/info`
+///
+/// Returns a quick summary of the library: how many books are indexed and
+/// how many still need metadata from Hardcover.
+pub async fn library_info_handler(
+    State(state): State<AppState>,
+) -> Result<Json<LibraryInfo>, AppError> {
+    let (total_books, books_needing_metadata) = tokio::try_join!(
+        state.mongodb.books.count_all(),
+        state.mongodb.books.count_needing_metadata(),
+    )?;
+
+    Ok(Json(LibraryInfo {
+        library_path: state.config.library_path.display().to_string(),
+        total_books,
+        books_with_metadata: total_books.saturating_sub(books_needing_metadata),
+        books_needing_metadata,
+    }))
+}
+
 /// POST `/scan` request handler
 ///
 /// Generates a unique `scan_id`, launches an asynchronous scan task in the
@@ -343,6 +394,93 @@ pub async fn refresh_single_book_metadata_handler(
     });
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    #[serde(default = "default_page")]
+    pub page: u64,
+    #[serde(default = "default_per_page")]
+    pub per_page: u64,
+}
+
+fn default_page() -> u64 {
+    1
+}
+fn default_per_page() -> u64 {
+    DEFAULT_PER_PAGE
+}
+
+impl PaginationParams {
+    /// Clamp user input to sane values.
+    pub fn normalized(&self) -> (u64, u64) {
+        let page = self.page.max(1);
+        let per_page = self.per_page.clamp(1, MAX_PER_PAGE);
+        (page, per_page)
+    }
+
+    pub fn skip(&self) -> u64 {
+        let (page, per_page) = self.normalized();
+        (page - 1) * per_page
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListResponse<T> {
+    pub data: Vec<T>,
+    pub has_more: bool,
+    /// URI of the next page, if there is one.
+    pub next_page: Option<String>,
+    pub page: u64,
+    pub per_page: u64,
+    pub total_items: u64,
+    pub total_pages: u64,
+}
+
+impl<T> ListResponse<T> {
+    pub fn new(
+        data: Vec<T>,
+        total_items: u64,
+        params: &PaginationParams,
+        base_path: &str, // e.g. "/library/list"
+    ) -> Self {
+        let (page, per_page) = params.normalized();
+        let total_pages = total_items.div_ceil(per_page);
+        let has_more = page < total_pages;
+        let next_page =
+            has_more.then(|| format!("{base_path}?page={}&per_page={per_page}", page + 1));
+
+        Self {
+            data,
+            has_more,
+            next_page,
+            page,
+            per_page,
+            total_items,
+            total_pages,
+        }
+    }
+}
+
+/// GET `/library/list?page=1&per_page=50`
+pub async fn library_list_handler(
+    State(state): State<AppState>,
+    Query(params): Query<PaginationParams>,
+) -> Result<Json<ListResponse<Book>>, AppError> {
+    let (_, per_page) = params.normalized();
+
+    let (books, total) = state
+        .mongodb
+        .books
+        .fetch_page(params.skip(), per_page as i64)
+        .await?;
+
+    Ok(Json(ListResponse::new(
+        books,
+        total,
+        &params,
+        "/library/list",
+    )))
 }
 
 #[cfg(test)]
