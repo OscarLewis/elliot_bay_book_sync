@@ -86,6 +86,21 @@ impl Book {
         }
     }
 
+    /// True if every metadata field the refresh writes is identical.
+    pub fn same_metadata(&self, other: &Book) -> bool {
+        self.title == other.title
+            && self.author == other.author
+            && self.description == other.description
+            && self.series_name == other.series_name
+            && self.series_position == other.series_position
+            && self.hardcover_id == other.hardcover_id
+            && self.hardcover_slug == other.hardcover_slug
+            && self.hardcover_series_id == other.hardcover_series_id
+            && self.hardcover_img_id == other.hardcover_img_id
+            && self.hardcover_img_url == other.hardcover_img_url
+            && self.has_metadata == other.has_metadata
+    }
+
     /// Stable creation time: the stored value if present, else the ObjectId's embedded timestamp.
     pub fn created_or_default(&self) -> DateTime<Utc> {
         self.created_at

@@ -24,8 +24,7 @@ pub async fn update_metadata(
         );
 
         let book_id = book.id.ok_or(AppError::InvalidObjectId)?;
-        book.modified_at = Utc::now();
-
+        let before = book.clone();
         if let Some(token) = state.hardcover_api_token.as_deref() {
             debug!(
                 book_id = ?book_id,
@@ -94,7 +93,11 @@ pub async fn update_metadata(
             book.author = metadata.author;
             book.has_metadata = true;
         }
-
+        if book.same_metadata(&before) {
+            debug!(book_id = ?book_id, "Metadata unchanged, skipping update");
+            continue;
+        }
+        book.modified_at = Utc::now();
         state.mongodb.books.update(book_id, &book).await?;
     }
 

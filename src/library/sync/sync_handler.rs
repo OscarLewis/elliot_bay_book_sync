@@ -754,4 +754,122 @@ mod tests {
 
         Ok(())
     }
+
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_modified_at_bump_without_content_change_does_not_resend(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), AppError> {
+        let temp_dir = tempfile::tempdir()?;
+        let epub_path = temp_dir.path().join("test_name.epub");
+        write_minimal_epub(&epub_path, "Test Book")?;
+
+        let mut book = Book::from_path(epub_path);
+        book.description = Some("Unchanged description".into());
+
+        let test_base_url = "http://books.example.com/";
+        let token = "test-token-123";
+
+        let mut state = ctx.state.clone();
+        let mut config = (*state.config).clone();
+
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
+
+        config.base_url = test_base_url.to_string();
+        config.ebbooks_auth_key = token.to_string();
+        config.proxy_kobo_store = false;
+        state.config = Arc::new(config);
+
+        let server = setup_test_app(state.clone());
+
+        // --- Initial sync: NewEntitlement, hash gets stored ---
+        let response = server.get(&format!("/kobo/{token}/v1/library/sync")).await;
+        response.assert_status(StatusCode::OK);
+
+        let token_header = response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8")
+            .to_string();
+
+        let results: Vec<SyncResult> = response.json();
+        assert_eq!(results.len(), 1, "Expected one result on initial sync");
+        assert!(results[0].new_entitlement.is_some());
+
+        let before = ctx.state.mongodb.syncs.fetch_all().await?;
+        assert_eq!(before.len(), 1, "Expected exactly one sync record");
+        let before = &before[0];
+        assert!(
+            before.entitlement_hash.is_some(),
+            "Initial sync should store an entitlement hash"
+        );
+
+        // Ensure the bumped modified_at is strictly later than last_synced_at
+        // (Mongo datetimes have millisecond precision)
+        sleep(Duration::from_millis(50)).await;
+
+        // --- Simulate a metadata refresh that touches modified_at but changes nothing ---
+        book.modified_at = Utc::now();
+        ctx.state
+            .mongodb
+            .books
+            .update_diff(book_id, &mut book)
+            .await?;
+
+        // --- Second sync: book looks modified, but the entitlement is identical ---
+        let second_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, &token_header)
+            .await;
+        second_response.assert_status(StatusCode::OK);
+
+        let second_token_header = second_response
+            .headers()
+            .get(SYNC_TOKEN_HEADER)
+            .expect("x-kobo-synctoken header missing from second response")
+            .to_str()
+            .expect("x-kobo-synctoken header is not valid UTF-8")
+            .to_string();
+
+        let second_results: Vec<SyncResult> = second_response.json();
+        assert!(
+            second_results.is_empty(),
+            "A modified_at bump with no content change must not produce a ChangedEntitlement, got {} result(s)",
+            second_results.len()
+        );
+
+        // The skip branch should still refresh the sync record without changing the hash
+        let after = ctx.state.mongodb.syncs.fetch_all().await?;
+        assert_eq!(
+            after.len(),
+            1,
+            "Sync record should be updated, not duplicated"
+        );
+        let after = &after[0];
+        assert_eq!(
+            before.entitlement_hash, after.entitlement_hash,
+            "Hash should be unchanged when content is unchanged"
+        );
+        assert!(
+            after.last_synced_at > before.last_synced_at,
+            "last_synced_at should be refreshed so the book isn't re-flagged every sync"
+        );
+
+        // --- Third sync: nothing pending ---
+        let third_response = server
+            .get(&format!("/kobo/{token}/v1/library/sync"))
+            .add_header(SYNC_TOKEN_HEADER, &second_token_header)
+            .await;
+        third_response.assert_status(StatusCode::OK);
+
+        let third_results: Vec<SyncResult> = third_response.json();
+        assert!(
+            third_results.is_empty(),
+            "Expected no entitlements on a follow-up sync"
+        );
+
+        Ok(())
+    }
 }
