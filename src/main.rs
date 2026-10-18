@@ -5,12 +5,15 @@ use crate::{
     error::AppError,
     metadata::update_meta::update_metadata,
     scan::scanner::{ScanResponse, run_library_scan},
+    scss::compile_scss,
 };
+use askama::Template;
 use axum::{
     Json, Router,
     extract::State,
     http::{self, HeaderMap},
     middleware,
+    response::Html,
     routing::{get, post},
 };
 use dotenvy::dotenv;
@@ -18,6 +21,7 @@ use mongodb::bson::{doc, oid::ObjectId};
 use reqwest::StatusCode;
 use std::{env, sync::Arc};
 use tokio::sync::Mutex;
+use tower_http::services::ServeDir;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -30,6 +34,7 @@ pub mod library;
 pub mod logging;
 pub(crate) mod metadata;
 pub mod scan;
+pub(crate) mod scss;
 
 /// Holds shared application state accessible across request handlers
 #[derive(Clone)]
@@ -77,10 +82,21 @@ impl AppState {
     }
 }
 
+#[derive(Template)]
+#[template(path = "index.html")]
+struct IndexTemplate<'a> {
+    title: &'a str,
+}
+
+async fn index_handler() -> Result<Html<String>, AppError> {
+    let html = IndexTemplate { title: "ebbooks" }.render()?;
+    Ok(Html(html))
+}
+
 /// Constructs the main application `Router` and registers API routes with shared state
 pub fn app(state: AppState) -> Router {
     Router::new()
-        .route("/", get(|| async { "Ebook Sync Server" }))
+        .route("/", get(get(index_handler)))
         .route("/scan", post(scan_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
         .route(
@@ -88,6 +104,7 @@ pub fn app(state: AppState) -> Router {
             post(refresh_single_book_metadata_handler),
         )
         .merge(api::kobo_routes::kobo_routes(state.clone()))
+        .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
         // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
@@ -147,6 +164,10 @@ async fn main() -> Result<(), AppError> {
     // Fetch and debug all stored books & scans from redb
     // let books: Vec<(String, Book)> = db.get_all(DocumentTable::Books)?;
     // debug!(?books, count = books.len(), "All stored books in database");
+
+    // Compile SCSS styles
+    debug!("Compiling scss styles");
+    compile_scss()?;
 
     // Construct App state
     let state = AppState::new(config, mongodb, hardcover_api_token);
