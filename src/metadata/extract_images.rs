@@ -11,11 +11,13 @@ pub(crate) async fn extract_imgs_for_books(
     state: AppState,
     save_to_fs: bool,
 ) -> Result<Vec<PathBuf>, AppError> {
-    debug!(
-        ?book_list,
-        ?state.config.image_dir, "Extracting images for book list"
-    );
+    let book_names: Vec<&str> = book_list.iter().map(|b| b.name.as_str()).collect();
 
+    debug!(
+        ?book_names,
+        ?state.config.image_dir,
+        "Extracting images for book list"
+    );
     let mut image_paths = Vec::new();
 
     for mut book in book_list {
