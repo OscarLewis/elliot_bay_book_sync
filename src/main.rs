@@ -114,8 +114,8 @@ pub fn app(state: AppState) -> Router {
     // Heavy routes: scanning the library, generating images, and hitting the Hardcover API
     let gov = Arc::new(
         GovernorConfigBuilder::default()
-            .per_second(7) // refill: 1 request every 7s per IP
-            .burst_size(10) // allow a short burst of 10 requests per IP
+            .per_second(5) // refill: 1 request every 5s per IP
+            .burst_size(40) // allow a short burst of 40 requests per IP
             .key_extractor(SmartIpKeyExtractor)
             .finish()
             .expect("valid governor config"),
@@ -254,14 +254,14 @@ async fn main() -> Result<(), AppError> {
 
     // TODO Move a initial scan into helper function
 
-    if !books_needing_metadata.is_empty() {
-        let metadata_state = state.clone();
-        tokio::spawn(async move {
-            if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
-                error!(?err, "Metadata update failed");
-            }
-        });
-    }
+    // if !books_needing_metadata.is_empty() {
+    //     let metadata_state = state.clone();
+    //     tokio::spawn(async move {
+    //         if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
+    //             error!(?err, "Metadata update failed");
+    //         }
+    //     });
+    // }
 
     // Bind server to local port 3000
     let listener = tokio::net::TcpListener::bind(state.config.bind_addr)
@@ -378,13 +378,13 @@ pub async fn refresh_single_book_metadata_handler(
 ) -> Result<StatusCode, AppError> {
     let book_id = ObjectId::parse_str(&book_doc_id).map_err(|_| AppError::InvalidObjectId)?;
 
-    let Some(book) = state.mongodb.books.find_by_id(book_id).await? else {
+    let Some(mut book) = state.mongodb.books.find_by_id(book_id).await? else {
         return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
     };
 
     // Reset field "has_metadata" to false before we fetch new metadata
     state.mongodb.books.reset_metadata(book_id).await?;
-
+    book.has_metadata = false;
     let metadata_state = state.clone();
 
     tokio::spawn(async move {
