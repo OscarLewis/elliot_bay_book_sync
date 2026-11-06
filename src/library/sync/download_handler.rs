@@ -17,7 +17,7 @@ use axum::{
 use mongodb::bson::oid::ObjectId;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
 // `/kobo/{token}/download/{book_id}/{book_format}`
 pub async fn download_request_handler(
@@ -77,7 +77,7 @@ pub async fn download_request_handler(
         .await
         .into_response();
 
-    debug!(
+    info!(
         ?book_id,
         format = ?format,
         filename = %filename,

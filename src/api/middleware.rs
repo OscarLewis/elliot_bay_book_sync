@@ -24,7 +24,7 @@ pub async fn sync_auth_middleware(
     next: Next,
 ) -> Result<Response, StatusCode> {
     if token == state.config.ebbooks_auth_key {
-        debug!("Sync auth middleware passed for token: {}", token);
+        debug!("Sync auth middleware passed successfully");
         Ok(next.run(req).await)
     } else {
         Err(StatusCode::UNAUTHORIZED)

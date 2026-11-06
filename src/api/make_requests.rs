@@ -169,7 +169,6 @@ pub(crate) async fn get_store_url_for_current_request(
 
     debug!(
         full_path,
-        token,
         request_path,
         base_origin = %base_origin,
         target_url = %validated_url,

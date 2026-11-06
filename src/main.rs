@@ -1,8 +1,13 @@
 use crate::{
-    api::init_resources::{Resources, patch_kobo_resources},
+    api::{
+        images::image_handler_with_quality,
+        init_resources::{Resources, patch_kobo_resources},
+        middleware::sync_auth_middleware,
+    },
     config::AppConfig,
     database::MongoDatabase,
     error::AppError,
+    library::book::Book,
     metadata::update_meta::update_metadata,
     scan::scanner::{ScanResponse, run_library_scan},
     scss::compile_scss,
@@ -10,7 +15,7 @@ use crate::{
 use askama::Template;
 use axum::{
     Json, Router,
-    extract::State,
+    extract::{Query, State},
     http::{self, HeaderMap},
     middleware,
     response::Html,
@@ -19,13 +24,18 @@ use axum::{
 use dotenvy::dotenv;
 use mongodb::bson::{doc, oid::ObjectId};
 use reqwest::StatusCode;
-use std::{env, sync::Arc};
+use serde::{Deserialize, Serialize};
+use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
+use tower_governor::{
+    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor,
+};
 use tower_http::services::ServeDir;
 use tracing::{debug, error, info};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod api;
+pub mod auth;
 pub(crate) mod config;
 pub(crate) mod database;
 pub(crate) mod directories;
@@ -35,6 +45,9 @@ pub mod logging;
 pub(crate) mod metadata;
 pub mod scan;
 pub(crate) mod scss;
+
+const DEFAULT_PER_PAGE: u64 = 40;
+const MAX_PER_PAGE: u64 = 100;
 
 /// Holds shared application state accessible across request handlers
 #[derive(Clone)]
@@ -47,6 +60,7 @@ pub struct AppState {
     pub hardcover_api_token: Option<String>,
     pub kobo_resources: Arc<Mutex<Resources>>,
     pub patched_resources: Arc<Mutex<Resources>>,
+    pub admin_key: Arc<str>,
 }
 
 impl AppState {
@@ -55,6 +69,7 @@ impl AppState {
         config: impl Into<Arc<AppConfig>>,
         mongodb: MongoDatabase,
         hardcover_api_token: Option<String>,
+        admin_key: impl Into<Arc<str>>,
     ) -> Self {
         let config: Arc<AppConfig> = config.into();
         let client = reqwest::Client::builder()
@@ -78,6 +93,7 @@ impl AppState {
             hardcover_api_token,
             kobo_resources: Arc::new(Mutex::new(kobo_resources)),
             patched_resources: Arc::new(Mutex::new(patched_resources)),
+            admin_key: admin_key.into(),
         }
     }
 }
@@ -95,18 +111,58 @@ async fn index_handler() -> Result<Html<String>, AppError> {
 
 /// Constructs the main application `Router` and registers API routes with shared state
 pub fn app(state: AppState) -> Router {
-    Router::new()
-        .route("/", get(get(index_handler)))
+    // Heavy routes: scanning the library, generating images, and hitting the Hardcover API
+    let gov = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(5) // refill: 1 request every 5s per IP
+            .burst_size(40) // allow a short burst of 40 requests per IP
+            .key_extractor(SmartIpKeyExtractor)
+            .finish()
+            .expect("valid governor config"),
+    );
+
+    // Prune stale per-IP entries so the limiter can't leak memory
+    let limiter = gov.limiter().clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            limiter.retain_recent();
+        }
+    });
+
+    let admin = Router::new()
         .route("/scan", post(scan_handler))
+        .route("/library/info", get(library_info_handler))
+        .route("/library/list", get(library_list_handler))
         .route("/metadata/refresh", post(refresh_metadata_handler))
         .route(
             "/metadata/refresh/{book_doc_id}",
             post(refresh_single_book_metadata_handler),
         )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::require_admin,
+        ))
+        .layer(GovernorLayer::new(gov.clone()));
+
+    let client_with_sync_auth_token = Router::new()
+        .route(
+            "/book/{token}/{book_uuid}/{width}/{height}/{quality}/{is_greyscale}",
+            get(image_handler_with_quality),
+        )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            sync_auth_middleware,
+        ))
+        .layer(GovernorLayer::new(gov));
+
+    Router::new()
+        .route("/", get(index_handler))
+        .merge(admin)
+        .merge(client_with_sync_auth_token)
         .merge(api::kobo_routes::kobo_routes(state.clone()))
         .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
-        // .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn(logging::log_with_body))
 }
 
@@ -123,7 +179,7 @@ async fn main() -> Result<(), AppError> {
 
     // Load config from file and environment
     let config = AppConfig::load()?;
-    debug!(?config, "Loaded config");
+    debug!("Loaded config");
 
     // Load the .env file into the system environment
     dotenv().ok();
@@ -153,6 +209,19 @@ async fn main() -> Result<(), AppError> {
     mongodb.db.run_command(doc! { "ping": 1 }).await?;
     info!("MongoDB connection confirmed (ping ok)");
 
+    let admin_key = env::var("ADMIN_KEY").map_err(|e| {
+        error!("Could not find ADMIN_KEY: {e}");
+        AppError::Internal(format!(
+            "Missing required ADMIN_KEY environment variable: {e}"
+        ))
+    })?;
+    if admin_key.len() < 32 {
+        error!("ADMIN_KEY is too short");
+        return Err(AppError::Internal(
+            "ADMIN_KEY must be at least 32 characters".into(),
+        ));
+    }
+
     // Open DB
     // TODO Switch to being backed by MongoDB
 
@@ -170,7 +239,7 @@ async fn main() -> Result<(), AppError> {
     compile_scss()?;
 
     // Construct App state
-    let state = AppState::new(config, mongodb, hardcover_api_token);
+    let state = AppState::new(config, mongodb, hardcover_api_token, admin_key);
 
     // Bind state to app
     let app = app(state.clone());
@@ -185,14 +254,14 @@ async fn main() -> Result<(), AppError> {
 
     // TODO Move a initial scan into helper function
 
-    if !books_needing_metadata.is_empty() {
-        let metadata_state = state.clone();
-        tokio::spawn(async move {
-            if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
-                error!(?err, "Metadata update failed");
-            }
-        });
-    }
+    // if !books_needing_metadata.is_empty() {
+    //     let metadata_state = state.clone();
+    //     tokio::spawn(async move {
+    //         if let Err(err) = update_metadata(metadata_state, books_needing_metadata).await {
+    //             error!(?err, "Metadata update failed");
+    //         }
+    //     });
+    // }
 
     // Bind server to local port 3000
     let listener = tokio::net::TcpListener::bind(state.config.bind_addr)
@@ -202,8 +271,41 @@ async fn main() -> Result<(), AppError> {
     info!(addr = ?listener.local_addr().unwrap(), "listening");
 
     // Start serving HTTP requests with Axum
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
     Ok(())
+}
+
+#[derive(Debug, Serialize)]
+pub struct LibraryInfo {
+    pub library_path: String,
+    pub total_books: u64,
+    pub books_with_metadata: u64,
+    pub books_needing_metadata: u64,
+}
+
+/// GET `/library/info`
+///
+/// Returns a quick summary of the library: how many books are indexed and
+/// how many still need metadata from Hardcover.
+pub async fn library_info_handler(
+    State(state): State<AppState>,
+) -> Result<Json<LibraryInfo>, AppError> {
+    let (total_books, books_needing_metadata) = tokio::try_join!(
+        state.mongodb.books.count_all(),
+        state.mongodb.books.count_needing_metadata(),
+    )?;
+
+    Ok(Json(LibraryInfo {
+        library_path: state.config.library_path.display().to_string(),
+        total_books,
+        books_with_metadata: total_books.saturating_sub(books_needing_metadata),
+        books_needing_metadata,
+    }))
 }
 
 /// POST `/scan` request handler
@@ -213,7 +315,7 @@ async fn main() -> Result<(), AppError> {
 pub async fn scan_handler(State(state): State<AppState>) -> Result<Json<ScanResponse>, AppError> {
     let scan_id = state.mongodb.scans.start().await?;
 
-    debug!(doc_id = ?scan_id, "Initialized scan execution record");
+    info!(doc_id = ?scan_id, "Initialized scan");
 
     // Spawn long-running library scanning task asynchronously so handler returns immediately
     tokio::spawn(run_library_scan(
@@ -276,13 +378,13 @@ pub async fn refresh_single_book_metadata_handler(
 ) -> Result<StatusCode, AppError> {
     let book_id = ObjectId::parse_str(&book_doc_id).map_err(|_| AppError::InvalidObjectId)?;
 
-    let Some(book) = state.mongodb.books.find_by_id(book_id).await? else {
+    let Some(mut book) = state.mongodb.books.find_by_id(book_id).await? else {
         return Err(AppError::Internal(format!("Book not found: {book_doc_id}")));
     };
 
     // Reset field "has_metadata" to false before we fetch new metadata
     state.mongodb.books.reset_metadata(book_id).await?;
-
+    book.has_metadata = false;
     let metadata_state = state.clone();
 
     tokio::spawn(async move {
@@ -292,6 +394,93 @@ pub async fn refresh_single_book_metadata_handler(
     });
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    #[serde(default = "default_page")]
+    pub page: u64,
+    #[serde(default = "default_per_page")]
+    pub per_page: u64,
+}
+
+fn default_page() -> u64 {
+    1
+}
+fn default_per_page() -> u64 {
+    DEFAULT_PER_PAGE
+}
+
+impl PaginationParams {
+    /// Clamp user input to sane values.
+    pub fn normalized(&self) -> (u64, u64) {
+        let page = self.page.max(1);
+        let per_page = self.per_page.clamp(1, MAX_PER_PAGE);
+        (page, per_page)
+    }
+
+    pub fn skip(&self) -> u64 {
+        let (page, per_page) = self.normalized();
+        (page - 1) * per_page
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListResponse<T> {
+    pub data: Vec<T>,
+    pub has_more: bool,
+    /// URI of the next page, if there is one.
+    pub next_page: Option<String>,
+    pub page: u64,
+    pub per_page: u64,
+    pub total_items: u64,
+    pub total_pages: u64,
+}
+
+impl<T> ListResponse<T> {
+    pub fn new(
+        data: Vec<T>,
+        total_items: u64,
+        params: &PaginationParams,
+        base_path: &str, // e.g. "/library/list"
+    ) -> Self {
+        let (page, per_page) = params.normalized();
+        let total_pages = total_items.div_ceil(per_page);
+        let has_more = page < total_pages;
+        let next_page =
+            has_more.then(|| format!("{base_path}?page={}&per_page={per_page}", page + 1));
+
+        Self {
+            data,
+            has_more,
+            next_page,
+            page,
+            per_page,
+            total_items,
+            total_pages,
+        }
+    }
+}
+
+/// GET `/library/list?page=1&per_page=50`
+pub async fn library_list_handler(
+    State(state): State<AppState>,
+    Query(params): Query<PaginationParams>,
+) -> Result<Json<ListResponse<Book>>, AppError> {
+    let (_, per_page) = params.normalized();
+
+    let (books, total) = state
+        .mongodb
+        .books
+        .fetch_page(params.skip(), per_page as i64)
+        .await?;
+
+    Ok(Json(ListResponse::new(
+        books,
+        total,
+        &params,
+        "/library/list",
+    )))
 }
 
 #[cfg(test)]
@@ -313,7 +502,7 @@ pub mod test_helpers {
     use tokio::sync::Mutex;
     use zip::write::SimpleFileOptions;
     use zip::{CompressionMethod, ZipWriter};
-
+    pub const TEST_ADMIN_KEY: &str = "test-admin-key";
     pub struct AppTestContext {
         pub state: AppState,
         mongodb: MongoDatabase,
@@ -360,6 +549,7 @@ pub mod test_helpers {
                 hardcover_api_token: None,
                 kobo_resources: Arc::new(Mutex::new(kobo_resources)),
                 patched_resources: Arc::new(Mutex::new(patched_resources)),
+                admin_key: Arc::from(TEST_ADMIN_KEY),
             };
 
             Self { state, mongodb }

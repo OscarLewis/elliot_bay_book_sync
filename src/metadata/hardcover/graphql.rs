@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde::Serialize;
 use std::fs::OpenOptions;
 use std::io::Write;
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 
 use crate::error::AppError;
 
@@ -73,7 +73,7 @@ pub async fn book_by_pk_query(
         .json::<graphql_client::Response<book_by_pk::ResponseData>>()
         .await?;
 
-    debug!(?response.errors, "Hardcover response");
+    trace!(?response.errors, "Hardcover response");
 
     let Some(data) = response.data else {
         return Ok(None);

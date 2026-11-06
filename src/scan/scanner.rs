@@ -87,7 +87,7 @@ pub async fn scan_library(scan_dir: &Path) -> Result<Vec<Book>, AppError> {
         }
     }
     if !book_list.is_empty() {
-        debug!(number_epubs = book_list.len(), ?book_list, "Found files");
+        info!(number_epubs = book_list.len(), ?book_list, "Found files");
     }
 
     Ok(book_list)
@@ -98,8 +98,6 @@ pub(crate) async fn run_library_scan(
     scan_document_id: ObjectId,
     library_path: Arc<std::path::Path>,
 ) -> Result<(), AppError> {
-    debug!(doc_id = %scan_document_id, "Initialized scan execution record");
-
     // TODO Handle missing books as deleted books or flag them in mongodb
 
     // TODO take in an ObjectId for a mongodb.scans instead of a string for scan_document_id

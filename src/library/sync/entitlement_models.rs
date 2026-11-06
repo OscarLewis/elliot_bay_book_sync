@@ -6,6 +6,8 @@ use crate::{
 };
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::fmt::Write;
 use std::{collections::HashMap, sync::Arc};
 use tracing::debug;
 use uuid::Uuid;
@@ -297,6 +299,17 @@ pub struct Entitlement {
     pub reading_state: Option<ReadingState>,
 }
 
+pub fn entitlement_hash(e: &Entitlement) -> String {
+    let bytes =
+        serde_json::to_vec(&(&e.book_metadata, e.book_entitlement.is_removed)).unwrap_or_default();
+
+    Sha256::digest(&bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut s, b| {
+            let _ = write!(s, "{b:02x}");
+            s
+        })
+}
 impl Entitlement {
     pub fn from_book_tuple(
         (book_id, book): (&str, &Book),
@@ -306,16 +319,16 @@ impl Entitlement {
         reading_state: Option<ReadingState>,
         archieved: bool,
     ) -> Self {
-        let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
         let last_modified = book.modified_at.format("%Y-%m-%dT%H:%M:%SZ").to_string();
-
+        let fmt = "%Y-%m-%dT%H:%M:%SZ";
+        let created = book.created_or_default().format(fmt).to_string();
         let book_entitlement = BookEntitlement {
             id: book_id.to_string(),
             accessibility: accessibility.unwrap_or_else(|| "Full".to_string()),
             active_period: ActivePeriod {
-                from: active_from.unwrap_or_else(|| now.clone()),
+                from: active_from.unwrap_or_else(|| created.clone()),
             },
-            created: now,
+            created,
             cross_revision_id: book_id.to_string(),
             is_removed: archieved,
             is_hidden_from_archive: false,
@@ -376,7 +389,11 @@ pub fn get_download_url_for_book_id(
 impl BookMetadata {
     pub fn from_book_tuple((book_id, book): (&str, &Book), app_config: Arc<AppConfig>) -> Self {
         // Parse UTC timestamp or fallback to `now`
-        let pub_date = book.modified_at.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let pub_date = book
+            .created_or_default()
+            .format("%Y-%m-%dT%H:%M:%SZ")
+            .to_string();
+
         // Derive format & download details
         let format = match book.initial_format.as_deref() {
             Some("kepub") => KoboFormat::Kepub,
