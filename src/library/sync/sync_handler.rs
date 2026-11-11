@@ -346,6 +346,7 @@ pub async fn generate_sync_response(
     }
     */
 
+    // TODO only enable this on a debug flag
     let dir = state.config.data_dir.join("sync_diffs");
     let entries = crate::library::sync::sync_diff::entries_from_results(&final_results);
     let redact = [state.config.ebbooks_auth_key.clone()];
