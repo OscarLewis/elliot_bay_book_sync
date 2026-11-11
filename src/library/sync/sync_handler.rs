@@ -336,6 +336,23 @@ pub async fn generate_sync_response(
 
     info!(books_synced = final_results.len(), "Kobo sync completed");
 
+    /*
+    if let Some(dir) = state.config.sync_diff_dir.as_deref() {
+        let entries = crate::library::sync::sync_diff::entries_from_results(&final_results);
+        let redact = [state.config.ebbooks_auth_key.clone()];
+        if let Err(e) = crate::library::sync::sync_diff::record(dir, entries, &redact).await {
+            tracing::warn!(?e, "failed to record sync diff");
+        }
+    }
+    */
+
+    let dir = state.config.data_dir.join("sync_diffs");
+    let entries = crate::library::sync::sync_diff::entries_from_results(&final_results);
+    let redact = [state.config.ebbooks_auth_key.clone()];
+    if let Err(e) = crate::library::sync::sync_diff::record(&dir, entries, &redact).await {
+        tracing::warn!(?e, "failed to record sync diff");
+    }
+
     // Build JSON response with proper encoding
     let json_body = serde_json::to_string(&final_results)?;
     response_headers.insert(

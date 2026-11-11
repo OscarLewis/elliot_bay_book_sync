@@ -47,6 +47,7 @@ sha2 = "0.11.1"
 tower_governor = "0.8.0"
 subtle = "2.6.1"
 jiff = { version = "0.2.39", features = ["serde"] }
+similar = { version = "3.2.1", features = ["serde"] }
 
 [package.metadata.generate-rpm]
 assets = [
