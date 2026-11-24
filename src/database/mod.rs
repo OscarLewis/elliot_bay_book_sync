@@ -4,6 +4,7 @@ mod sync_repository;
 pub use book_repository::BookRepository;
 pub use scan_repository::ScanRepository;
 pub mod bson_chrono_datetime;
+pub mod bson_jiff_datatime;
 use crate::error::AppError;
 use mongodb::{Client, Database};
 pub use sync_repository::SyncRepository;
