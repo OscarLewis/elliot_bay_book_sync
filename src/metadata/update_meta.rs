@@ -15,6 +15,8 @@ pub async fn update_metadata(
     state: AppState,
     books_needing_metadata: Vec<Book>,
 ) -> Result<(), AppError> {
+    // TODO - Somewhere this is wiping previous metadata for books that already have metadata. Need to figure out why.
+
     for mut book in books_needing_metadata {
         let metadata = parse_metadata_ebook(book.path.clone().into()).await?;
         debug!(
