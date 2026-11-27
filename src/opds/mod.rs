@@ -252,3 +252,85 @@ async fn download(
     }
     Ok(response)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        library::book::Book,
+        test_helpers::{AppTestContext, setup_test_app, write_minimal_epub},
+    };
+    use axum::http::StatusCode;
+    use std::sync::Arc;
+    use test_context::test_context;
+    use test_log::test;
+
+    const TOKEN: &str = "test-token-123";
+
+    fn set_token(ctx: &mut AppTestContext) {
+        let mut config = (*ctx.state.config).clone();
+        config.ebbooks_auth_key = TOKEN.to_string();
+        ctx.state.config = Arc::new(config);
+    }
+
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_root_and_bad_token(ctx: &mut AppTestContext) {
+        set_token(ctx);
+        let server = setup_test_app(ctx.state.clone());
+
+        server
+            .get(&format!("/opds/{TOKEN}"))
+            .await
+            .assert_status(StatusCode::OK);
+
+        server
+            .get("/opds/wrong")
+            .await
+            .assert_status(StatusCode::UNAUTHORIZED);
+    }
+
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_all_feed_lists_book(
+        ctx: &mut AppTestContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        set_token(ctx);
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("test.epub");
+        write_minimal_epub(&path, "Test")?;
+
+        let mut book = Book::from_path(path);
+        book.title = Some("Dungeons & Dragons".into());
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
+
+        let server = setup_test_app(ctx.state.clone());
+        let resp = server.get(&format!("/opds/{TOKEN}/all")).await;
+        resp.assert_status(StatusCode::OK);
+
+        let body = resp.text();
+        assert!(body.contains("Dungeons &amp; Dragons"));
+        assert!(body.contains(&format!("/opds/{TOKEN}/download/{book_id}")));
+        Ok(())
+    }
+
+    #[test_context(AppTestContext)]
+    #[test(tokio::test)]
+    async fn test_download(ctx: &mut AppTestContext) -> Result<(), Box<dyn std::error::Error>> {
+        set_token(ctx);
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("test.epub");
+        write_minimal_epub(&path, "Test")?;
+        let expected = tokio::fs::read(&path).await?;
+
+        let mut book = Book::from_path(path);
+        let book_id = ctx.state.mongodb.books.insert(&mut book).await?;
+
+        let server = setup_test_app(ctx.state.clone());
+        let resp = server
+            .get(&format!("/opds/{TOKEN}/download/{book_id}"))
+            .await;
+        resp.assert_status(StatusCode::OK);
+        assert_eq!(resp.into_bytes().as_ref(), expected.as_slice());
+        Ok(())
+    }
+}
