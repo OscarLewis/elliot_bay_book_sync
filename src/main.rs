@@ -162,6 +162,7 @@ pub fn app(state: AppState) -> Router {
         .merge(admin)
         .merge(client_with_sync_auth_token)
         .merge(api::kobo_routes::kobo_routes(state.clone()))
+        .merge(opds::opds_routes(state.clone()))
         .nest_service("/static/styles", ServeDir::new("static/styles"))
         .with_state(state)
         .layer(middleware::from_fn(logging::log_with_body))
